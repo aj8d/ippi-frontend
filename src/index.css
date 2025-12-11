@@ -1,0 +1,20 @@
+﻿@import 'tailwindcss';
+
+@font-face {
+  font-family: 'LINE Seed JP';
+  src: url('../public/fonts/LINESeedJP_OTF_Rg.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'LINE Seed JP';
+  src: url('../public/fonts/LINESeedJP_OTF_Bd.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: 'LINE Seed JP', sans-serif;
+}
