@@ -1,7 +1,11 @@
+import SwapyContainer from './swapy/SwapyContainer';
+import SwapyItem from './swapy/SwapyItem';
+import SwapyTimer from './swapy/SwapyTimer';
+
 function App() {
   return (
     <>
-      <h1 className="text-violet-500 text-4xl font-bold">こんにちは</h1>
+      <SwapyContainer />
     </>
   );
 }
