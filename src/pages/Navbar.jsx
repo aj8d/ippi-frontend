@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function Navbar() {
+  const location = useLocation();
+
   return (
     <>
       {/* <div class="mx-auto flex max-w-sm items-center gap-x-4 rounded-xl bg-white p-6 shadow-lg outline outline-black/5 dark:bg-slate-800 dark:shadow-none dark:-outline-offset-1 dark:outline-white/10">
@@ -13,13 +15,13 @@ export default function Navbar() {
        */}
 
       <nav className="mx-auto max-w-sm flex place-items-stretch gap-8 rounded-xl bg-white p-6 shadow-lg">
-        <Link to="/home" className="text-gray-500">
+        <Link to="/home" className={location.pathname === '/home' ? 'text-sky-500' : 'text-gray-500'}>
           Home
         </Link>
-        <Link to="/about" className="text-gray-500">
+        <Link to="/about" className={location.pathname === '/about' ? 'text-sky-500' : 'text-gray-500'}>
           About
         </Link>
-        <Link to="/blog" className="text-gray-500">
+        <Link to="/blog" className={location.pathname === '/blog' ? 'text-sky-500' : 'text-gray-500'}>
           Blog
         </Link>
         <Link to="/" className="text-gray-500">
