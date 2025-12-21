@@ -1,0 +1,54 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
+
+export default function Register() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const result = await register(email, password, name);
+    if (result.success) {
+      navigate('/profile');
+    } else {
+      setError(result.message);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div>
+      <h1>ユーザー登録</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>名前:</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+        </div>
+        <div>
+          <label>メールアドレス:</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        </div>
+        <div>
+          <label>パスワード:</label>
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </div>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <button type="submit" disabled={loading}>
+          {loading ? '登録中...' : '登録'}
+        </button>
+      </form>
+      <p>
+        既にアカウントをお持ちの場合は <a href="/login">ログインはこちら</a>
+      </p>
+    </div>
+  );
+}
