@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Check, Trash2 } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
 
 const API_URL = 'http://localhost:8080/api/text-data';
 
@@ -8,16 +9,26 @@ function SwapyTodo() {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { token } = useAuth();
 
   // バックエンドから TODO を取得
   useEffect(() => {
-    fetchTodos();
-  }, []);
+    if (token) {
+      fetchTodos();
+    }
+  }, [token]);
+
+  const getHeaders = () => ({
+    'Content-Type': 'application/json; charset=utf-8',
+    Authorization: `Bearer ${token}`,
+  });
 
   const fetchTodos = async () => {
     try {
       setLoading(true);
-      const response = await fetch(API_URL);
+      const response = await fetch(API_URL, {
+        headers: getHeaders(),
+      });
       const data = await response.json();
       setTodos(Array.isArray(data) ? data : []);
       setError('');
@@ -38,7 +49,7 @@ function SwapyTodo() {
 
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        headers: getHeaders(),
         body: utf8Bytes,
       });
 
@@ -58,6 +69,7 @@ function SwapyTodo() {
     try {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
+        headers: getHeaders(),
       });
 
       if (response.ok) {
