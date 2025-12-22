@@ -1,25 +1,20 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // ページロード時にlocalStorageからトークンを復元
-  useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    if (savedToken) {
-      setToken(savedToken);
-      // プロフィール情報を取得
-      fetchProfile(savedToken);
-    }
-    setLoading(false);
-  }, []);
+  const [token, setToken] = useState(() => {
+    // 初期化時にlocalStorageから復元
+    return localStorage.getItem('token') || null;
+  });
+  const [loading, setLoading] = useState(() => {
+    // トークンがない場合はloadingをfalseにする
+    return localStorage.getItem('token') ? true : false;
+  });
 
   // プロフィール情報を取得
-  const fetchProfile = async (authToken) => {
+  const fetchProfile = useCallback(async (authToken) => {
     try {
       const response = await fetch('http://localhost:8080/api/auth/profile', {
         method: 'GET',
@@ -39,8 +34,19 @@ export function AuthProvider({ children }) {
       }
     } catch (error) {
       console.error('Failed to fetch profile:', error);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
+
+  // トークンが変更されたときにプロフィール情報を取得
+  useEffect(() => {
+    if (token) {
+      fetchProfile(token);
+    } else {
+      setLoading(false);
+    }
+  }, [token, fetchProfile]);
 
   // ユーザー登録
   const register = async (email, password, name) => {
@@ -108,6 +114,7 @@ export function AuthProvider({ children }) {
 }
 
 // useAuth フック
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

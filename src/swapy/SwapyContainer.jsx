@@ -9,15 +9,40 @@ function SwapyContainer() {
   const containerRef = useRef(null);
   const swapyRef = useRef(null);
   const [streak, setStreak] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [selectedTodoId, setSelectedTodoId] = useState(null);
 
-  const handleTimerComplete = useCallback(() => {
+  const handleTimerComplete = useCallback((seconds) => {
+    // タイマー完了時に秒数を更新してから streak をインクリメント
+    setElapsedSeconds(seconds);
     setStreak((prev) => prev + 1);
   }, []);
 
+  const handleTimerUpdate = useCallback((seconds) => {
+    setElapsedSeconds(seconds);
+  }, []);
+
+  const handleSelectedTodoChange = useCallback((todoId) => {
+    setSelectedTodoId(todoId);
+  }, []);
+
   const items = [
-    { id: 'item-1', content: <SwapyTimer key="timer-1" onComplete={handleTimerComplete} /> },
+    {
+      id: 'item-1',
+      content: (
+        <SwapyTimer
+          key="timer-1"
+          onComplete={handleTimerComplete}
+          onUpdate={handleTimerUpdate}
+          selectedTodoId={selectedTodoId}
+        />
+      ),
+    },
     { id: 'item-2', content: <SwapyStreak key="streak" count={streak} /> },
-    { id: 'item-3', content: <SwapyTodo key="todo" /> },
+    {
+      id: 'item-3',
+      content: <SwapyTodo key="todo" timerSeconds={elapsedSeconds} onSelectedTodoChange={handleSelectedTodoChange} />,
+    },
   ];
 
   useEffect(() => {

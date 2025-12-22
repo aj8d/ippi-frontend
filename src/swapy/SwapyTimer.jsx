@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
+import { useAuth } from '../auth/AuthContext';
 
-function SwapyTimer({ onComplete }) {
+const API_URL = 'http://localhost:8080/api/text-data';
+
+function SwapyTimer({ onComplete, onUpdate, selectedTodoId }) {
+  const { token } = useAuth();
   const [totalTime, setTotalTime] = useState(60);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
@@ -21,7 +25,12 @@ function SwapyTimer({ onComplete }) {
             hasCompletedRef.current = true;
             setIsRunning(false);
             if (onComplete) {
-              onComplete();
+              // タイマー完了時に経過秒数を渡す
+              onComplete(Math.round(totalTime));
+            }
+            if (onUpdate) {
+              // 完了時にも onUpdate を呼ぶ
+              onUpdate(Math.round(totalTime));
             }
             return totalTime;
           }
@@ -39,7 +48,7 @@ function SwapyTimer({ onComplete }) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, totalTime, onComplete]);
+  }, [isRunning, totalTime, onComplete, onUpdate]);
 
   const progress = (elapsedTime / totalTime) * 100;
   const radius = 140;
@@ -63,7 +72,67 @@ function SwapyTimer({ onComplete }) {
     }
   };
 
+  // サーバーにタイマー開始を通知
+  const startTimerOnServer = useCallback(async () => {
+    try {
+      await fetch(`${API_URL}/${selectedTodoId}/start-timer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to start timer on server:', err);
+    }
+  }, [selectedTodoId, token]);
+
+  // サーバーにタイマー停止を通知
+  const stopTimerOnServer = useCallback(async () => {
+    try {
+      await fetch(`${API_URL}/${selectedTodoId}/stop-timer`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to stop timer on server:', err);
+    }
+  }, [selectedTodoId, token]);
+
+  // ページ復帰時にサーバーから状態を取得
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && selectedTodoId && isRunning) {
+        // ページが表示に戻った場合、サーバーから最新の状態を取得
+        (async () => {
+          try {
+            const response = await fetch(`${API_URL}/${selectedTodoId}/timer-status`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+            if (data.timerRunning) {
+              // サーバー上で実行中の場合、最新の経過時間を設定
+              setElapsedTime(data.elapsedSeconds);
+            }
+          } catch (err) {
+            console.error('Failed to sync timer status:', err);
+          }
+        })();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [selectedTodoId, isRunning, token]);
+
   const handleStart = () => {
+    if (!selectedTodoId) {
+      alert('タスクを選択してからタイマーを開始してください');
+      return;
+    }
+
     const mins = parseInt(inputMinutes) || 0;
     const secs = parseInt(inputSeconds) || 0;
     const newTotal = mins * 60 + secs;
@@ -72,6 +141,8 @@ function SwapyTimer({ onComplete }) {
       setTotalTime(newTotal);
       setElapsedTime(0);
       setIsRunning(true);
+      // サーバーにも開始を通知
+      startTimerOnServer();
     }
   };
 
@@ -82,7 +153,19 @@ function SwapyTimer({ onComplete }) {
   };
 
   const togglePlayPause = () => {
+    const willStop = isRunning;
     setIsRunning(!isRunning);
+
+    // 停止時に親に秒数を通知＆サーバーに通知
+    if (willStop) {
+      if (onUpdate) {
+        onUpdate(Math.round(elapsedTime));
+      }
+      stopTimerOnServer();
+    } else {
+      // 再開時もサーバーに通知
+      startTimerOnServer();
+    }
   };
 
   return (

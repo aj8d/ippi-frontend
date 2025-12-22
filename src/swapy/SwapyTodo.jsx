@@ -1,33 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 
 const API_URL = 'http://localhost:8080/api/text-data';
 
-function SwapyTodo() {
+function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
   const [todos, setTodos] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedTodoId, setSelectedTodoId] = useState(null); // 選択されたTODO ID
   const { token } = useAuth();
 
-  // バックエンドから TODO を取得
-  useEffect(() => {
-    if (token) {
-      fetchTodos();
-    }
-  }, [token]);
-
-  const getHeaders = () => ({
-    'Content-Type': 'application/json; charset=utf-8',
-    Authorization: `Bearer ${token}`,
-  });
-
-  const fetchTodos = async () => {
+  const fetchTodos = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(API_URL, {
-        headers: getHeaders(),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await response.json();
       setTodos(Array.isArray(data) ? data : []);
@@ -38,18 +30,61 @@ function SwapyTodo() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  const updateTodoTimer = useCallback(
+    async (todoId, seconds) => {
+      try {
+        const updateData = { timerSeconds: Math.round(seconds) };
+        const jsonBody = JSON.stringify(updateData);
+        const utf8Bytes = new TextEncoder().encode(jsonBody);
+
+        await fetch(`${API_URL}/${todoId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            Authorization: `Bearer ${token}`,
+          },
+          body: utf8Bytes,
+        });
+      } catch (err) {
+        console.error('Failed to update todo timer:', err);
+      }
+    },
+    [token]
+  );
+
+  // バックエンドから TODO を取得
+  useEffect(() => {
+    if (token) {
+      fetchTodos();
+    }
+  }, [token, fetchTodos]);
+
+  // timerSeconds が更新されたとき（タイマー停止/完了時のみ）、選択された TODO の timerSeconds を更新
+  useEffect(() => {
+    if (timerSeconds !== null && timerSeconds !== undefined && timerSeconds > 0 && selectedTodoId) {
+      updateTodoTimer(selectedTodoId, timerSeconds);
+    }
+  }, [timerSeconds, selectedTodoId, updateTodoTimer]);
 
   const addTodo = async () => {
     if (!inputValue.trim()) return;
 
     try {
-      const jsonBody = JSON.stringify({ text: inputValue });
+      const todoData = {
+        text: inputValue,
+        timerSeconds: 0,
+      };
+      const jsonBody = JSON.stringify(todoData);
       const utf8Bytes = new TextEncoder().encode(jsonBody);
 
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: getHeaders(),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          Authorization: `Bearer ${token}`,
+        },
         body: utf8Bytes,
       });
 
@@ -65,16 +100,33 @@ function SwapyTodo() {
     }
   };
 
+  // TODO を選択するハンドラー
+  const handleSelectTodo = (todoId) => {
+    setSelectedTodoId(todoId);
+    if (onSelectedTodoChange) {
+      onSelectedTodoChange(todoId);
+    }
+  };
+
   const completeTodo = async (id) => {
     try {
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
-        headers: getHeaders(),
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
         setTodos(todos.filter((todo) => todo.id !== id));
         setError('');
+        if (selectedTodoId === id) {
+          setSelectedTodoId(null); // 選択されたTODOを解除
+          if (onSelectedTodoChange) {
+            onSelectedTodoChange(null);
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to delete todo:', err);
@@ -126,17 +178,28 @@ function SwapyTodo() {
           todos.map((todo) => (
             <div
               key={todo.id}
-              className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-all"
+              onClick={() => handleSelectTodo(todo.id)}
+              className={`flex items-center gap-3 p-3 border rounded-lg transition-all cursor-pointer ${
+                selectedTodoId === todo.id
+                  ? 'bg-blue-100 border-blue-500 border-2'
+                  : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+              }`}
             >
               <button
-                onClick={() => completeTodo(todo.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  completeTodo(todo.id);
+                }}
                 className="flex-shrink-0 w-6 h-6 rounded border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 transition-all flex items-center justify-center"
               >
                 <Check size={16} className="text-green-500 opacity-0 hover:opacity-100" />
               </button>
               <span className="flex-1 text-gray-800">{todo.text}</span>
               <button
-                onClick={() => completeTodo(todo.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  completeTodo(todo.id);
+                }}
                 className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-all"
               >
                 <Trash2 size={16} />
