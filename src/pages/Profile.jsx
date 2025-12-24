@@ -1,6 +1,7 @@
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import ActivityCalendar from '../components/ActivityCalendar';
 
 export default function Profile() {
   const { user, logout, token } = useAuth();
@@ -94,6 +95,9 @@ export default function Profile() {
               <p>統計データがまだありません</p>
             )}
           </div>
+
+          {/* GitHub-style アクティビティカレンダーを追加 */}
+          {stats && stats.length > 0 && <ActivityCalendar stats={stats} />}
 
           <div style={{ marginTop: '20px' }}>
             <button onClick={handleLogout} style={{ marginRight: '10px' }}>

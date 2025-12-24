@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -24,26 +25,128 @@ export default function Login() {
     setLoading(false);
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setError('');
+      setLoading(true);
+
+      // Google ID Token をバックエンドに送信
+      const response = await fetch('http://localhost:8080/api/auth/google-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          idToken: credentialResponse.credential,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // JWT トークンを localStorage に保存
+        localStorage.setItem('token', data.token);
+        // プロフィールページにリダイレクト
+        navigate('/profile');
+      } else {
+        setError(data.message || 'Google ログインに失敗しました');
+      }
+    } catch (err) {
+      setError('エラーが発生しました: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google ログインに失敗しました。コンソールでエラーを確認してください。');
+    console.error('Google OAuth Error occurred');
+  };
+
   return (
-    <div>
-      <h1>ログイン</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>メールアドレス:</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      {/* カード型コンテナ */}
+      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+        {/* ヘッダー */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Login</h1>
         </div>
-        <div>
-          <label>パスワード:</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+
+        {/* エラーメッセージ */}
+        {error && (
+          <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* ログインフォーム */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* メールアドレス入力 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">メールアドレス</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              placeholder="example@email.com"
+            />
+          </div>
+
+          {/* パスワード入力 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">パスワード</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              placeholder="••••••••"
+            />
+          </div>
+
+          {/* ログインボタン */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition duration-200 transform hover:scale-105 active:scale-95"
+          >
+            {loading ? 'ログイン中...' : 'ログイン'}
+          </button>
+        </form>
+
+        {/* 区切り線 */}
+        <div className="my-6 flex items-center">
+          <div className="flex-1 border-t border-gray-300"></div>
+          <span className="px-3 text-gray-500 text-sm">または</span>
+          <div className="flex-1 border-t border-gray-300"></div>
         </div>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <button type="submit" disabled={loading}>
-          {loading ? 'ログイン中...' : 'ログイン'}
-        </button>
-      </form>
-      <p>
-        アカウントがない場合は <a href="/register">登録はこちら</a>
-      </p>
+
+        {/* Google Sign-In */}
+        <GoogleOAuthProvider clientId="226358310830-ej5ltkmrnaq3bgcog0p4nler40viutfd.apps.googleusercontent.com">
+          <div className="flex justify-center mb-6">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              text="signin_with"
+              theme="outline"
+              size="large"
+            />
+          </div>
+        </GoogleOAuthProvider>
+
+        {/* 登録リンク */}
+        <div className="text-center pt-4 border-t border-gray-200">
+          <p className="text-gray-600 text-sm">
+            アカウントがない場合は{' '}
+            <a href="/register" className="text-blue-600 hover:text-blue-700 font-semibold underline">
+              登録はこちら
+            </a>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
