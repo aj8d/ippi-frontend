@@ -5,7 +5,7 @@ import SwapyTimer from './SwapyTimer';
 import SwapyStreak from './SwapyStreak';
 import SwapyTodo from './SwapyTodo';
 
-function SwapyContainer() {
+function SwapyContainer({ timerSettings = { displayMode: 'countdown', inputMinutes: '1', inputSeconds: '0' } }) {
   const containerRef = useRef(null);
   const swapyRef = useRef(null);
   const [streak, setStreak] = useState(0);
@@ -35,6 +35,9 @@ function SwapyContainer() {
           onComplete={handleTimerComplete}
           onUpdate={handleTimerUpdate}
           selectedTodoId={selectedTodoId}
+          displayMode={timerSettings.displayMode}
+          inputMinutes={timerSettings.inputMinutes}
+          inputSeconds={timerSettings.inputSeconds}
         />
       ),
     },

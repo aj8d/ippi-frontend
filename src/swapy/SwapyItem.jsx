@@ -3,9 +3,9 @@ function SwapyItem({ slotId, itemId, children }) {
     <div data-swapy-slot={slotId} className="w-full">
       <div
         data-swapy-item={itemId}
-        className="relative bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 cursor-grab active:cursor-grabbing h-160 flex flex-col items-center justify-center"
+        className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 cursor-grab active:cursor-grabbing flex flex-col items-center justify-center h-full"
       >
-        <div className="text-gray-400 hover:text-gray-600">{children}</div>
+        {children}
       </div>
     </div>
   );
