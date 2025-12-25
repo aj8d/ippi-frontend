@@ -3,8 +3,8 @@ import { AuthProvider } from './auth/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
 import Login from './auth/Login';
 import Register from './auth/Register';
+import Home from './pages/Home';
 import Profile from './pages/Profile';
-import SwapyContainer from './swapy/SwapyContainer';
 
 function App() {
   return (
@@ -25,7 +25,7 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <SwapyContainer />
+                <Home />
               </ProtectedRoute>
             }
           />
