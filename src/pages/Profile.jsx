@@ -50,6 +50,12 @@ export default function Profile() {
   const totalMinutes = stats ? stats.reduce((sum, day) => sum + day.count, 0) : 0;
   const totalHours = (totalMinutes / 60).toFixed(1);
 
+  // バグ調査：データをコンソール出力
+  console.log('Stats data:', stats);
+  console.log('Recent stats:', recentStats);
+  console.log('Total minutes:', totalMinutes);
+  console.log('Total hours:', totalHours);
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} onTimerSettingsChange={() => {}} />
@@ -81,7 +87,17 @@ export default function Profile() {
                       <strong>合計作業時間（過去365日）:</strong> {totalHours}時間 ({totalMinutes}分)
                     </p>
                     <h3>過去7日間の作業時間:</h3>
-                    <div style={{ display: 'flex', gap: '5px', alignItems: 'flex-end', height: '100px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '5px',
+                        alignItems: 'flex-end',
+                        height: '150px',
+                        justifyContent: 'center',
+                        borderBottom: '1px solid #ddd',
+                        paddingBottom: '10px',
+                      }}
+                    >
                       {recentStats.map((day, index) => (
                         <div
                           key={index}
@@ -92,7 +108,10 @@ export default function Profile() {
                             backgroundColor: day.count > 0 ? '#4CAF50' : '#ddd',
                             borderRadius: '4px',
                             cursor: 'pointer',
+                            transition: 'all 0.2s',
                           }}
+                          onMouseEnter={(e) => (e.target.style.opacity = '0.8')}
+                          onMouseLeave={(e) => (e.target.style.opacity = '1')}
                         />
                       ))}
                     </div>

@@ -29,6 +29,7 @@ function SwapyContainer({ timerSettings = { displayMode: 'countdown', inputMinut
   const items = [
     {
       id: 'item-1',
+      scrollable: false,
       content: (
         <SwapyTimer
           key="timer-1"
@@ -41,9 +42,10 @@ function SwapyContainer({ timerSettings = { displayMode: 'countdown', inputMinut
         />
       ),
     },
-    { id: 'item-2', content: <SwapyStreak key="streak" count={streak} /> },
+    { id: 'item-2', scrollable: false, content: <SwapyStreak key="streak" count={streak} /> },
     {
       id: 'item-3',
+      scrollable: true,
       content: <SwapyTodo key="todo" timerSeconds={elapsedSeconds} onSelectedTodoChange={handleSelectedTodoChange} />,
     },
   ];
@@ -71,9 +73,13 @@ function SwapyContainer({ timerSettings = { displayMode: 'countdown', inputMinut
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-8">
       <div className="max-w-6xl mx-auto">
-        <div ref={containerRef} data-swapy-container className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          ref={containerRef}
+          data-swapy-container
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-max"
+        >
           {items.map((item) => (
-            <SwapyItem key={item.id} slotId={`slot-${item.id}`} itemId={item.id}>
+            <SwapyItem key={item.id} slotId={`slot-${item.id}`} itemId={item.id} scrollable={item.scrollable}>
               {item.content}
             </SwapyItem>
           ))}

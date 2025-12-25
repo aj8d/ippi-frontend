@@ -141,16 +141,16 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full gap-4 px-4">
-      <div className="text-2xl font-bold text-gray-800 mb-2">TODO</div>
+    <div className="flex flex-col h-full gap-3">
+      <div className="text-2xl font-bold text-gray-800 flex-shrink-0">TODO</div>
 
       {error && (
-        <div className="w-full max-w-xs p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
+        <div className="w-full p-2 bg-red-100 border border-red-300 text-red-700 rounded-lg text-xs flex-shrink-0">
           {error}
         </div>
       )}
 
-      <div className="flex gap-2 w-full max-w-xs">
+      <div className="flex gap-2 w-full flex-shrink-0">
         <input
           type="text"
           value={inputValue}
@@ -158,55 +158,57 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
           onKeyPress={handleKeyPress}
           placeholder="新しいタスク"
           disabled={loading}
-          className="flex-1 px-4 py-2 border-2 border-gray-300 text-black rounded-lg focus:outline-none focus:border-black disabled:bg-gray-200"
+          className="flex-1 px-3 py-2 border-2 border-gray-300 text-black text-sm rounded-lg focus:outline-none focus:border-black disabled:bg-gray-200"
         />
         <button
           onClick={addTodo}
           disabled={loading}
-          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-all flex items-center gap-2 disabled:bg-gray-400"
+          className="px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-all flex items-center gap-1 disabled:bg-gray-400"
         >
-          <Plus size={20} />
+          <Plus size={18} />
         </button>
       </div>
 
-      <div className="w-full max-w-xs flex flex-col gap-2">
-        {loading && todos.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">読み込み中...</div>
-        ) : todos.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">タスクはありません</div>
-        ) : (
-          todos.map((todo) => (
-            <div
-              key={todo.id}
-              onClick={() => handleSelectTodo(todo.id)}
-              className={`flex items-center gap-3 p-3 border rounded-lg transition-all cursor-pointer ${
-                selectedTodoId === todo.id
-                  ? 'bg-blue-100 border-blue-500 border-2'
-                  : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-              }`}
-            >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  completeTodo(todo.id);
-                }}
-                className="flex-shrink-0 w-6 h-6 rounded border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 transition-all flex items-center justify-center"
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex flex-col gap-2">
+          {loading && todos.length === 0 ? (
+            <div className="text-center text-gray-400 py-8">読み込み中...</div>
+          ) : todos.length === 0 ? (
+            <div className="text-center text-gray-400 py-8">タスクはありません</div>
+          ) : (
+            todos.map((todo) => (
+              <div
+                key={todo.id}
+                onClick={() => handleSelectTodo(todo.id)}
+                className={`flex items-center gap-2 p-2 border rounded-lg transition-all cursor-pointer flex-shrink-0 text-sm ${
+                  selectedTodoId === todo.id
+                    ? 'bg-blue-100 border-blue-500 border-2'
+                    : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                }`}
               >
-                <Check size={16} className="text-green-500 opacity-0 hover:opacity-100" />
-              </button>
-              <span className="flex-1 text-gray-800">{todo.text}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  completeTodo(todo.id);
-                }}
-                className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-all"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))
-        )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    completeTodo(todo.id);
+                  }}
+                  className="flex-shrink-0 w-5 h-5 rounded border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 transition-all flex items-center justify-center"
+                >
+                  <Check size={14} className="text-green-500 opacity-0 hover:opacity-100" />
+                </button>
+                <span className="flex-1 text-gray-800 truncate">{todo.text}</span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    completeTodo(todo.id);
+                  }}
+                  className="flex-shrink-0 text-gray-400 hover:text-red-500 transition-all"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
