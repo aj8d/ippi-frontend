@@ -8,7 +8,6 @@ export default function Profile() {
   const { user, logout, token } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState(user?.profileImageUrl || null);
@@ -39,8 +38,6 @@ export default function Profile() {
         }
       } catch (error) {
         console.error('Error fetching stats:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -141,86 +138,43 @@ export default function Profile() {
     }
   };
 
-  // 過去7日間の統計を表示
-  const recentStats = stats ? stats.slice(-7).reverse() : [];
-  const totalMinutes = stats ? stats.reduce((sum, day) => sum + day.count, 0) : 0;
-  const totalHours = (totalMinutes / 60).toFixed(1);
-
-  // バグ調査：データをコンソール出力
-  console.log('Stats data:', stats);
-  console.log('Recent stats:', recentStats);
-  console.log('Total minutes:', totalMinutes);
-  console.log('Total hours:', totalHours);
-
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} onTimerSettingsChange={() => {}} />
 
       {/* メインコンテンツ */}
       <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} flex-1 transition-all duration-300`}>
-        <div style={{ padding: '20px' }}>
+        <div className="p-5 max-w-6xl mx-auto">
           {user ? (
             <div>
               {/* プロフィール画像セクション */}
-              <div style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <div
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    borderRadius: '50%',
-                    backgroundColor: '#e0e0e0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                    border: '3px solid #4CAF50',
-                  }}
-                >
+              <div className="mb-8 flex items-center gap-5">
+                <div className="w-32 h-32 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-4 border-green-500">
                   {profileImageUrl ? (
-                    <img
-                      src={profileImageUrl}
-                      alt="プロフィール"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                    <img src={profileImageUrl} alt="プロフィール" className="w-full h-full object-cover" />
                   ) : (
-                    <div style={{ fontSize: '48px' }}>👤</div>
+                    <div className="text-5xl">👤</div>
                   )}
                 </div>
 
                 <div>
-                  <p style={{ fontSize: '18px', marginBottom: '10px' }}>
-                    <strong>{userName || '名前なし'}</strong>
-                  </p>
-                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px', whiteSpace: 'pre-wrap' }}>
+                  <p className="text-lg mb-2.5 font-bold">{userName || '名前なし'}</p>
+                  <p className="text-sm text-gray-600 mb-3.75 whitespace-pre-wrap">
                     {userDescription || '説明文はまだ設定されていません'}
                   </p>
                   <button
                     onClick={() => setIsEditing(true)}
-                    style={{
-                      padding: '8px 16px',
-                      backgroundColor: '#4CAF50',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      marginBottom: '10px',
-                    }}
+                    className="px-4 py-2 bg-green-500 text-white rounded cursor-pointer mb-2.5 hover:bg-green-600"
                   >
                     編集
                   </button>
 
                   {/* 画像アップロード */}
-                  <div style={{ marginTop: '10px' }}>
+                  <div className="mt-2.5">
                     <label
-                      style={{
-                        display: 'inline-block',
-                        padding: '8px 16px',
-                        backgroundColor: '#4CAF50',
-                        color: 'white',
-                        borderRadius: '4px',
-                        cursor: uploading ? 'not-allowed' : 'pointer',
-                        opacity: uploading ? 0.6 : 1,
-                      }}
+                      className={`inline-block px-4 py-2 bg-green-500 text-white rounded cursor-pointer transition-opacity ${
+                        uploading ? 'opacity-60 cursor-not-allowed' : 'opacity-100 hover:bg-green-600'
+                      }`}
                     >
                       {uploading ? '保存中...' : '画像をアップロード'}
                       <input
@@ -228,71 +182,27 @@ export default function Profile() {
                         accept="image/*"
                         onChange={handleProfileImageUpload}
                         disabled={uploading}
-                        style={{ display: 'none' }}
+                        className="hidden"
                       />
                     </label>
-                    {uploadError && <p style={{ color: 'red', marginTop: '8px', fontSize: '12px' }}>{uploadError}</p>}
+                    {uploadError && <p className="text-red-500 mt-2 text-xs">{uploadError}</p>}
                   </div>
                 </div>
               </div>
 
               {/* ユーザー情報 */}
-              <hr style={{ margin: '20px 0' }} />
-
-              {/* 統計情報を表示 */}
-              <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-                <h2>📊 統計情報</h2>
-                {loading ? (
-                  <p>統計データを読み込み中...</p>
-                ) : stats && stats.length > 0 ? (
-                  <div>
-                    <p>
-                      <strong>合計作業時間（過去365日）:</strong> {totalHours}時間 ({totalMinutes}分)
-                    </p>
-                    <h3>過去7日間の作業時間:</h3>
-                    <div
-                      style={{
-                        display: 'flex',
-                        gap: '5px',
-                        alignItems: 'flex-end',
-                        height: '150px',
-                        justifyContent: 'center',
-                        borderBottom: '1px solid #ddd',
-                        paddingBottom: '10px',
-                      }}
-                    >
-                      {recentStats.map((day, index) => (
-                        <div
-                          key={index}
-                          title={`${day.date}: ${day.count}分`}
-                          style={{
-                            width: '30px',
-                            height: `${Math.max(day.count * 2, 20)}px`,
-                            backgroundColor: day.count > 0 ? '#4CAF50' : '#ddd',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                          }}
-                          onMouseEnter={(e) => (e.target.style.opacity = '0.8')}
-                          onMouseLeave={(e) => (e.target.style.opacity = '1')}
-                        />
-                      ))}
-                    </div>
-                    <p style={{ fontSize: '12px', marginTop: '10px' }}>🟩 = 作業時間あり | ⬜ = 作業時間なし</p>
-                  </div>
-                ) : (
-                  <p>統計データがまだありません</p>
-                )}
-              </div>
+              <hr className="my-5" />
 
               {/* GitHub-style アクティビティカレンダーを追加 */}
               {stats && stats.length > 0 && <ActivityCalendar stats={stats} />}
 
-              <div style={{ marginTop: '20px' }}>
-                <button onClick={handleLogout} style={{ marginRight: '10px' }}>
+              <div className="mt-5">
+                <button onClick={handleLogout} className="mr-2.5 px-3 py-2 bg-gray-300 rounded hover:bg-gray-400">
                   ログアウト
                 </button>
-                <button onClick={() => navigate('/')}>ホームへ戻る</button>
+                <button onClick={() => navigate('/')} className="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                  ホームへ戻る
+                </button>
               </div>
             </div>
           ) : (
@@ -304,18 +214,7 @@ export default function Profile() {
       {/* モーダル */}
       {isEditing && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           onClick={() => {
             setIsEditing(false);
             setUserName(user?.name || '');
@@ -323,88 +222,44 @@ export default function Profile() {
           }}
         >
           {/* モーダル内容 */}
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '30px',
-              maxWidth: '500px',
-              width: '90%',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 style={{ marginBottom: '20px', marginTop: 0 }}>プロフィールを編集</h2>
+          <div className="bg-white rounded-lg p-7.5 max-w-md w-11/12 shadow-md" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-5 mt-0 text-xl font-bold">プロフィールを編集</h2>
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>名前</label>
+            <div className="mb-3.75">
+              <label className="block mb-1.25 font-bold">名前</label>
               <input
                 type="text"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  border: '1px solid #ddd',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                }}
+                className="w-full p-2.5 rounded border border-gray-300 text-sm box-border"
               />
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>説明文</label>
+            <div className="mb-5">
+              <label className="block mb-1.25 font-bold">説明文</label>
               <textarea
                 value={userDescription}
                 onChange={(e) => setUserDescription(e.target.value)}
                 placeholder="自己紹介を入力してください..."
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  border: '1px solid #ddd',
-                  fontSize: '14px',
-                  minHeight: '100px',
-                  fontFamily: 'inherit',
-                  resize: 'vertical',
-                  boxSizing: 'border-box',
-                }}
+                className="w-full p-2.5 rounded border border-gray-300 text-sm min-h-24 font-inherit resize-vertical box-border"
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <div className="flex gap-2.5 justify-end">
               <button
                 onClick={() => {
                   setIsEditing(false);
                   setUserName(user?.name || '');
                   setUserDescription(user?.description || '');
                 }}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#999',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                }}
+                className="px-5 py-2.5 bg-gray-600 text-white rounded cursor-pointer text-sm hover:bg-gray-700"
               >
                 キャンセル
               </button>
               <button
                 onClick={handleSaveProfile}
                 disabled={isSaving}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  opacity: isSaving ? 0.6 : 1,
-                }}
+                className={`px-5 py-2.5 bg-green-500 text-white rounded text-sm font-bold hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed`}
               >
                 {isSaving ? '保存中...' : '保存'}
               </button>

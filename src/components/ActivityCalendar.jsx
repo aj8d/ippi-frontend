@@ -1,4 +1,9 @@
+import { useState } from 'react';
+
 export default function ActivityCalendar({ stats }) {
+  const [tooltip, setTooltip] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
   if (!stats || stats.length === 0) {
     return <p>統計データがありません</p>;
   }
@@ -97,146 +102,104 @@ export default function ActivityCalendar({ stats }) {
   };
 
   return (
-    <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-      <h2>🎯 アクティビティカレンダー（過去365日）</h2>
+    <div className="mt-7.5 p-3.75 bg-gray-100 rounded-lg">
+      <h2 className="text-lg font-bold">🎯 アクティビティカレンダー（過去365日）</h2>
 
-      <div style={{ overflowX: 'auto', marginTop: '15px' }}>
-        <div style={{ display: 'inline-block', padding: '10px' }}>
-          {/* 曜日ラベル */}
-          <div style={{ display: 'flex', marginBottom: '5px' }}>
-            <div style={{ width: '30px' }} />
-            <div style={{ display: 'flex', gap: '4px' }}>
-              {['日', '月', '火', '水', '木', '金', '土'].map((day) => (
-                <div
-                  key={day}
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    textAlign: 'center',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {day}
+      <div className="mt-3.75 relative w-full overflow-hidden flex justify-center">
+        <div className="overflow-x-auto max-w-full">
+          <div className="inline-flex p-2.5 origin-left sm:scale-90 md:scale-100 lg:scale-100">
+            {/* 曜日ラベル */}
+            <div className="flex mb-1.25">
+              <div className="w-5" />
+              <div className="flex gap-0.5">
+                {['日', '月', '火', '水', '木', '金', '土'].map((day) => (
+                  <div key={day} className="text-xs font-bold text-center w-4 h-4 flex items-center justify-center">
+                    {day}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* カレンダーグリッド */}
+            <div className="flex gap-0.5 items-start">
+              {weeks.map((week, weekIndex) => (
+                <div key={weekIndex} className="flex flex-col gap-0.5 items-center">
+                  {/* 月ラベル */}
+                  <div className="text-xs font-bold h-4.5 flex items-center justify-center w-4 text-gray-600 leading-tight">
+                    {weekIndex % 4 === 0 ? getMonthLabel(week) : ''}
+                  </div>
+
+                  {/* 週のセル */}
+                  {week.map((day, dayIndex) => (
+                    <div
+                      key={`${weekIndex}-${dayIndex}`}
+                      className={`w-4 h-4 border border-gray-300 rounded-sm transition-all relative ${
+                        day ? 'cursor-pointer' : 'cursor-default'
+                      }`}
+                      style={{
+                        backgroundColor: day ? getColor(day.minutes) : '#f0f0f0',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (day) {
+                          e.target.style.boxShadow = '0 0 4px rgba(0,0,0,0.3)';
+                          e.target.style.transform = 'scale(1.1)';
+                          const rect = e.target.getBoundingClientRect();
+                          setTooltip(getTooltip(day.date, day.minutes));
+                          setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top - 5 });
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (day) {
+                          e.target.style.boxShadow = 'none';
+                          e.target.style.transform = 'scale(1)';
+                          setTooltip(null);
+                        }
+                      }}
+                    />
+                  ))}
                 </div>
               ))}
             </div>
           </div>
-
-          {/* カレンダーグリッド */}
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            {weeks.map((week, weekIndex) => (
-              <div
-                key={weekIndex}
-                style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}
-              >
-                {/* 月ラベル */}
-                <div
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    height: '20px',
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    minWidth: '24px',
-                    textAlign: 'center',
-                    color: '#666',
-                  }}
-                >
-                  {weekIndex % 4 === 0 ? getMonthLabel(week) : ''}
-                </div>
-
-                {/* 週のセル */}
-                {week.map((day, dayIndex) => (
-                  <div
-                    key={`${weekIndex}-${dayIndex}`}
-                    title={day ? getTooltip(day.date, day.minutes) : ''}
-                    style={{
-                      width: '24px',
-                      height: '24px',
-                      backgroundColor: day ? getColor(day.minutes) : '#f0f0f0',
-                      border: '1px solid #ddd',
-                      borderRadius: '3px',
-                      cursor: day ? 'pointer' : 'default',
-                      transition: 'all 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (day) {
-                        e.target.style.boxShadow = '0 0 4px rgba(0,0,0,0.3)';
-                        e.target.style.transform = 'scale(1.1)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (day) {
-                        e.target.style.boxShadow = 'none';
-                        e.target.style.transform = 'scale(1)';
-                      }
-                    }}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
+      {/* カスタムツールチップ（上に表示） */}
+      {tooltip && (
+        <div
+          className="fixed bg-gray-800 text-white px-2.5 py-1.5 rounded text-xs font-medium whitespace-nowrap pointer-events-none z-50 shadow-md"
+          style={{
+            left: `${tooltipPos.x}px`,
+            top: `${tooltipPos.y}px`,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          {tooltip}
+          <div
+            className="absolute w-0 h-0 border-l-2 border-r-2 border-t-2 border-l-transparent border-r-transparent border-t-gray-800"
+            style={{
+              bottom: '-4px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+            }}
+          />
+        </div>
+      )}
+
       {/* カラー凡例 */}
-      <div style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px' }}>
+      <div className="mt-3.75 flex items-center gap-2.5 text-xs">
         <span>Less</span>
-        <div style={{ display: 'flex', gap: '2px' }}>
-          <div
-            style={{
-              width: '14px',
-              height: '14px',
-              backgroundColor: '#ebedf0',
-              border: '1px solid #ddd',
-              borderRadius: '2px',
-            }}
-          />
-          <div
-            style={{
-              width: '14px',
-              height: '14px',
-              backgroundColor: '#c6e48b',
-              border: '1px solid #ddd',
-              borderRadius: '2px',
-            }}
-          />
-          <div
-            style={{
-              width: '14px',
-              height: '14px',
-              backgroundColor: '#7bc96f',
-              border: '1px solid #ddd',
-              borderRadius: '2px',
-            }}
-          />
-          <div
-            style={{
-              width: '14px',
-              height: '14px',
-              backgroundColor: '#239a3b',
-              border: '1px solid #ddd',
-              borderRadius: '2px',
-            }}
-          />
-          <div
-            style={{
-              width: '14px',
-              height: '14px',
-              backgroundColor: '#196127',
-              border: '1px solid #ddd',
-              borderRadius: '2px',
-            }}
-          />
+        <div className="flex gap-0.5">
+          <div className="w-2.5 h-2.5 bg-gray-200 border border-gray-300 rounded-sm" />
+          <div className="w-2.5 h-2.5 bg-green-300 border border-gray-300 rounded-sm" />
+          <div className="w-2.5 h-2.5 bg-green-500 border border-gray-300 rounded-sm" />
+          <div className="w-2.5 h-2.5 bg-green-700 border border-gray-300 rounded-sm" />
+          <div className="w-2.5 h-2.5 bg-green-900 border border-gray-300 rounded-sm" />
         </div>
         <span>More</span>
       </div>
 
-      <p style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>
+      <p className="text-xs mt-2.5 text-gray-600">
         各セルはその日の作業時間を表しています。ホバーで詳細を確認できます。
       </p>
     </div>
