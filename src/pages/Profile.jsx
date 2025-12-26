@@ -10,6 +10,13 @@ export default function Profile() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState(user?.profileImageUrl || null);
+  const [uploadError, setUploadError] = useState(null);
+  const [userName, setUserName] = useState(user?.name || '');
+  const [userDescription, setUserDescription] = useState(user?.description || '');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -45,6 +52,95 @@ export default function Profile() {
     navigate('/login');
   };
 
+  const fetchLatestProfile = async () => {
+    if (!token) return;
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/profile', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfileImageUrl(data.profileImageUrl);
+        setUserName(data.name);
+        setUserDescription(data.description || '');
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/update-profile', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: userName,
+          description: userDescription,
+        }),
+      });
+
+      if (response.ok) {
+        setIsEditing(false);
+        await fetchLatestProfile();
+      } else {
+        const errorText = await response.text();
+        console.error('Update error:', errorText);
+        alert('プロフィール更新に失敗しました');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('プロフィール更新中にエラーが発生しました');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleProfileImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !token) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('http://localhost:8080/api/auth/upload-profile-image', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProfileImageUrl(data.profileImageUrl);
+        await fetchLatestProfile();
+      } else {
+        const errorText = await response.text();
+        console.error('Upload error response:', errorText);
+        setUploadError(`アップロード失敗: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setUploadError(`エラー: ${error.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   // 過去7日間の統計を表示
   const recentStats = stats ? stats.slice(-7).reverse() : [];
   const totalMinutes = stats ? stats.reduce((sum, day) => sum + day.count, 0) : 0;
@@ -63,18 +159,85 @@ export default function Profile() {
       {/* メインコンテンツ */}
       <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} flex-1 transition-all duration-300`}>
         <div style={{ padding: '20px' }}>
-          <h1>プロフィール</h1>
           {user ? (
             <div>
-              <p>
-                <strong>ID:</strong> {user.userId}
-              </p>
-              <p>
-                <strong>名前:</strong> {user.name}
-              </p>
-              <p>
-                <strong>メール:</strong> {user.email}
-              </p>
+              {/* プロフィール画像セクション */}
+              <div style={{ marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <div
+                  style={{
+                    width: '120px',
+                    height: '120px',
+                    borderRadius: '50%',
+                    backgroundColor: '#e0e0e0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    border: '3px solid #4CAF50',
+                  }}
+                >
+                  {profileImageUrl ? (
+                    <img
+                      src={profileImageUrl}
+                      alt="プロフィール"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ fontSize: '48px' }}>👤</div>
+                  )}
+                </div>
+
+                <div>
+                  <p style={{ fontSize: '18px', marginBottom: '10px' }}>
+                    <strong>{userName || '名前なし'}</strong>
+                  </p>
+                  <p style={{ fontSize: '14px', color: '#666', marginBottom: '15px', whiteSpace: 'pre-wrap' }}>
+                    {userDescription || '説明文はまだ設定されていません'}
+                  </p>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#4CAF50',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    編集
+                  </button>
+
+                  {/* 画像アップロード */}
+                  <div style={{ marginTop: '10px' }}>
+                    <label
+                      style={{
+                        display: 'inline-block',
+                        padding: '8px 16px',
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        borderRadius: '4px',
+                        cursor: uploading ? 'not-allowed' : 'pointer',
+                        opacity: uploading ? 0.6 : 1,
+                      }}
+                    >
+                      {uploading ? '保存中...' : '画像をアップロード'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileImageUpload}
+                        disabled={uploading}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+                    {uploadError && <p style={{ color: 'red', marginTop: '8px', fontSize: '12px' }}>{uploadError}</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* ユーザー情報 */}
+              <hr style={{ margin: '20px 0' }} />
 
               {/* 統計情報を表示 */}
               <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
@@ -137,6 +300,118 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      {/* モーダル */}
+      {isEditing && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => {
+            setIsEditing(false);
+            setUserName(user?.name || '');
+            setUserDescription(user?.description || '');
+          }}
+        >
+          {/* モーダル内容 */}
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '30px',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ marginBottom: '20px', marginTop: 0 }}>プロフィールを編集</h2>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>名前</label>
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>説明文</label>
+              <textarea
+                value={userDescription}
+                onChange={(e) => setUserDescription(e.target.value)}
+                placeholder="自己紹介を入力してください..."
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  borderRadius: '4px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px',
+                  minHeight: '100px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setIsEditing(false);
+                  setUserName(user?.name || '');
+                  setUserDescription(user?.description || '');
+                }}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#999',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  opacity: isSaving ? 0.6 : 1,
+                }}
+              >
+                {isSaving ? '保存中...' : '保存'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
