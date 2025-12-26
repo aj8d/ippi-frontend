@@ -16,30 +16,12 @@ function SwapyTimer({
   const [totalTime, setTotalTime] = useState(60);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [timerSettings, setTimerSettings] = useState({
-    displayMode: propDisplayMode,
-    inputMinutes: propInputMinutes,
-    inputSeconds: propInputSeconds,
-  });
+  // propsから直接値を取得（stateで管理しない）
+  const displayMode = propDisplayMode || 'countdown';
+  const inputMinutes = propInputMinutes || '1';
+  const inputSeconds = propInputSeconds || '0';
   const intervalRef = useRef(null);
   const hasCompletedRef = useRef(false);
-
-  // サイドバーの設定が変更されたときに状態を更新（1回の状態更新で複数の値を更新）
-  useEffect(() => {
-    console.log(
-      'SwapyTimer useEffect: propDisplayMode=',
-      propDisplayMode,
-      ', propInputMinutes=',
-      propInputMinutes,
-      ', propInputSeconds=',
-      propInputSeconds
-    );
-    setTimerSettings({
-      displayMode: propDisplayMode,
-      inputMinutes: propInputMinutes,
-      inputSeconds: propInputSeconds,
-    });
-  }, [propDisplayMode, propInputMinutes, propInputSeconds]);
 
   useEffect(() => {
     if (isRunning) {
@@ -90,13 +72,13 @@ function SwapyTimer({
   const getDisplayValue = () => {
     // タイマーが停止状態で、まだ開始していない場合、入力された時間を表示
     if (!isRunning && elapsedTime === 0) {
-      const inputMins = parseInt(timerSettings.inputMinutes) || 0;
-      const inputSecs = parseInt(timerSettings.inputSeconds) || 0;
+      const inputMins = parseInt(inputMinutes) || 0;
+      const inputSecs = parseInt(inputSeconds) || 0;
       const inputTotal = inputMins * 60 + inputSecs;
 
-      if (timerSettings.displayMode === 'countdown') {
+      if (displayMode === 'countdown') {
         return formatTime(inputTotal);
-      } else if (timerSettings.displayMode === 'countup') {
+      } else if (displayMode === 'countup') {
         return formatTime(0);
       } else {
         return '0%';
@@ -104,10 +86,10 @@ function SwapyTimer({
     }
 
     // タイマー実行中または再開状態
-    if (timerSettings.displayMode === 'countdown') {
+    if (displayMode === 'countdown') {
       const remaining = Math.max(0, totalTime - elapsedTime);
       return formatTime(remaining);
-    } else if (timerSettings.displayMode === 'countup') {
+    } else if (displayMode === 'countup') {
       return formatTime(elapsedTime);
     } else {
       return `${Math.round(progress)}%`;
@@ -175,18 +157,11 @@ function SwapyTimer({
       return;
     }
 
-    const mins = parseInt(timerSettings.inputMinutes) || 0;
-    const secs = parseInt(timerSettings.inputSeconds) || 0;
+    const mins = parseInt(inputMinutes) || 0;
+    const secs = parseInt(inputSeconds) || 0;
     const newTotal = mins * 60 + secs;
 
-    console.log(
-      'handleStart: inputMinutes=',
-      timerSettings.inputMinutes,
-      ', inputSeconds=',
-      timerSettings.inputSeconds,
-      ', newTotal=',
-      newTotal
-    );
+    console.log('handleStart: inputMinutes=', inputMinutes, ', inputSeconds=', inputSeconds, ', newTotal=', newTotal);
 
     if (newTotal > 0) {
       setTotalTime(newTotal);
@@ -195,7 +170,7 @@ function SwapyTimer({
       // サーバーにも開始を通知
       startTimerOnServer();
     }
-  }, [timerSettings, selectedTodoId, startTimerOnServer]);
+  }, [inputMinutes, inputSeconds, selectedTodoId, startTimerOnServer]);
 
   const handleReset = useCallback(() => {
     hasCompletedRef.current = false;
