@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Menu, X, Settings, LogOut, Timer } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 
 function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange }) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
   const [displayMode, setDisplayMode] = useState('countdown');
   const [inputMinutes, setInputMinutes] = useState('1');
   const [inputSeconds, setInputSeconds] = useState('0');
@@ -27,6 +29,12 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange }) {
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleProfileClick = () => {
+    if (user?.customId) {
+      navigate(`/${user.customId}`);
+    }
   };
 
   return (
@@ -115,13 +123,13 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange }) {
 
       {/* ナビゲーション */}
       <nav className="flex-1 p-4 space-y-2">
-        <a
-          href="/profile"
-          className="flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
+        <button
+          onClick={handleProfileClick}
+          className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
         >
           <Settings className="w-5 h-5 flex-shrink-0" />
           {isOpen && <span className="text-sm font-medium">プロフィール</span>}
-        </a>
+        </button>
       </nav>
 
       {/* フッター */}

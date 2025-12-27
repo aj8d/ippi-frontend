@@ -17,8 +17,11 @@ export default function Login() {
     setLoading(true);
 
     const result = await login(email, password);
-    if (result.success) {
-      navigate('/profile');
+    if (result.success && result.customId) {
+      navigate(`/${result.customId}`);
+    } else if (result.success) {
+      // customId がない場合はホームに遷移（通常は発生しない）
+      navigate('/');
     } else {
       setError(result.message);
     }
@@ -46,8 +49,13 @@ export default function Login() {
       if (response.ok) {
         // JWT トークンを localStorage に保存
         localStorage.setItem('token', data.token);
-        // プロフィールページにリダイレクト
-        navigate('/profile');
+        // customId がある場合はプロフィールページにリダイレクト
+        if (data.customId) {
+          navigate(`/${data.customId}`);
+        } else {
+          // customId がない場合はホームに遷移
+          navigate('/');
+        }
       } else {
         setError(data.message || 'Google ログインに失敗しました');
       }

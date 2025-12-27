@@ -1,5 +1,5 @@
 import { useAuth } from '../auth/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import ActivityCalendar from '../components/ActivityCalendar';
 import Sidebar from '../components/Sidebar';
@@ -7,18 +7,73 @@ import Sidebar from '../components/Sidebar';
 export default function Profile() {
   const { user, logout, token } = useAuth();
   const navigate = useNavigate();
+  const { id } = useParams();
+
   const [stats, setStats] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [profileImageUrl, setProfileImageUrl] = useState(user?.profileImageUrl || null);
+  const [profileImageUrl, setProfileImageUrl] = useState(null);
   const [uploadError, setUploadError] = useState(null);
-  const [userName, setUserName] = useState(user?.name || '');
-  const [userDescription, setUserDescription] = useState(user?.description || '');
+  const [userName, setUserName] = useState('');
+  const [userDescription, setUserDescription] = useState('');
+  const [userCustomId, setUserCustomId] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [customIdError, setCustomIdError] = useState('');
+  const [editingCustomId, setEditingCustomId] = useState('');
 
+  // ログイン後のプロフィール初期化
   useEffect(() => {
-    if (!token) return;
+    if (user && !id) {
+      // ログイン中で URL に id がない場合は、自分の customId で自動リダイレクト
+      if (user.customId) {
+        navigate(`/${user.customId}`, { replace: true });
+      }
+    }
+  }, [user, id, navigate]);
+
+  // URL パラメータでプロフィールを取得
+  useEffect(() => {
+    if (!id) {
+      return;
+    }
+
+    const fetchProfileById = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/api/auth/${id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setProfileImageUrl(data.profileImageUrl);
+          setUserName(data.name);
+          setUserDescription(data.description || '');
+          setUserCustomId(data.customId || '');
+          // 自分のプロフィールか判定（ログイン中で customId が一致）
+          setIsOwnProfile(user && user.customId === id);
+        } else {
+          console.error('Failed to fetch profile');
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setLoading(true);
+    fetchProfileById();
+  }, [id, user]);
+
+  // スタッツ取得（自分のプロフィール＆ログイン状態）
+  useEffect(() => {
+    if (!isOwnProfile || !token) return;
 
     const fetchStats = async () => {
       try {
@@ -42,7 +97,7 @@ export default function Profile() {
     };
 
     fetchStats();
-  }, [token]);
+  }, [isOwnProfile, token]);
 
   const handleLogout = () => {
     logout();
@@ -65,6 +120,7 @@ export default function Profile() {
         setProfileImageUrl(data.profileImageUrl);
         setUserName(data.name);
         setUserDescription(data.description || '');
+        setUserCustomId(data.customId || '');
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -72,6 +128,11 @@ export default function Profile() {
   };
 
   const handleSaveProfile = async () => {
+    if (editingCustomId && editingCustomId.length < 3) {
+      setCustomIdError('IDは3文字以上である必要があります');
+      return;
+    }
+
     setIsSaving(true);
     try {
       const response = await fetch('http://localhost:8080/api/auth/update-profile', {
@@ -83,16 +144,25 @@ export default function Profile() {
         body: JSON.stringify({
           name: userName,
           description: userDescription,
+          customId: editingCustomId,
         }),
       });
 
       if (response.ok) {
+        const data = await response.json();
         setIsEditing(false);
+        setUserCustomId(data.customId || '');
+        setEditingCustomId('');
+        setCustomIdError('');
         await fetchLatestProfile();
       } else {
         const errorText = await response.text();
         console.error('Update error:', errorText);
-        alert('プロフィール更新に失敗しました');
+        if (errorText.includes('既に使用されています')) {
+          setCustomIdError('このIDは既に使用されています');
+        } else {
+          alert('プロフィール更新に失敗しました');
+        }
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -138,32 +208,48 @@ export default function Profile() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>読み込み中...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} onTimerSettingsChange={() => {}} />
+      {isOwnProfile && <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} onTimerSettingsChange={() => {}} />}
 
       {/* メインコンテンツ */}
-      <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} flex-1 transition-all duration-300`}>
+      <div
+        className={`${
+          isOwnProfile && sidebarOpen ? 'ml-64' : isOwnProfile ? 'ml-20' : 'ml-0'
+        } flex-1 transition-all duration-300`}
+      >
         <div className="p-5 max-w-6xl mx-auto">
-          {user ? (
-            <div>
-              {/* プロフィール画像セクション */}
-              <div className="mb-8 flex items-center gap-5">
-                <div className="w-32 h-32 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-4 border-green-500">
-                  {profileImageUrl ? (
-                    <img src={profileImageUrl} alt="プロフィール" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-5xl">👤</div>
-                  )}
-                </div>
+          {/* プロフィール画像セクション */}
+          <div className="mb-8 flex items-center gap-5">
+            <div className="w-48 h-48 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-4 border-green-500">
+              {profileImageUrl ? (
+                <img src={profileImageUrl} alt="プロフィール" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-5xl">👤</div>
+              )}
+            </div>
 
-                <div>
-                  <p className="text-lg mb-2.5 font-bold">{userName || '名前なし'}</p>
-                  <p className="text-sm text-gray-600 mb-3.75 whitespace-pre-wrap">
-                    {userDescription || '説明文はまだ設定されていません'}
-                  </p>
+            <div>
+              <p className="text-lg mb-2.5 font-bold">{userName || '名前なし'}</p>
+              {userCustomId && <p className="text-sm text-gray-500 mb-2">ID: {userCustomId}</p>}
+              <p className="text-sm text-gray-600 mb-3.75 whitespace-pre-wrap">
+                {userDescription || '説明文はまだ設定されていません'}
+              </p>
+              {isOwnProfile && (
+                <>
                   <button
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => {
+                      setIsEditing(true);
+                      setEditingCustomId(userCustomId);
+                    }}
                     className="px-4 py-2 bg-green-500 text-white rounded cursor-pointer mb-2.5 hover:bg-green-600"
                   >
                     編集
@@ -187,43 +273,65 @@ export default function Profile() {
                     </label>
                     {uploadError && <p className="text-red-500 mt-2 text-xs">{uploadError}</p>}
                   </div>
-                </div>
-              </div>
+                </>
+              )}
+            </div>
+          </div>
 
-              {/* ユーザー情報 */}
-              <hr className="my-5" />
+          {/* ユーザー情報 */}
+          <hr className="my-5" />
 
-              {/* GitHub-style アクティビティカレンダーを追加 */}
-              {stats && stats.length > 0 && <ActivityCalendar stats={stats} />}
+          {/* GitHub-style アクティビティカレンダーを追加 */}
+          {stats && stats.length > 0 && <ActivityCalendar stats={stats} />}
 
-              <div className="mt-5">
+          <div className="mt-5">
+            {isOwnProfile ? (
+              <>
                 <button onClick={handleLogout} className="mr-2.5 px-3 py-2 bg-gray-300 rounded hover:bg-gray-400">
                   ログアウト
                 </button>
                 <button onClick={() => navigate('/')} className="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400">
                   ホームへ戻る
                 </button>
-              </div>
-            </div>
-          ) : (
-            <p>ユーザー情報を読み込み中...</p>
-          )}
+              </>
+            ) : (
+              <button onClick={() => navigate('/')} className="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400">
+                ホームへ戻る
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* モーダル */}
-      {isEditing && (
+      {isEditing && isOwnProfile && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           onClick={() => {
             setIsEditing(false);
-            setUserName(user?.name || '');
-            setUserDescription(user?.description || '');
+            setEditingCustomId('');
+            setCustomIdError('');
           }}
         >
           {/* モーダル内容 */}
           <div className="bg-white rounded-lg p-7.5 max-w-md w-11/12 shadow-md" onClick={(e) => e.stopPropagation()}>
             <h2 className="mb-5 mt-0 text-xl font-bold">プロフィールを編集</h2>
+
+            <div className="mb-3.75">
+              <label className="block mb-1.25 font-bold">カスタムID</label>
+              <input
+                type="text"
+                value={editingCustomId}
+                onChange={(e) => {
+                  setEditingCustomId(e.target.value);
+                  setCustomIdError('');
+                }}
+                placeholder="例: myprofile"
+                className="w-full p-2.5 rounded border border-gray-300 text-sm box-border"
+              />
+              {customIdError && <p className="text-red-500 text-xs mt-1">{customIdError}</p>}
+              <p className="text-xs text-gray-500 mt-1">3〜50文字の英数字とハイフン、アンダースコアが使用できます</p>
+            </div>
 
             <div className="mb-3.75">
               <label className="block mb-1.25 font-bold">名前</label>
@@ -249,8 +357,8 @@ export default function Profile() {
               <button
                 onClick={() => {
                   setIsEditing(false);
-                  setUserName(user?.name || '');
-                  setUserDescription(user?.description || '');
+                  setEditingCustomId('');
+                  setCustomIdError('');
                 }}
                 className="px-5 py-2.5 bg-gray-600 text-white rounded cursor-pointer text-sm hover:bg-gray-700"
               >

@@ -49,14 +49,14 @@ export function AuthProvider({ children }) {
   }, [token, fetchProfile]);
 
   // ユーザー登録
-  const register = async (email, password, name) => {
+  const register = async (email, password, name, customId) => {
     try {
       const response = await fetch('http://localhost:8080/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name, customId }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
         setToken(token);
         setUser(data);
         localStorage.setItem('token', token);
-        return { success: true };
+        return { success: true, customId: data.customId };
       } else {
         return { success: false, message: data };
       }
@@ -91,7 +91,7 @@ export function AuthProvider({ children }) {
         setToken(token);
         setUser(data);
         localStorage.setItem('token', token);
-        return { success: true };
+        return { success: true, customId: data.customId };
       } else {
         return { success: false, message: data };
       }

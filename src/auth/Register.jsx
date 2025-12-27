@@ -6,6 +6,7 @@ export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [customId, setCustomId] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -14,11 +15,24 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!customId.trim()) {
+      setError('IDは必須です');
+      return;
+    }
+
+    if (customId.length < 3) {
+      setError('IDは3文字以上である必要があります');
+      return;
+    }
+
     setLoading(true);
 
-    const result = await register(email, password, name);
-    if (result.success) {
-      navigate('/profile');
+    const result = await register(email, password, name, customId);
+    if (result.success && result.customId) {
+      navigate(`/${result.customId}`);
+    } else if (result.success) {
+      navigate('/');
     } else {
       setError(result.message);
     }
@@ -27,11 +41,21 @@ export default function Register() {
 
   return (
     <div>
-      <h1>ユーザー登録</h1>
+      <h2>新規登録</h2>
       <form onSubmit={handleSubmit}>
         <div>
+          <label>ユーザーID:</label>
+          <input
+            type="text"
+            value={customId}
+            onChange={(e) => setCustomId(e.target.value)}
+            placeholder="3文字以上50文字以下"
+            required
+          />
+        </div>
+        <div>
           <label>名前:</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div>
           <label>メールアドレス:</label>
