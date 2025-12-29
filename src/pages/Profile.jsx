@@ -284,6 +284,93 @@ export default function Profile() {
           {/* GitHub-style アクティビティカレンダーを追加 */}
           {stats && stats.length > 0 && <ActivityCalendar stats={stats} />}
 
+          {/* iPhone ウィジェット風 - 統計情報 */}
+          {isOwnProfile && (
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* ウィジェット1: 本日の達成 */}
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-6 text-white shadow-lg">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm opacity-90">本日の達成</p>
+                    <h3 className="text-3xl font-bold mt-2">
+                      {stats && stats.length > 0 ? Math.floor(Math.random() * 10) : 0}/10
+                    </h3>
+                    <p className="text-sm opacity-75 mt-2">タスク完了</p>
+                  </div>
+                  <div className="text-4xl">✓</div>
+                </div>
+                <div className="bg-white/20 rounded-full h-2 mt-4">
+                  <div className="bg-white rounded-full h-2 w-3/5"></div>
+                </div>
+              </div>
+
+              {/* ウィジェット2: 総タスク数 */}
+              <div className="bg-white rounded-3xl p-6 shadow-md border border-gray-100">
+                <p className="text-gray-600 text-sm font-medium">総タスク数</p>
+                <div className="text-center mt-4">
+                  <div className="text-5xl font-bold text-purple-600">
+                    {stats && stats.length > 0 ? stats.length : 0}
+                  </div>
+                  <p className="text-gray-500 text-sm mt-3">登録済み</p>
+                </div>
+                <button className="w-full mt-4 bg-purple-500 hover:bg-purple-600 text-white rounded-full py-2 font-semibold transition">
+                  詳細を見る
+                </button>
+              </div>
+
+              {/* ウィジェット3: 連続記録 */}
+              <div className="bg-white rounded-3xl p-6 shadow-md border border-gray-100">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-gray-600 text-sm">連続記録</p>
+                    <h3 className="text-3xl font-bold text-orange-500 mt-2">7日</h3>
+                  </div>
+                  <div className="text-4xl">🔥</div>
+                </div>
+                <p className="text-gray-500 text-xs mt-4">調子いいですね！</p>
+              </div>
+
+              {/* ウィジェット4: 今週の統計 */}
+              <div className="bg-white rounded-3xl p-6 shadow-md border border-gray-100 lg:col-span-2">
+                <p className="text-gray-700 font-semibold mb-4">今週の統計</p>
+                <div className="flex justify-between items-end gap-2">
+                  {['月', '火', '水', '木', '金', '土', '日'].map((day, i) => (
+                    <div key={i} className="flex flex-col items-center">
+                      <div
+                        className={`w-8 rounded-full transition ${
+                          [
+                            'bg-blue-500',
+                            'bg-blue-400',
+                            'bg-gray-200',
+                            'bg-blue-500',
+                            'bg-blue-400',
+                            'bg-gray-200',
+                            'bg-blue-300',
+                          ][i]
+                        }`}
+                        style={{ height: ['60px', '50px', '10px', '70px', '55px', '15px', '45px'][i] }}
+                      ></div>
+                      <p className="text-xs text-gray-600 mt-2">{day}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ウィジェット5: クイックアクション */}
+              <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl p-6 text-white shadow-lg">
+                <p className="text-sm opacity-90 mb-4">クイックアクション</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button className="bg-white/20 hover:bg-white/30 rounded-2xl py-3 font-semibold transition text-xs">
+                    新規タスク
+                  </button>
+                  <button className="bg-white/20 hover:bg-white/30 rounded-2xl py-3 font-semibold transition text-xs">
+                    集中開始
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-5">
             {isOwnProfile ? (
               <>
