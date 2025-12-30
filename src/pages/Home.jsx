@@ -67,22 +67,29 @@ function Home() {
         }
       };
 
-      const newWidget = {
-        // 📚 Date.now() でユニークなIDを生成
-        id: `widget-${Date.now()}`,
-        type,
-        // 📚 新しいウィジェットは画面中央付近に配置
-        // ランダムなオフセットを加えて重ならないようにする
-        x: 100 + Math.random() * 100,
-        y: 100 + Math.random() * 100,
-        width: defaultSize.width,
-        height: defaultSize.height,
-        // 📚 ウィジェット固有のデータ
-        data: getDefaultData(type),
-      };
-
       // 📚 スプレッド演算子で既存配列に追加
-      setWidgets((prev) => [...prev, newWidget]);
+      setWidgets((prev) => {
+        // 現在の最大zIndexを取得
+        const maxZ = Math.max(...prev.map((w) => w.zIndex || 0), 0);
+
+        const newWidget = {
+          // 📚 Date.now() でユニークなIDを生成
+          id: `widget-${Date.now()}`,
+          type,
+          // 📚 新しいウィジェットは画面中央付近に配置
+          // ランダムなオフセットを加えて重ならないようにする
+          x: 100 + Math.random() * 100,
+          y: 100 + Math.random() * 100,
+          width: defaultSize.width,
+          height: defaultSize.height,
+          // 📚 ウィジェット固有のデータ
+          data: getDefaultData(type),
+          // 📚 新しいウィジェットを最前面に表示
+          zIndex: maxZ + 1,
+        };
+
+        return [...prev, newWidget];
+      });
     },
     [setWidgets]
   );

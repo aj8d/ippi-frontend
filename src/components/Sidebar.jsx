@@ -1,6 +1,22 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Menu, X, Settings, LogOut, Timer, ChevronDown, ListTodo, StickyNote, Image, Flame } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Menu,
+  X,
+  Settings,
+  LogOut,
+  Timer,
+  ListTodo,
+  StickyNote,
+  Image,
+  Flame,
+  Plus,
+  Trash2,
+  Home,
+  Search,
+  Bell,
+} from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '../auth/AuthContext';
@@ -36,6 +52,11 @@ const MULTIPLE_WIDGETS = [
  */
 function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemoveWidget, activeWidgets = [] }) {
   const { logout, user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // 📚 現在のページがHomeかどうかを判定
+  const isHomePage = location.pathname === '/' || location.pathname === '/home';
 
   /**
    * 📚 一意ウィジェットが追加済みかチェック
@@ -59,27 +80,50 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
       onAddWidget?.(widget.id, widget.defaultSize);
     }
   };
-  const navigate = useNavigate();
   const [displayMode, setDisplayMode] = useState('countdown');
-  const [inputMinutes, setInputMinutes] = useState('1');
-  const [inputSeconds, setInputSeconds] = useState('0');
-  const [timerSettingsExpanded, setTimerSettingsExpanded] = useState(false);
+  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
+  const [totalCycles, setTotalCycles] = useState('3'); // 📚 サイクル数（デフォルト3サイクル）
+
+  // 📚 ポモドーロセクション管理
+  // 各セクションは { id, workMinutes, breakMinutes } を持つ
+  const [pomodoroSections, setPomodoroSections] = useState([{ id: 1, workMinutes: '25', breakMinutes: '5' }]);
+
+  // 📚 セクション追加
+  const handleAddSection = () => {
+    const newId = Math.max(...pomodoroSections.map((s) => s.id), 0) + 1;
+    setPomodoroSections([...pomodoroSections, { id: newId, workMinutes: '25', breakMinutes: '5' }]);
+  };
+
+  // 📚 セクション削除
+  const handleRemoveSection = (id) => {
+    if (pomodoroSections.length > 1) {
+      setPomodoroSections(pomodoroSections.filter((s) => s.id !== id));
+    }
+  };
+
+  // 📚 セクションの値更新
+  const handleSectionChange = (id, field, value) => {
+    setPomodoroSections(pomodoroSections.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  };
+
+  // 📚 設定変更時にTimerWidgetへ通知
+  const notifyTimerSettings = (sections = pomodoroSections, mode = displayMode, cycles = totalCycles) => {
+    onTimerSettingsChange?.({
+      displayMode: mode,
+      sections: sections,
+      totalCycles: parseInt(cycles) || 1,
+    });
+  };
 
   const handleDisplayModeChange = (mode) => {
     setDisplayMode(mode);
-    onTimerSettingsChange({ displayMode: mode, inputMinutes, inputSeconds });
+    notifyTimerSettings(pomodoroSections, mode);
   };
 
-  const handleMinutesChange = (value) => {
-    console.log('handleMinutesChange called with:', value);
-    setInputMinutes(value);
-    onTimerSettingsChange({ displayMode, inputMinutes: value, inputSeconds });
-  };
-
-  const handleSecondsChange = (value) => {
-    console.log('handleSecondsChange called with:', value);
-    setInputSeconds(value);
-    onTimerSettingsChange({ displayMode, inputMinutes, inputSeconds: value });
+  // 📚 モーダルを閉じる時に設定を適用
+  const handleCloseModal = () => {
+    notifyTimerSettings();
+    setIsTimerModalOpen(false);
   };
 
   const handleLogout = () => {
@@ -106,188 +150,155 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
         </button>
       </div>
 
-      {/* タイマー設定 */}
-      <div className="border-b border-gray-200">
-        {isOpen && (
-          <>
-            {/* タイトル */}
+      {/* アイコンナビゲーション */}
+      <div className="border-b border-gray-200 p-4">
+        {isOpen ? (
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setTimerSettingsExpanded(!timerSettingsExpanded)}
-              className="w-full p-4 flex items-center justify-between gap-2 hover:bg-gray-50 transition-colors"
+              onClick={() => navigate('/')}
+              className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
+              title="ホーム"
             >
-              <div className="flex items-center gap-2">
-                <Timer className="w-4 h-4 text-gray-600" />
-                <h3 className="text-sm font-semibold text-gray-700">タイマー設定</h3>
-              </div>
-              <ChevronDown
-                className={`w-4 h-4 text-gray-600 transition-transform duration-300 ${
-                  timerSettingsExpanded ? 'rotate-180' : ''
-                }`}
-              />
+              <Home className={`w-5 h-5 ${isHomePage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
-
-            {/* 展開時の設定内容 */}
-            <AnimatePresence>
-              {timerSettingsExpanded && (
-                <motion.div
-                  className="p-4 space-y-4 bg-gray-50"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                >
-                  {/* 表示モード */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-600">表示モード</label>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleDisplayModeChange('countdown')}
-                        className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
-                          displayMode === 'countdown'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        カウント
-                      </button>
-                      <button
-                        onClick={() => handleDisplayModeChange('progress')}
-                        className={`flex-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
-                          displayMode === 'progress'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        進行度
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* タイマー時間設定 */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-600">デフォルト時間</label>
-                    <div className="flex gap-2">
-                      <div className="flex-1">
-                        <select
-                          value={inputMinutes}
-                          onChange={(e) => handleMinutesChange(e.target.value)}
-                          className="w-full px-2 py-2 border-2 border-gray-300 text-gray-800 text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer"
-                        >
-                          {[...Array(60)].map((_, i) => (
-                            <option key={i} value={String(i)}>
-                              {i}分
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="flex-1">
-                        <select
-                          value={inputSeconds}
-                          onChange={(e) => handleSecondsChange(e.target.value)}
-                          className="w-full px-2 py-2 border-2 border-gray-300 text-gray-800 text-xs rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white cursor-pointer"
-                        >
-                          {[...Array(60)].map((_, i) => (
-                            <option key={i} value={String(i)}>
-                              {i}秒
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </>
+            <button
+              className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
+              title="検索"
+              disabled
+            >
+              <Search className="w-5 h-5 text-gray-400" />
+            </button>
+            <button
+              className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
+              title="通知"
+              disabled
+            >
+              <Bell className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={() => navigate('/')}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="ホーム"
+            >
+              <Home className={`w-5 h-5 ${isHomePage ? 'text-blue-600' : 'text-gray-600'}`} />
+            </button>
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="検索" disabled>
+              <Search className="w-5 h-5 text-gray-400" />
+            </button>
+            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="通知" disabled>
+              <Bell className="w-5 h-5 text-gray-400" />
+            </button>
+          </div>
         )}
       </div>
 
-      {/* 📚 ウィジェット追加セクション */}
-      <div className="border-b border-gray-200 p-4">
-        {isOpen ? (
-          // サイドバーが開いている時：ラベル付きボタン
-          <div className="space-y-4">
-            {/* 一意ウィジェット（1つだけ） */}
-            <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">ツール</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {UNIQUE_WIDGETS.map((widget) => {
-                  const isActive = isWidgetActive(widget.id);
-                  return (
+      {/* タイマー設定ボタン */}
+      {isHomePage && isOpen && (
+        <div className="border-b border-gray-200 p-4">
+          <button
+            onClick={() => setIsTimerModalOpen(true)}
+            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <Settings className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">タイマー設定</span>
+          </button>
+        </div>
+      )}
+
+      {/* 📚 ウィジェット追加セクション（Homeページでのみ表示） */}
+      {isHomePage && (
+        <div className="border-b border-gray-200 p-4">
+          {isOpen ? (
+            // サイドバーが開いている時：ラベル付きボタン
+            <div className="space-y-4">
+              {/* 一意ウィジェット（1つだけ） */}
+              <div>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">ツール</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {UNIQUE_WIDGETS.map((widget) => {
+                    const isActive = isWidgetActive(widget.id);
+                    return (
+                      <button
+                        key={widget.id}
+                        onClick={() => handleUniqueWidgetClick(widget)}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
+                          isActive
+                            ? 'bg-blue-500 text-white hover:bg-blue-600' // 追加済み：ハイライト
+                            : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-600' // 未追加
+                        }`}
+                      >
+                        <widget.icon className="w-4 h-4" />
+                        <span>{widget.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 複数追加可能なウィジェット */}
+              <div>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">メモ</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {MULTIPLE_WIDGETS.map((widget) => (
                     <button
                       key={widget.id}
-                      onClick={() => handleUniqueWidgetClick(widget)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
-                        isActive
-                          ? 'bg-blue-500 text-white hover:bg-blue-600' // 追加済み：ハイライト
-                          : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-600' // 未追加
-                      }`}
+                      onClick={() => onAddWidget?.(widget.id, widget.defaultSize)}
+                      className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
                     >
                       <widget.icon className="w-4 h-4" />
                       <span>{widget.label}</span>
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </div>
-
-            {/* 複数追加可能なウィジェット */}
-            <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">メモ</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {MULTIPLE_WIDGETS.map((widget) => (
+          ) : (
+            // サイドバーが閉じている時：アイコンのみ
+            <div className="flex flex-col items-center gap-2">
+              {/* 一意ウィジェット */}
+              {UNIQUE_WIDGETS.map((widget) => {
+                const isActive = isWidgetActive(widget.id);
+                return (
                   <button
                     key={widget.id}
-                    onClick={() => onAddWidget?.(widget.id, widget.defaultSize)}
-                    className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
+                    onClick={() => handleUniqueWidgetClick(widget)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'text-gray-600 hover:bg-blue-100 hover:text-blue-600'
+                    }`}
+                    title={isActive ? `${widget.label}を削除` : widget.label}
                   >
-                    <widget.icon className="w-4 h-4" />
-                    <span>{widget.label}</span>
+                    <widget.icon className="w-5 h-5" />
                   </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          // サイドバーが閉じている時：アイコンのみ
-          <div className="flex flex-col items-center gap-2">
-            {/* 一意ウィジェット */}
-            {UNIQUE_WIDGETS.map((widget) => {
-              const isActive = isWidgetActive(widget.id);
-              return (
+                );
+              })}
+              {/* 区切り線 */}
+              <div className="w-8 border-t border-gray-200 my-1" />
+              {/* 複数追加可能なウィジェット */}
+              {MULTIPLE_WIDGETS.map((widget) => (
                 <button
                   key={widget.id}
-                  onClick={() => handleUniqueWidgetClick(widget)}
-                  className={`p-2 rounded-lg transition-colors ${
-                    isActive
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'text-gray-600 hover:bg-blue-100 hover:text-blue-600'
-                  }`}
-                  title={isActive ? `${widget.label}を削除` : widget.label}
+                  onClick={() => onAddWidget?.(widget.id, widget.defaultSize)}
+                  className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-gray-600"
+                  title={widget.label}
                 >
                   <widget.icon className="w-5 h-5" />
                 </button>
-              );
-            })}
-            {/* 区切り線 */}
-            <div className="w-8 border-t border-gray-200 my-1" />
-            {/* 複数追加可能なウィジェット */}
-            {MULTIPLE_WIDGETS.map((widget) => (
-              <button
-                key={widget.id}
-                onClick={() => onAddWidget?.(widget.id, widget.defaultSize)}
-                className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-gray-600"
-                title={widget.label}
-              >
-                <widget.icon className="w-5 h-5" />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* ナビゲーション */}
-      <nav className="flex-1 p-4 space-y-2">
+      {/* 空のスペーサー */}
+      <div className="flex-1"></div>
+
+      {/* フッター */}
+      <div className="p-4 border-t border-gray-200 space-y-2">
         <button
           onClick={handleProfileClick}
           className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
@@ -295,10 +306,6 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
           <Settings className="w-5 h-5 flex-shrink-0" />
           {isOpen && <span className="text-sm font-medium">プロフィール</span>}
         </button>
-      </nav>
-
-      {/* フッター */}
-      <div className="p-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
@@ -307,6 +314,154 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
           {isOpen && <span className="text-sm font-medium">ログアウト</span>}
         </button>
       </div>
+
+      {/* タイマー設定モーダル（Portalで画面全体に表示） */}
+      {isTimerModalOpen &&
+        createPortal(
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={handleCloseModal}>
+            {/* モーダルコンテンツ */}
+            <div
+              className="bg-white rounded-xl shadow-2xl w-[90%] max-w-lg p-6 max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* ヘッダー */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Timer className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-xl font-bold text-gray-800">インターバル設定</h2>
+                </div>
+                <button onClick={handleCloseModal} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              {/* 設定内容 */}
+              <div className="space-y-6">
+                {/* 表示モード */}
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-gray-700">表示モード</label>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleDisplayModeChange('countdown')}
+                      className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                        displayMode === 'countdown'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      カウント
+                    </button>
+                    <button
+                      onClick={() => handleDisplayModeChange('progress')}
+                      className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                        displayMode === 'progress'
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      進行度
+                    </button>
+                  </div>
+                </div>
+
+                {/* サイクル数設定 */}
+                <div className="space-y-3">
+                  <label className="text-sm font-semibold text-gray-700">サイクル数</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={totalCycles}
+                      onChange={(e) => setTotalCycles(e.target.value)}
+                      className="w-20 px-3 py-2 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
+                    />
+                    <span className="text-sm text-gray-600">サイクル</span>
+                    <span className="text-xs text-gray-500">全セクションを何回繰り返すか</span>
+                  </div>
+                </div>
+
+                {/* ポモドーロセクション */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-gray-700">セクション設定</label>
+                    <span className="text-xs text-gray-500">順番に繰り返します</span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {pomodoroSections.map((section, index) => (
+                      <div key={section.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        {/* セクションヘッダー */}
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-600">セクション {index + 1}</span>
+                          {pomodoroSections.length > 1 && (
+                            <button
+                              onClick={() => handleRemoveSection(section.id)}
+                              className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* 作業時間・休憩時間（同じ行） */}
+                        <div className="flex items-center justify-between">
+                          {/* 作業時間 */}
+                          <div className="flex-1 flex items-center gap-2">
+                            <span className="text-xs text-gray-500">🔴</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="999"
+                              value={section.workMinutes}
+                              onChange={(e) => handleSectionChange(section.id, 'workMinutes', e.target.value)}
+                              className="flex-1 max-w-[60px] px-2 py-1.5 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
+                            />
+                            <span className="text-xs text-gray-600">分</span>
+                          </div>
+
+                          <span className="text-gray-400 px-2">→</span>
+
+                          {/* 休憩時間 */}
+                          <div className="flex-1 flex items-center justify-end gap-2">
+                            <span className="text-xs text-gray-500">🟢</span>
+                            <input
+                              type="number"
+                              min="1"
+                              max="999"
+                              value={section.breakMinutes}
+                              onChange={(e) => handleSectionChange(section.id, 'breakMinutes', e.target.value)}
+                              className="flex-1 max-w-[60px] px-2 py-1.5 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
+                            />
+                            <span className="text-xs text-gray-600">分</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* セクション追加ボタン */}
+                  <button
+                    onClick={handleAddSection}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="text-sm font-medium">セクションを追加</span>
+                  </button>
+                </div>
+
+                {/* 閉じるボタン */}
+                <button
+                  onClick={handleCloseModal}
+                  className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                >
+                  完了
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
