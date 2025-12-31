@@ -308,11 +308,7 @@ export default function Profile() {
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} onTimerSettingsChange={() => {}} />
 
       {/* メインコンテンツ */}
-      <div
-        className={`${
-          sidebarOpen ? 'ml-64' : 'ml-20'
-        } flex-1 transition-all duration-300`}
-      >
+      <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} flex-1 transition-all duration-300`}>
         <div className="p-5 max-w-6xl mx-auto">
           {/* プロフィール画像セクション */}
           <div className="mb-8 flex items-center gap-5">
