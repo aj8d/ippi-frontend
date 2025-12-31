@@ -10,17 +10,19 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, Pause, RotateCcw, SkipForward, X } from 'lucide-react';
+import { Play, Pause, Square, SkipForward, X } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
+import { useTimer } from '../../contexts/TimerContext';
 
-const API_URL = 'http://localhost:8080/api/text-data';
+// 📚 作業時間保存用のエンドポイント（/work-sessionを使用）
+const API_URL = 'http://localhost:8080/api/text-data/work-session';
 
 // 📚 デフォルトのポモドーロセクション
 const DEFAULT_SECTIONS = [{ id: 1, workMinutes: '25', workSeconds: '0', breakMinutes: '5', breakSeconds: '0' }];
 
 function TimerWidget({ settings = {} }) {
-  // eslint-disable-next-line no-unused-vars
   const { token } = useAuth();
+  const { updateTimerState, registerStopCallback } = useTimer();
 
   // 📚 props から設定を取得
   const displayMode = settings.displayMode || 'countdown';
@@ -41,12 +43,97 @@ function TimerWidget({ settings = {} }) {
   const hasCompletedRef = useRef(false);
   const sectionsRef = useRef(sections);
   const totalCyclesRef = useRef(totalCycles);
+  const currentSectionIndexRef = useRef(0); // 現在のセクションインデックスを追跡
+  const isWorkPhaseRef = useRef(true); // 現在の作業/休憩フェーズを追跡
+
+  // 📚 バックグラウンドでも正確に動作させるため、開始時刻を記録
+  const phaseStartTimeRef = useRef(null); // フェーズ開始時刻（ミリ秒）
+  const pausedElapsedRef = useRef(0); // 一時停止時の経過時間
+
+  // 📚 累積作業時間をトラッキング（秒）
+  // eslint-disable-next-line no-unused-vars
+  const [totalWorkTime, setTotalWorkTime] = useState(0);
+  // eslint-disable-next-line no-unused-vars
+  const [completedWorkSessions, setCompletedWorkSessions] = useState(0);
+  const totalWorkTimeRef = useRef(0);
+
+  // 📚 現在のフェーズで経過した作業時間（秒）をトラッキング
+  const currentPhaseWorkTimeRef = useRef(0);
 
   // 📚 refs を最新の値で更新
   useEffect(() => {
     sectionsRef.current = sections;
     totalCyclesRef.current = totalCycles;
   }, [sections, totalCycles]);
+
+  // 📚 currentSectionIndexRefを同期
+  useEffect(() => {
+    currentSectionIndexRef.current = currentSectionIndex;
+  }, [currentSectionIndex]);
+
+  // 📚 isWorkPhaseRefを同期
+  useEffect(() => {
+    isWorkPhaseRef.current = isWorkPhase;
+  }, [isWorkPhase]);
+
+  // 📚 currentSectionIndexが変更されたらrefも更新
+  useEffect(() => {
+    currentSectionIndexRef.current = currentSectionIndex;
+  }, [currentSectionIndex]);
+
+  // 📚 タイマー状態をコンテキストに通知
+  useEffect(() => {
+    updateTimerState(hasStarted);
+  }, [hasStarted, updateTimerState]);
+
+  /**
+   * 📚 バックエンドに作業時間を送信
+   * @param workSeconds 作業時間（秒）- 分単位に切り捨てて保存
+   * @param sessionsCount セッション数（ログ用）
+   */
+  const saveWorkTimeToBackend = useCallback(
+    async (workSeconds, sessionsCount) => {
+      if (!token) return;
+
+      // 📚 秒を分に変換し、端数を切り捨て（60秒未満は0分）
+      const workMinutes = Math.floor(workSeconds / 60);
+
+      // 📚 1分未満の場合は保存しない
+      if (workMinutes < 1) {
+        console.log(`⏭️ 作業時間が1分未満のため保存スキップ: ${workSeconds}秒`);
+        return;
+      }
+
+      // 📚 分を秒に戻す（端数切り捨て後の値）
+      const truncatedSeconds = workMinutes * 60;
+
+      try {
+        // 今日の日付を取得（YYYY-MM-DD形式）
+        const today = new Date().toISOString().split('T')[0];
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            date: today,
+            timerSeconds: truncatedSeconds,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('作業時間の保存に失敗しました');
+        }
+
+        console.log(`✅ 作業時間を保存: ${workMinutes}分 (${truncatedSeconds}秒, ${sessionsCount}セッション)`);
+      } catch (error) {
+        console.error('作業時間の保存エラー:', error);
+      }
+    },
+    [token]
+  );
 
   /**
    * 📚 セクションから時間（秒）を計算
@@ -63,47 +150,47 @@ function TimerWidget({ settings = {} }) {
 
   /**
    * 📚 次のフェーズに進む
+   * @param actualElapsedTime スキップ時に渡される実際の経過時間（秒）
    */
-  const goToNextPhase = useCallback(() => {
-    const currentSections = sectionsRef.current;
-    const currentTotalCycles = totalCyclesRef.current;
+  const goToNextPhase = useCallback(
+    (actualElapsedTime = null) => {
+      const currentSections = sectionsRef.current;
+      const currentTotalCycles = totalCyclesRef.current;
+      const prevIsWorkPhase = isWorkPhaseRef.current; // refから取得
+      const prevSectionIndex = currentSectionIndexRef.current;
 
-    setIsWorkPhase((prevIsWorkPhase) => {
-      setCurrentSectionIndex((prevSectionIndex) => {
-        if (prevIsWorkPhase) {
-          // 作業 → 休憩
-          const breakTime = getTimeFromSection(currentSections[prevSectionIndex], false);
-          if (breakTime > 0) {
-            setTotalTime(breakTime);
-            setElapsedTime(0);
-            hasCompletedRef.current = false;
-            return prevSectionIndex; // セクションは変わらない
-          } else {
-            // 休憩時間が0の場合は次のセクションへ
-            const nextIndex = (prevSectionIndex + 1) % currentSections.length;
+      // 📚 作業フェーズが完了した場合のみ作業時間を累積（休憩時間は含まない）
+      if (prevIsWorkPhase) {
+        // 📚 actualElapsedTimeが渡された場合（スキップ時）は実際の経過時間を使用
+        // そうでない場合（自然完了時）は設定された作業時間を使用
+        const workTime =
+          actualElapsedTime !== null
+            ? Math.floor(actualElapsedTime) // スキップ時: 実際の経過秒数（整数に切り捨て）
+            : getTimeFromSection(currentSections[prevSectionIndex], true); // 完了時: 設定時間
 
-            // 最後のセクションの場合、サイクルをカウント
-            if (nextIndex === 0) {
-              setCurrentCycle((prevCycle) => {
-                const nextCycle = prevCycle + 1;
-                if (nextCycle > currentTotalCycles) {
-                  // 全サイクル完了
-                  setIsRunning(false);
-                  setShowCompletionModal(true);
-                  return prevCycle;
-                }
-                return nextCycle;
-              });
-            }
+        totalWorkTimeRef.current += workTime;
+        setTotalWorkTime((prev) => prev + workTime);
+        setCompletedWorkSessions((prev) => prev + 1);
 
-            const nextWorkTime = getTimeFromSection(currentSections[nextIndex], true);
-            setTotalTime(nextWorkTime);
-            setElapsedTime(0);
-            hasCompletedRef.current = false;
-            return nextIndex; // 次のセクションへ
-          }
+        // 📚 現在のフェーズの作業時間をリセット
+        currentPhaseWorkTimeRef.current = 0;
+      }
+
+      if (prevIsWorkPhase) {
+        // 作業 → 休憩
+        const breakTime = getTimeFromSection(currentSections[prevSectionIndex], false);
+        if (breakTime > 0) {
+          // 休憩時間がある場合
+          setIsWorkPhase(false);
+          isWorkPhaseRef.current = false; // refも更新
+          setTotalTime(breakTime);
+          setElapsedTime(0);
+          hasCompletedRef.current = false;
+          phaseStartTimeRef.current = null;
+          pausedElapsedRef.current = 0;
+          // セクションインデックスは変わらない
         } else {
-          // 休憩 → 次のセクションの作業
+          // 休憩時間が0の場合は次のセクションへ（作業フェーズのまま）
           const nextIndex = (prevSectionIndex + 1) % currentSections.length;
 
           // 最後のセクションの場合、サイクルをカウント
@@ -114,49 +201,97 @@ function TimerWidget({ settings = {} }) {
                 // 全サイクル完了
                 setIsRunning(false);
                 setShowCompletionModal(true);
+                // バックエンドに作業時間を送信
+                const finalWorkTime = totalWorkTimeRef.current;
+                setTimeout(() => {
+                  saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
+                }, 0);
                 return prevCycle;
               }
               return nextCycle;
             });
           }
 
+          setCurrentSectionIndex(nextIndex);
           const nextWorkTime = getTimeFromSection(currentSections[nextIndex], true);
           setTotalTime(nextWorkTime);
           setElapsedTime(0);
           hasCompletedRef.current = false;
-          return nextIndex;
+          phaseStartTimeRef.current = null;
+          pausedElapsedRef.current = 0;
         }
-      });
+      } else {
+        // 休憩 → 次のセクションの作業
+        const nextIndex = (prevSectionIndex + 1) % currentSections.length;
 
-      // isWorkPhaseを切り替え（作業→休憩の場合のみ）
-      return !prevIsWorkPhase; // 必ず反転
-    });
-  }, [getTimeFromSection]);
+        // 最後のセクションの場合、サイクルをカウント
+        if (nextIndex === 0) {
+          setCurrentCycle((prevCycle) => {
+            const nextCycle = prevCycle + 1;
+            if (nextCycle > currentTotalCycles) {
+              // 全サイクル完了
+              setIsRunning(false);
+              setShowCompletionModal(true);
+              // バックエンドに作業時間を送信
+              const finalWorkTime = totalWorkTimeRef.current;
+              setTimeout(() => {
+                saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
+              }, 0);
+              return prevCycle;
+            }
+            return nextCycle;
+          });
+        }
+
+        setIsWorkPhase(true);
+        isWorkPhaseRef.current = true; // refも更新
+        setCurrentSectionIndex(nextIndex);
+        const nextWorkTime = getTimeFromSection(currentSections[nextIndex], true);
+        setTotalTime(nextWorkTime);
+        setElapsedTime(0);
+        hasCompletedRef.current = false;
+        phaseStartTimeRef.current = null;
+        pausedElapsedRef.current = 0;
+      }
+    },
+    [getTimeFromSection, saveWorkTimeToBackend]
+  );
 
   /**
-   * 📚 タイマーのメインロジック
+   * 📚 タイマーのメインロジック（バックグラウンドでも正確に動作）
+   * 開始時刻からの経過時間を計算する方式
    */
   useEffect(() => {
     if (isRunning) {
       hasCompletedRef.current = false;
 
-      intervalRef.current = setInterval(() => {
-        setElapsedTime((prev) => {
-          const newElapsed = prev + 0.1;
+      // 📚 フェーズ開始時刻を記録（再開時は一時停止時の経過時間を考慮）
+      if (phaseStartTimeRef.current === null) {
+        phaseStartTimeRef.current = Date.now() - pausedElapsedRef.current * 1000;
+      }
 
-          // タイマー完了チェック
-          if (newElapsed >= totalTime && !hasCompletedRef.current) {
-            hasCompletedRef.current = true;
-            // 次のフェーズへ自動で進む
-            setTimeout(() => {
-              goToNextPhase();
-            }, 100);
-            return totalTime;
-          }
-          return newElapsed;
-        });
+      intervalRef.current = setInterval(() => {
+        // 📚 開始時刻からの経過時間を計算（バックグラウンドでも正確）
+        const now = Date.now();
+        const elapsed = (now - phaseStartTimeRef.current) / 1000; // 秒に変換
+
+        setElapsedTime(elapsed);
+
+        // タイマー完了チェック
+        if (elapsed >= totalTime && !hasCompletedRef.current) {
+          hasCompletedRef.current = true;
+          // インターバルをクリアしてから次のフェーズへ
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          goToNextPhase();
+        }
       }, 100);
     } else {
+      // 📚 一時停止時は現在の経過時間を保存
+      if (phaseStartTimeRef.current !== null) {
+        pausedElapsedRef.current = elapsedTime;
+      }
+
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -167,7 +302,7 @@ function TimerWidget({ settings = {} }) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, totalTime, goToNextPhase]);
+  }, [isRunning, totalTime, goToNextPhase, elapsedTime]);
 
   // 📚 進捗率の計算
   const progress = totalTime > 0 ? (elapsedTime / totalTime) * 100 : 0;
@@ -216,32 +351,83 @@ function TimerWidget({ settings = {} }) {
     const initialTime = getTimeFromSection(sections[0], true);
     if (initialTime > 0) {
       setCurrentSectionIndex(0);
+      currentSectionIndexRef.current = 0;
       setCurrentCycle(1);
       setIsWorkPhase(true);
+      isWorkPhaseRef.current = true;
       setTotalTime(initialTime);
       setElapsedTime(0);
       setHasStarted(true);
       setIsRunning(true);
+      // 累積時間をリセット
+      setTotalWorkTime(0);
+      setCompletedWorkSessions(0);
+      totalWorkTimeRef.current = 0;
+      currentPhaseWorkTimeRef.current = 0;
+      // 📚 開始時刻をリセット
+      phaseStartTimeRef.current = null;
+      pausedElapsedRef.current = 0;
     }
   }, [sections, getTimeFromSection]);
 
   /**
-   * 📚 リセットボタンの処理
+   * 📚 停止ボタンの処理
+   * 停止前に作業時間が1分以上あれば保存
    */
-  const handleReset = useCallback(() => {
+  const handleStop = useCallback(() => {
+    // 📚 現在の作業フェーズの経過時間を計算
+    let currentPhaseTime = 0;
+    if (isWorkPhase && elapsedTime > 0) {
+      // フェーズが完了している場合（elapsedTime >= totalTime）は設定時間を使用
+      // 完了していない場合は実際の経過時間を使用
+      currentPhaseTime =
+        elapsedTime >= totalTime
+          ? totalTime // 完了済み: 設定時間（goToNextPhaseで既に記録済みなので0にすべき？）
+          : Math.floor(elapsedTime); // 未完了: 実際の経過時間
+
+      // 📚 フェーズが完了済みの場合は既にgoToNextPhaseで記録されているので加算しない
+      if (elapsedTime >= totalTime) {
+        currentPhaseTime = 0;
+      }
+    }
+
+    const finalWorkTime = totalWorkTimeRef.current + currentPhaseTime;
+
+    // 📚 1分以上の作業時間があれば保存
+    if (finalWorkTime >= 60) {
+      const sessionsCount = completedWorkSessions + (currentPhaseTime > 0 ? 1 : 0);
+      saveWorkTimeToBackend(finalWorkTime, sessionsCount);
+    }
+
     hasCompletedRef.current = false;
     setIsRunning(false);
     setHasStarted(false);
     setCurrentSectionIndex(0);
+    currentSectionIndexRef.current = 0;
     setCurrentCycle(1);
     setIsWorkPhase(true);
+    isWorkPhaseRef.current = true;
     setElapsedTime(0);
     setTotalTime(0);
     setShowCompletionModal(false);
-  }, []);
+    // 累積時間をリセット
+    setTotalWorkTime(0);
+    setCompletedWorkSessions(0);
+    totalWorkTimeRef.current = 0;
+    currentPhaseWorkTimeRef.current = 0;
+    // 📚 開始時刻をリセット
+    phaseStartTimeRef.current = null;
+    pausedElapsedRef.current = 0;
+  }, [isWorkPhase, elapsedTime, totalTime, completedWorkSessions, saveWorkTimeToBackend]);
+
+  // 📚 停止関数をコンテキストに登録
+  useEffect(() => {
+    registerStopCallback(handleStop);
+  }, [handleStop, registerStopCallback]);
 
   /**
    * 📚 再生/一時停止ボタンの処理
+   * 一時停止では作業時間を保存しない（停止ボタンで保存する）
    */
   const togglePlayPause = useCallback(() => {
     setIsRunning(!isRunning);
@@ -249,10 +435,14 @@ function TimerWidget({ settings = {} }) {
 
   /**
    * 📚 スキップボタンの処理（次のフェーズへ）
+   * 作業フェーズをスキップする場合は実際の経過時間を記録
+   * 休憩フェーズをスキップする場合は何も記録しない
    */
   const handleSkip = useCallback(() => {
-    goToNextPhase();
-  }, [goToNextPhase]);
+    // 📚 作業フェーズの場合のみ実際の経過時間を渡す（休憩フェーズはnullで何も記録しない）
+    const actualTime = isWorkPhase ? elapsedTime : null;
+    goToNextPhase(actualTime);
+  }, [goToNextPhase, isWorkPhase, elapsedTime]);
 
   // 📚 プログレスバーの色（停止中=グレー、作業中=オレンジ、休憩中=緑）
   const getColors = () => {
@@ -342,33 +532,33 @@ function TimerWidget({ settings = {} }) {
           // 開始前：スタートボタン
           <button
             onClick={handleStart}
-            className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-full text-sm font-semibold hover:bg-gray-800 transition-all"
+            className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
           >
-            <Play size={16} fill="white" />
-            スタート
+            <Play size={16} />
           </button>
         ) : (
           // 実行中・一時停止中：コントロールボタン
           <>
+            <button
+              onClick={handleStop}
+              className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
+              title="停止"
+            >
+              <Square size={16} />
+            </button>
+            <button
+              onClick={togglePlayPause}
+              className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
+            >
+              {isRunning ? <Pause size={16} /> : <Play size={16} />}
+            </button>
+
             <button
               onClick={handleSkip}
               className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
               title="次のフェーズへスキップ"
             >
               <SkipForward size={16} />
-            </button>
-            <button
-              onClick={togglePlayPause}
-              className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-            >
-              {isRunning ? <Pause size={16} /> : <Play size={16} fill="black" />}
-            </button>
-
-            <button
-              onClick={handleReset}
-              className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-            >
-              <RotateCcw size={16} />
             </button>
           </>
         )}
@@ -381,7 +571,7 @@ function TimerWidget({ settings = {} }) {
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
             onClick={() => {
               setShowCompletionModal(false);
-              handleReset();
+              handleStop();
             }}
           >
             <div
@@ -396,7 +586,7 @@ function TimerWidget({ settings = {} }) {
               <button
                 onClick={() => {
                   setShowCompletionModal(false);
-                  handleReset();
+                  handleStop();
                 }}
                 className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
               >

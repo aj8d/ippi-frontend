@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -16,10 +16,14 @@ import {
   Home,
   Search,
   Bell,
+  BarChart3,
 } from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'motion/react';
 import { useAuth } from '../auth/AuthContext';
+import { useTimer } from '../contexts/TimerContext';
+import StatsModal from './StatsModal';
+import TimerWarningModal from './TimerWarningModal';
 
 /**
  * 📚 一意のウィジェット（1つしか追加できない）
@@ -52,8 +56,14 @@ const MULTIPLE_WIDGETS = [
  */
 function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemoveWidget, activeWidgets = [] }) {
   const { logout, user } = useAuth();
+  const { isTimerRunning, stopTimer } = useTimer();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // 📚 警告モーダルの状態
+  const [warningModalOpen, setWarningModalOpen] = useState(false);
+  const [warningActionType, setWarningActionType] = useState('navigate');
+  const [pendingAction, setPendingAction] = useState(null);
 
   // 📚 現在のページがHomeかどうかを判定
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
@@ -80,13 +90,55 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
       onAddWidget?.(widget.id, widget.defaultSize);
     }
   };
-  const [displayMode, setDisplayMode] = useState('countdown');
+
+  // 📚 モーダル状態管理
+  // localStorageからタイマー設定を読み込む
+  const loadTimerSettings = () => {
+    try {
+      const saved = localStorage.getItem('timerSettings');
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return {
+          displayMode: settings.displayMode || 'countdown',
+          totalCycles: settings.totalCycles || '3',
+          pomodoroSections: settings.pomodoroSections || [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
+        };
+      }
+    } catch (error) {
+      console.error('タイマー設定の読み込みエラー:', error);
+    }
+    return {
+      displayMode: 'countdown',
+      totalCycles: '3',
+      pomodoroSections: [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
+    };
+  };
+
+  const initialSettings = loadTimerSettings();
+  const [displayMode, setDisplayMode] = useState(initialSettings.displayMode);
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
-  const [totalCycles, setTotalCycles] = useState('3'); // 📚 サイクル数（デフォルト3サイクル）
+  const [isStatsModalOpen, setIsStatsModalOpen] = useState(false); // 統計モーダル
+  const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles); // 📚 サイクル数（デフォルト3サイクル）
 
   // 📚 ポモドーロセクション管理
   // 各セクションは { id, workMinutes, breakMinutes } を持つ
-  const [pomodoroSections, setPomodoroSections] = useState([{ id: 1, workMinutes: '25', breakMinutes: '5' }]);
+  const [pomodoroSections, setPomodoroSections] = useState(initialSettings.pomodoroSections);
+
+  // 📚 タイマー設定をlocalStorageに保存
+  useEffect(() => {
+    const settings = {
+      displayMode,
+      totalCycles,
+      pomodoroSections,
+    };
+    localStorage.setItem('timerSettings', JSON.stringify(settings));
+  }, [displayMode, totalCycles, pomodoroSections]);
+
+  // 📚 初回マウント時に保存された設定をTimerWidgetへ通知
+  useEffect(() => {
+    notifyTimerSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 初回のみ実行
 
   // 📚 セクション追加
   const handleAddSection = () => {
@@ -126,15 +178,74 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
     setIsTimerModalOpen(false);
   };
 
-  const handleLogout = () => {
-    logout();
+  // 📚 タイマー動作中の警告を表示して操作を遅延実行
+  const showTimerWarning = useCallback(
+    (actionType, action) => {
+      if (isTimerRunning) {
+        setWarningActionType(actionType);
+        setPendingAction(() => action);
+        setWarningModalOpen(true);
+      } else {
+        action();
+      }
+    },
+    [isTimerRunning]
+  );
+
+  // 📚 警告モーダルで確認後にアクション実行
+  const handleWarningConfirm = useCallback(() => {
+    stopTimer();
+    if (pendingAction) {
+      // タイマー停止後に少し待ってからアクション実行
+      setTimeout(() => {
+        pendingAction();
+        setPendingAction(null);
+      }, 100);
+    }
+  }, [stopTimer, pendingAction]);
+
+  // 📚 タイマー設定ボタンクリック
+  const handleTimerSettingsClick = () => {
+    showTimerWarning('settings', () => setIsTimerModalOpen(true));
   };
 
+  // 📚 統計ボタンクリック
+  const handleStatsClick = () => {
+    showTimerWarning('stats', () => setIsStatsModalOpen(true));
+  };
+
+  // 📚 プロフィールクリック（ページ遷移）
   const handleProfileClick = () => {
     if (user?.customId) {
-      navigate(`/${user.customId}`);
+      showTimerWarning('navigate', () => navigate(`/${user.customId}`));
     }
   };
+
+  // 📚 ホームクリック（ページ遷移）
+  const handleHomeClick = () => {
+    showTimerWarning('navigate', () => navigate('/'));
+  };
+
+  const handleLogout = () => {
+    showTimerWarning('navigate', () => logout());
+  };
+
+  // 📚 ブラウザを閉じる/リロード時の警告
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isTimerRunning) {
+        e.preventDefault();
+        // Chrome requires returnValue to be set
+        e.returnValue = 'タイマーが動作中です。ページを離れると作業時間が保存されます。';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isTimerRunning]);
 
   return (
     <div
@@ -155,7 +266,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
         {isOpen ? (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => navigate('/')}
+              onClick={handleHomeClick}
               className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
               title="ホーム"
             >
@@ -179,7 +290,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
         ) : (
           <div className="flex flex-col items-center gap-2">
             <button
-              onClick={() => navigate('/')}
+              onClick={handleHomeClick}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               title="ホーム"
             >
@@ -199,7 +310,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
       {isHomePage && isOpen && (
         <div className="border-b border-gray-200 p-4">
           <button
-            onClick={() => setIsTimerModalOpen(true)}
+            onClick={handleTimerSettingsClick}
             className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <Settings className="w-4 h-4 text-gray-600" />
@@ -299,6 +410,14 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
 
       {/* フッター */}
       <div className="p-4 border-t border-gray-200 space-y-2">
+        {/* 📊 統計ボタン */}
+        <button
+          onClick={handleStatsClick}
+          className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
+        >
+          <BarChart3 className="w-5 h-5 flex-shrink-0" />
+          {isOpen && <span className="text-sm font-medium">統計</span>}
+        </button>
         <button
           onClick={handleProfileClick}
           className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
@@ -318,7 +437,10 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
       {/* タイマー設定モーダル（Portalで画面全体に表示） */}
       {isTimerModalOpen &&
         createPortal(
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={handleCloseModal}>
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
+            onClick={handleCloseModal}
+          >
             {/* モーダルコンテンツ */}
             <div
               className="bg-white rounded-xl shadow-2xl w-[90%] max-w-lg p-6 max-h-[85vh] overflow-y-auto"
@@ -462,6 +584,20 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
           </div>,
           document.body
         )}
+
+      {/* 📊 統計モーダル */}
+      <StatsModal isOpen={isStatsModalOpen} onClose={() => setIsStatsModalOpen(false)} />
+
+      {/* ⚠️ タイマー警告モーダル */}
+      <TimerWarningModal
+        isOpen={warningModalOpen}
+        onClose={() => {
+          setWarningModalOpen(false);
+          setPendingAction(null);
+        }}
+        onConfirm={handleWarningConfirm}
+        actionType={warningActionType}
+      />
     </div>
   );
 }
