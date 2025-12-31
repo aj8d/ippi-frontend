@@ -15,7 +15,7 @@ import {
   Trash2,
   Home,
   Search,
-  Rss,
+  MessageSquareHeart,
   BarChart3,
 } from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
@@ -296,7 +296,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
               className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
               title="フィード"
             >
-              <Rss className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
+              <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
           </div>
         ) : (
@@ -320,7 +320,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               title="フィード"
             >
-              <Rss className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
+              <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
           </div>
         )}

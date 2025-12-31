@@ -116,6 +116,48 @@ function Feed() {
     return new Date(timestamp).toLocaleDateString('ja-JP');
   };
 
+  // 📚 relatedDataから追加情報を取得
+  const parseRelatedData = (relatedData) => {
+    if (!relatedData) return null;
+    try {
+      return JSON.parse(relatedData);
+    } catch {
+      return null;
+    }
+  };
+
+  // 📚 アクティビティのバッジを取得
+  const getActivityBadge = (type, relatedData) => {
+    const data = parseRelatedData(relatedData);
+    if (!data) return null;
+
+    switch (type) {
+      case 'work_completed':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+            <Clock className="w-3 h-3" />
+            {data.minutes}分
+          </span>
+        );
+      case 'streak':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+            <Flame className="w-3 h-3" />
+            {data.streakDays}日連続
+          </span>
+        );
+      case 'achievement':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+            <Trophy className="w-3 h-3" />
+            達成！
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* サイドバー */}
@@ -202,6 +244,7 @@ function Feed() {
                           {item.userName}
                         </span>
                         {item.userCustomId && <span className="text-gray-500 text-sm">@{item.userCustomId}</span>}
+                        {getActivityBadge(item.activityType, item.relatedData)}
                       </div>
                       <div className="flex items-center gap-2 text-gray-700">
                         {getActivityIcon(item.activityType)}

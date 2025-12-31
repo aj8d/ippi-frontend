@@ -71,6 +71,13 @@ export const API_ENDPOINTS = {
     UPLOAD: `${API_BASE_URL}/images/upload`,
     DELETE: (publicId) => `${API_BASE_URL}/images/delete?publicId=${encodeURIComponent(publicId)}`,
   },
+
+  // ユーザー統計
+  USER_STATS: {
+    ME: `${API_BASE_URL}/user-stats/me`,
+    BY_ID: (userId) => `${API_BASE_URL}/user-stats/${userId}`,
+    BY_CUSTOM_ID: (customId) => `${API_BASE_URL}/user-stats/user/${customId}`,
+  },
 };
 
 // ページネーション設定
