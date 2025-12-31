@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-
-const API_URL = 'http://localhost:8080/api/text-data';
+import { API_ENDPOINTS } from '../config';
 
 function SwapyTimer({
   onComplete,
@@ -99,7 +98,7 @@ function SwapyTimer({
   // サーバーにタイマー開始を通知
   const startTimerOnServer = useCallback(async () => {
     try {
-      await fetch(`${API_URL}/${selectedTodoId}/start-timer`, {
+      await fetch(API_ENDPOINTS.TEXT_DATA.START_TIMER(selectedTodoId), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -114,7 +113,7 @@ function SwapyTimer({
   // サーバーにタイマー停止を通知
   const stopTimerOnServer = useCallback(async () => {
     try {
-      await fetch(`${API_URL}/${selectedTodoId}/stop-timer`, {
+      await fetch(API_ENDPOINTS.TEXT_DATA.STOP_TIMER(selectedTodoId), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -133,7 +132,7 @@ function SwapyTimer({
         // ページが表示に戻った場合、サーバーから最新の状態を取得
         (async () => {
           try {
-            const response = await fetch(`${API_URL}/${selectedTodoId}/timer-status`, {
+            const response = await fetch(API_ENDPOINTS.TEXT_DATA.TIMER_STATUS(selectedTodoId), {
               headers: { Authorization: `Bearer ${token}` },
             });
             const data = await response.json();

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { API_ENDPOINTS } from '../config';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -34,7 +35,7 @@ export default function Login() {
       setLoading(true);
 
       // Google ID Token をバックエンドに送信
-      const response = await fetch('http://localhost:8080/api/auth/google-login', {
+      const response = await fetch(API_ENDPOINTS.AUTH.GOOGLE_LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

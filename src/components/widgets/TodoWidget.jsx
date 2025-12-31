@@ -10,8 +10,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
-
-const API_URL = 'http://localhost:8080/api/text-data';
+import { API_ENDPOINTS } from '../../config';
 
 function TodoWidget() {
   const { token } = useAuth();
@@ -33,7 +32,7 @@ function TodoWidget() {
       setLoading(true);
 
       // 📚 fetch API でバックエンドにリクエスト
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_ENDPOINTS.TEXT_DATA.BASE, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           Authorization: `Bearer ${token}`, // JWT認証トークン
@@ -76,7 +75,7 @@ function TodoWidget() {
       };
 
       // 📚 POST リクエストで新しいTODOを作成
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_ENDPOINTS.TEXT_DATA.BASE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
@@ -104,7 +103,7 @@ function TodoWidget() {
   const completeTodo = async (id) => {
     try {
       // 📚 DELETE リクエストでTODOを削除
-      const response = await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(API_ENDPOINTS.TEXT_DATA.BY_ID(id), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json; charset=utf-8',

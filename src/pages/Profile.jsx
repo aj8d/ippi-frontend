@@ -1,9 +1,11 @@
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ActivityCalendar from '../components/ActivityCalendar';
 import Sidebar from '../components/Sidebar';
 import { createSwapy } from 'swapy';
+import { UserPlus, UserMinus, Users } from 'lucide-react';
+import { API_ENDPOINTS, API_BASE_URL } from '../config';
 
 export default function Profile() {
   const { user, logout, token } = useAuth();
@@ -24,6 +26,11 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [customIdError, setCustomIdError] = useState('');
   const [editingCustomId, setEditingCustomId] = useState('');
+
+  // フォロー関連のステート
+  const [profileUserId, setProfileUserId] = useState(null);
+  const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0, isFollowing: false });
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   // Swapy初期化
   useEffect(() => {
@@ -59,7 +66,7 @@ export default function Profile() {
 
     const fetchProfileById = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/api/auth/${id}`, {
+        const response = await fetch(API_ENDPOINTS.AUTH.PROFILE_BY_ID(id), {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -72,6 +79,7 @@ export default function Profile() {
           setUserName(data.name);
           setUserDescription(data.description || '');
           setUserCustomId(data.customId || '');
+          setProfileUserId(data.userId);
           // 自分のプロフィールか判定（ログイン中で customId が一致）
           setIsOwnProfile(user && user.customId === id);
         } else {
@@ -88,13 +96,75 @@ export default function Profile() {
     fetchProfileById();
   }, [id, user]);
 
+  // フォロー統計取得
+  const fetchFollowStats = useCallback(async () => {
+    if (!profileUserId) return;
+
+    try {
+      const headers = token
+        ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+        : { 'Content-Type': 'application/json' };
+
+      const response = await fetch(API_ENDPOINTS.FOLLOW.STATS(profileUserId), {
+        headers,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFollowStats(data);
+      }
+    } catch (error) {
+      console.error('フォロー統計取得エラー:', error);
+    }
+  }, [profileUserId, token]);
+
+  useEffect(() => {
+    fetchFollowStats();
+  }, [fetchFollowStats]);
+
+  // フォロー/アンフォロー
+  const handleFollowToggle = async () => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    if (!profileUserId) return;
+
+    setIsFollowLoading(true);
+    const method = followStats.isFollowing ? 'DELETE' : 'POST';
+
+    try {
+      const response = await fetch(API_ENDPOINTS.FOLLOW.BASE(profileUserId), {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFollowStats((prev) => ({
+          ...prev,
+          isFollowing: !prev.isFollowing,
+          followersCount: data.followersCount,
+        }));
+      }
+    } catch (error) {
+      console.error('フォロー操作エラー:', error);
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
   // スタッツ取得（自分のプロフィール＆ログイン状態）
   useEffect(() => {
     if (!isOwnProfile || !token) return;
 
     const fetchStats = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/auth/stats', {
+        const response = await fetch(API_ENDPOINTS.AUTH.STATS, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -124,7 +194,7 @@ export default function Profile() {
   const fetchLatestProfile = async () => {
     if (!token) return;
     try {
-      const response = await fetch('http://localhost:8080/api/auth/profile', {
+      const response = await fetch(API_ENDPOINTS.AUTH.PROFILE, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -152,7 +222,7 @@ export default function Profile() {
 
     setIsSaving(true);
     try {
-      const response = await fetch('http://localhost:8080/api/auth/update-profile', {
+      const response = await fetch(API_ENDPOINTS.AUTH.UPDATE_PROFILE, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -200,7 +270,7 @@ export default function Profile() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('http://localhost:8080/api/auth/upload-profile-image', {
+      const response = await fetch(API_ENDPOINTS.AUTH.UPLOAD_IMAGE, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -235,12 +305,12 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {isOwnProfile && <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} onTimerSettingsChange={() => {}} />}
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} onTimerSettingsChange={() => {}} />
 
       {/* メインコンテンツ */}
       <div
         className={`${
-          isOwnProfile && sidebarOpen ? 'ml-64' : isOwnProfile ? 'ml-20' : 'ml-0'
+          sidebarOpen ? 'ml-64' : 'ml-20'
         } flex-1 transition-all duration-300`}
       >
         <div className="p-5 max-w-6xl mx-auto">
@@ -260,6 +330,53 @@ export default function Profile() {
               <p className="text-sm text-gray-600 mb-3.75 whitespace-pre-wrap">
                 {userDescription || '説明文はまだ設定されていません'}
               </p>
+
+              {/* フォロー統計 */}
+              <div className="flex items-center gap-4 mb-4">
+                <button
+                  onClick={() => navigate(`/${userCustomId}/followers`)}
+                  className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors"
+                >
+                  <Users className="w-4 h-4" />
+                  <span className="font-semibold">{followStats.followersCount}</span>
+                  <span className="text-gray-500">フォロワー</span>
+                </button>
+                <button
+                  onClick={() => navigate(`/${userCustomId}/following`)}
+                  className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors"
+                >
+                  <span className="font-semibold">{followStats.followingCount}</span>
+                  <span className="text-gray-500">フォロー中</span>
+                </button>
+              </div>
+
+              {/* フォローボタン（他人のプロフィールの場合） */}
+              {!isOwnProfile && (
+                <button
+                  onClick={handleFollowToggle}
+                  disabled={isFollowLoading}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors mb-4 ${
+                    followStats.isFollowing
+                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  } disabled:opacity-50`}
+                >
+                  {isFollowLoading ? (
+                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : followStats.isFollowing ? (
+                    <>
+                      <UserMinus className="w-4 h-4" />
+                      <span>フォロー中</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      <span>フォローする</span>
+                    </>
+                  )}
+                </button>
+              )}
+
               {isOwnProfile && (
                 <>
                   <button

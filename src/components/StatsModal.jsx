@@ -13,8 +13,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, BarChart3, Clock, Calendar, TrendingUp } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-
-const API_URL = 'http://localhost:8080/api/auth/stats';
+import { API_ENDPOINTS } from '../config';
 
 /**
  * StatsModal - 統計表示モーダル
@@ -39,7 +38,7 @@ function StatsModal({ isOpen, onClose }) {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(API_ENDPOINTS.AUTH.STATS, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

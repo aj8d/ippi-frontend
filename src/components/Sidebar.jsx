@@ -15,7 +15,7 @@ import {
   Trash2,
   Home,
   Search,
-  Bell,
+  Rss,
   BarChart3,
 } from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
@@ -65,8 +65,10 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
   const [warningActionType, setWarningActionType] = useState('navigate');
   const [pendingAction, setPendingAction] = useState(null);
 
-  // 📚 現在のページがHomeかどうかを判定
+  // 📚 現在のページを判定
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
+  const isSearchPage = location.pathname === '/search';
+  const isFeedPage = location.pathname === '/feed';
 
   /**
    * 📚 一意ウィジェットが追加済みかチェック
@@ -226,6 +228,16 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
     showTimerWarning('navigate', () => navigate('/'));
   };
 
+  // 📚 検索クリック（ページ遷移）
+  const handleSearchClick = () => {
+    showTimerWarning('navigate', () => navigate('/search'));
+  };
+
+  // 📚 フィードクリック（ページ遷移）
+  const handleFeedClick = () => {
+    showTimerWarning('navigate', () => navigate('/feed'));
+  };
+
   const handleLogout = () => {
     showTimerWarning('navigate', () => logout());
   };
@@ -273,18 +285,18 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
               <Home className={`w-5 h-5 ${isHomePage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
             <button
+              onClick={handleSearchClick}
               className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
               title="検索"
-              disabled
             >
-              <Search className="w-5 h-5 text-gray-400" />
+              <Search className={`w-5 h-5 ${isSearchPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
             <button
+              onClick={handleFeedClick}
               className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
-              title="通知"
-              disabled
+              title="フィード"
             >
-              <Bell className="w-5 h-5 text-gray-400" />
+              <Rss className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
           </div>
         ) : (
@@ -296,11 +308,19 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
             >
               <Home className={`w-5 h-5 ${isHomePage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="検索" disabled>
-              <Search className="w-5 h-5 text-gray-400" />
+            <button
+              onClick={handleSearchClick}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="検索"
+            >
+              <Search className={`w-5 h-5 ${isSearchPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="通知" disabled>
-              <Bell className="w-5 h-5 text-gray-400" />
+            <button
+              onClick={handleFeedClick}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="フィード"
+            >
+              <Rss className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
           </div>
         )}

@@ -16,8 +16,7 @@
 import { useState, useRef } from 'react';
 import { Upload, Image as ImageIcon, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
-
-const API_URL = 'http://localhost:8080/api/images';
+import { API_ENDPOINTS } from '../../config';
 
 function ImageWidget({ data = {}, onUpdate }) {
   const { token } = useAuth();
@@ -67,7 +66,7 @@ function ImageWidget({ data = {}, onUpdate }) {
       formData.append('file', file);
 
       // 📚 fetch でアップロード
-      const response = await fetch(`${API_URL}/upload`, {
+      const response = await fetch(API_ENDPOINTS.IMAGES.UPLOAD, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -109,7 +108,7 @@ function ImageWidget({ data = {}, onUpdate }) {
 
     try {
       // Cloudinaryから削除
-      await fetch(`${API_URL}/delete?publicId=${encodeURIComponent(publicId)}`, {
+      await fetch(API_ENDPOINTS.IMAGES.DELETE(publicId), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,

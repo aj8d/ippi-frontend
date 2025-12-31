@@ -13,9 +13,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
-
-// 📚 サーバーのコンテキストパスが /api なので、/widgets だけでOK
-const API_URL = 'http://localhost:8080/api/widgets';
+import { API_ENDPOINTS } from '../config';
 
 /**
  * 📚 デバウンス用タイマーID
@@ -48,7 +46,7 @@ export function useWidgets() {
 
     try {
       setLoading(true);
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_ENDPOINTS.WIDGETS.BASE, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -87,7 +85,7 @@ export function useWidgets() {
       // 📚 1秒後に保存（デバウンス）
       saveTimeoutId = setTimeout(async () => {
         try {
-          const response = await fetch(API_URL, {
+          const response = await fetch(API_ENDPOINTS.WIDGETS.BASE, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',

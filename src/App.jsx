@@ -6,6 +6,9 @@ import Login from './auth/Login';
 import Register from './auth/Register';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
+import Search from './pages/Search';
+import Feed from './pages/Feed';
+import FollowList from './pages/FollowList';
 
 function App() {
   return (
@@ -15,6 +18,38 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route
+              path="/search"
+              element={
+                <ProtectedRoute>
+                  <Search />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/feed"
+              element={
+                <ProtectedRoute>
+                  <Feed />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/:id/followers"
+              element={
+                <ProtectedRoute>
+                  <FollowList type="followers" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/:id/following"
+              element={
+                <ProtectedRoute>
+                  <FollowList type="following" />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/:id" element={<Profile />} />
             <Route
               path="/"

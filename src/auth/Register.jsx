@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { API_ENDPOINTS } from '../config';
 
 export default function Register() {
   const [step, setStep] = useState(1); // 1: メール/パスワード, 2: ユーザーID/名前
@@ -73,7 +74,7 @@ export default function Register() {
       setError('');
       setLoading(true);
 
-      const response = await fetch('http://localhost:8080/api/auth/google-login', {
+      const response = await fetch(API_ENDPOINTS.AUTH.GOOGLE_LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

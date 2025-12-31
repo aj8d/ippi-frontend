@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-
-const API_URL = 'http://localhost:8080/api/text-data';
+import { API_ENDPOINTS } from '../config';
 
 function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
   const [todos, setTodos] = useState([]);
@@ -15,7 +14,7 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
   const fetchTodos = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_ENDPOINTS.TEXT_DATA.BASE, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           Authorization: `Bearer ${token}`,
@@ -39,7 +38,7 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
         const jsonBody = JSON.stringify(updateData);
         const utf8Bytes = new TextEncoder().encode(jsonBody);
 
-        await fetch(`${API_URL}/${todoId}`, {
+        await fetch(API_ENDPOINTS.TEXT_DATA.BY_ID(todoId), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json; charset=utf-8',
@@ -79,7 +78,7 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
       const jsonBody = JSON.stringify(todoData);
       const utf8Bytes = new TextEncoder().encode(jsonBody);
 
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_ENDPOINTS.TEXT_DATA.BASE, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
@@ -110,7 +109,7 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
 
   const completeTodo = async (id) => {
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(API_ENDPOINTS.TEXT_DATA.BY_ID(id), {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json; charset=utf-8',

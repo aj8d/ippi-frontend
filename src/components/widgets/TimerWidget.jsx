@@ -13,9 +13,7 @@ import { createPortal } from 'react-dom';
 import { Play, Pause, Square, SkipForward, X } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useTimer } from '../../contexts/TimerContext';
-
-// 📚 作業時間保存用のエンドポイント（/work-sessionを使用）
-const API_URL = 'http://localhost:8080/api/text-data/work-session';
+import { API_ENDPOINTS } from '../../config';
 
 // 📚 デフォルトのポモドーロセクション
 const DEFAULT_SECTIONS = [{ id: 1, workMinutes: '25', workSeconds: '0', breakMinutes: '5', breakSeconds: '0' }];
@@ -111,7 +109,7 @@ function TimerWidget({ settings = {} }) {
         // 今日の日付を取得（YYYY-MM-DD形式）
         const today = new Date().toISOString().split('T')[0];
 
-        const response = await fetch(API_URL, {
+        const response = await fetch(API_ENDPOINTS.TEXT_DATA.WORK_SESSION, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

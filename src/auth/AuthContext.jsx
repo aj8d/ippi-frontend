@@ -1,4 +1,5 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { API_ENDPOINTS } from '../config';
 
 const AuthContext = createContext();
 
@@ -16,7 +17,7 @@ export function AuthProvider({ children }) {
   // プロフィール情報を取得
   const fetchProfile = useCallback(async (authToken) => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/profile', {
+      const response = await fetch(API_ENDPOINTS.AUTH.PROFILE, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${authToken}`,
@@ -51,7 +52,7 @@ export function AuthProvider({ children }) {
   // ユーザー登録
   const register = async (email, password, name, customId) => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/register', {
+      const response = await fetch(API_ENDPOINTS.AUTH.REGISTER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ export function AuthProvider({ children }) {
   // ユーザーログイン
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
