@@ -14,7 +14,10 @@ export default function Profile() {
   const { id } = useParams();
 
   const [stats, setStats] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebarOpen');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const [uploading, setUploading] = useState(false);
   const [profileImageUrl, setProfileImageUrl] = useState(null);
   const [uploadError, setUploadError] = useState(null);
@@ -419,9 +422,9 @@ export default function Profile() {
           <hr className="my-5" />
 
           {/* 統計ウィジェット */}
-          <div className="mb-8">
+          {/* <div className="mb-8">
             <StatsWidget customId={userCustomId} token={token} />
-          </div>
+          </div> */}
 
           {/* GitHub-style アクティビティカレンダーを追加 */}
           {stats && stats.length > 0 && <ActivityCalendar stats={stats} />}

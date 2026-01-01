@@ -19,6 +19,10 @@ import {
   BarChart3,
   ArrowLeftFromLine,
   ArrowRightFromLine,
+  Square,
+  Columns2,
+  Columns3,
+  Settings2,
 } from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'motion/react';
@@ -78,6 +82,18 @@ function Sidebar({
   const [warningModalOpen, setWarningModalOpen] = useState(false);
   const [warningActionType, setWarningActionType] = useState('navigate');
   const [pendingAction, setPendingAction] = useState(null);
+
+  // 📚 カスタムツールチップの状態
+  const [tooltip, setTooltip] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
+  // 📚 削除メニューの状態
+  const [showDeleteMenu, setShowDeleteMenu] = useState(false);
+
+  // 📚 サイドバーの開閉状態をlocalStorageに保存
+  useEffect(() => {
+    localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
+  }, [isOpen]);
 
   // 📚 現在のページを判定
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
@@ -226,6 +242,9 @@ function Sidebar({
     showTimerWarning('settings', () => setIsTimerModalOpen(true));
   };
 
+  // 📚 タイマー設定ボタンクリック（エイリアス）
+  const handleTimerClick = handleTimerSettingsClick;
+
   // 📚 統計ボタンクリック
   const handleStatsClick = () => {
     showTimerWarning('stats', () => setIsStatsModalOpen(true));
@@ -278,16 +297,38 @@ function Sidebar({
     <div
       className={`${
         isOpen ? 'w-64' : 'w-20'
-      } bg-white shadow-lg transition-all duration-300 flex flex-col fixed h-screen left-0 top-0`}
+      } bg-white shadow-lg transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-50`}
     >
       {/* ヘッダー */}
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
         {isOpen && <h1 className="text-2xl font-bold text-gray-800">iPPi</h1>}
-        <button onClick={() => setIsOpen(!isOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+        <button
+          onClick={() => {
+            setTooltip(null);
+            setIsOpen(!isOpen);
+          }}
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        >
           {isOpen ? (
-            <ArrowLeftFromLine className="w-5 h-5 text-gray-600" />
+            <ArrowLeftFromLine
+              className="w-5 h-5 text-gray-600"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip('折りたたむ');
+                setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
+              }}
+              onMouseLeave={() => setTooltip(null)}
+            />
           ) : (
-            <ArrowRightFromLine className="w-5 h-5 text-gray-600" />
+            <ArrowRightFromLine
+              className="w-5 h-5 text-gray-600"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip('展開');
+                setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
+              }}
+              onMouseLeave={() => setTooltip(null)}
+            />
           )}
         </button>
       </div>
@@ -299,21 +340,36 @@ function Sidebar({
             <button
               onClick={handleHomeClick}
               className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
-              title="ホーム"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip('ホーム');
+                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+              }}
+              onMouseLeave={() => setTooltip(null)}
             >
               <Home className={`w-5 h-5 ${isHomePage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
             <button
               onClick={handleSearchClick}
               className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
-              title="検索"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip('検索');
+                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+              }}
+              onMouseLeave={() => setTooltip(null)}
             >
               <Search className={`w-5 h-5 ${isSearchPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
             <button
               onClick={handleFeedClick}
               className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
-              title="フィード"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip('フィード');
+                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+              }}
+              onMouseLeave={() => setTooltip(null)}
             >
               <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
@@ -323,21 +379,36 @@ function Sidebar({
             <button
               onClick={handleHomeClick}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="ホーム"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip('ホーム');
+                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+              }}
+              onMouseLeave={() => setTooltip(null)}
             >
               <Home className={`w-5 h-5 ${isHomePage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
             <button
               onClick={handleSearchClick}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="検索"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip('検索');
+                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+              }}
+              onMouseLeave={() => setTooltip(null)}
             >
               <Search className={`w-5 h-5 ${isSearchPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
             <button
               onClick={handleFeedClick}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="フィード"
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setTooltip('フィード');
+                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+              }}
+              onMouseLeave={() => setTooltip(null)}
             >
               <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
@@ -345,32 +416,98 @@ function Sidebar({
         )}
       </div>
 
-      {/* タイマー設定ボタン */}
-      {isHomePage && isOpen && (
-        <div className="border-b border-gray-200 p-4">
-          <button
-            onClick={handleTimerSettingsClick}
-            className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <Settings className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">タイマー設定</span>
-          </button>
-        </div>
-      )}
-
       {/* 📚 カスタム要素追加セクション（プロフィールページ & 自分のプロフィール & サイドバー開いている時のみ） */}
-      {isProfilePage && isOwnProfile && addRowFunction && isOpen && (
-        <div className="border-b border-gray-200 p-4">
-          <WidgetAddButton onAddRow={addRowFunction} />
+      {isProfilePage && isOwnProfile && addRowFunction && (
+        <div className="p-4">
+          {isOpen ? (
+            <div>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">カスタム要素追加</h3>
+              <div className="space-y-2">
+                <button
+                  onClick={() => addRowFunction(1)}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
+                >
+                  <Square className="w-4 h-4" />
+                  <span>1列追加</span>
+                </button>
+                <button
+                  onClick={() => addRowFunction(2)}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
+                >
+                  <Columns2 className="w-4 h-4" />
+                  <span>2列追加</span>
+                </button>
+                <button
+                  onClick={() => addRowFunction(3)}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
+                >
+                  <Columns3 className="w-4 h-4" />
+                  <span>3列追加</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={() => addRowFunction(1)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltip('1列追加');
+                    setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                >
+                  <Square className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => addRowFunction(2)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltip('2列追加');
+                    setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                >
+                  <Columns2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => addRowFunction(3)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltip('3列追加');
+                    setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                >
+                  <Columns3 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* 📚 ウィジェット追加セクション（Homeページでのみ表示） */}
       {isHomePage && (
-        <div className="border-b border-gray-200 p-4">
+        <div className=" p-4">
           {isOpen ? (
             // サイドバーが開いている時：ラベル付きボタン
             <div className="space-y-4">
+              {/* タイマー設定 */}
+              <div>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">設定</h3>
+                <button
+                  onClick={handleTimerClick}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
+                >
+                  <Settings2 className="w-4 h-4" />
+                  <span>インターバル設定</span>
+                </button>
+              </div>
               {/* 一意ウィジェット（1つだけ） */}
               <div>
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">ツール</h3>
@@ -411,10 +548,79 @@ function Sidebar({
                   ))}
                 </div>
               </div>
+
+              {/* ウィジェットを削除 */}
+              <div>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">削除</h3>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowDeleteMenu(!showDeleteMenu)}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg transition-colors text-sm font-medium"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>ウィジェットを削除</span>
+                  </button>
+                  {showDeleteMenu && (
+                    <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
+                      <button
+                        onClick={() => {
+                          const stickyWidgets = activeWidgets.filter((w) => w.type === 'sticky');
+                          stickyWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                          setShowDeleteMenu(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm"
+                      >
+                        <StickyNote className="w-4 h-4" />
+                        <span>付箋を全て削除</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const imageWidgets = activeWidgets.filter((w) => w.type === 'image');
+                          imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                          setShowDeleteMenu(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm"
+                      >
+                        <Image className="w-4 h-4" />
+                        <span>画像を全て削除</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const allRemovableWidgets = activeWidgets.filter(
+                            (w) => w.type === 'sticky' || w.type === 'image'
+                          );
+                          allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                          setShowDeleteMenu(false);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm border-t border-gray-200"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>全ての要素を削除</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           ) : (
             // サイドバーが閉じている時：アイコンのみ
             <div className="flex flex-col items-center gap-2">
+              {/* タイマー設定（アイコンのみ） */}
+              <button
+                onClick={handleTimerClick}
+                className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-gray-600"
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setTooltip('インターバル設定');
+                  setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
+                }}
+                onMouseLeave={() => setTooltip(null)}
+              >
+                <Settings2 className="w-5 h-5" />
+              </button>
+              {/* 区切り線 */}
+              <div className="w-8 border-t border-gray-200 my-1" />
+
               {/* 一意ウィジェット */}
               {UNIQUE_WIDGETS.map((widget) => {
                 const isActive = isWidgetActive(widget.id);
@@ -427,7 +633,12 @@ function Sidebar({
                         ? 'bg-blue-500 text-white hover:bg-blue-600'
                         : 'text-gray-600 hover:bg-blue-100 hover:text-blue-600'
                     }`}
-                    title={isActive ? `${widget.label}を削除` : widget.label}
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setTooltip(isActive ? `${widget.label}を削除` : widget.label);
+                      setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
+                    }}
+                    onMouseLeave={() => setTooltip(null)}
                   >
                     <widget.icon className="w-5 h-5" />
                   </button>
@@ -441,11 +652,72 @@ function Sidebar({
                   key={widget.id}
                   onClick={() => onAddWidget?.(widget.id, widget.defaultSize)}
                   className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-gray-600"
-                  title={widget.label}
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltip(widget.label);
+                    setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
                 >
                   <widget.icon className="w-5 h-5" />
                 </button>
               ))}
+              {/* 区切り線 */}
+              <div className="w-8 border-t border-gray-200 my-1" />
+              {/* 削除メニュー（アイコンのみ） */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowDeleteMenu(!showDeleteMenu)}
+                  className="p-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors"
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltip('削除メニュー');
+                    setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+                {showDeleteMenu && (
+                  <div className="absolute left-full ml-2 top-0 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
+                    <button
+                      onClick={() => {
+                        const stickyWidgets = activeWidgets.filter((w) => w.type === 'sticky');
+                        stickyWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                        setShowDeleteMenu(false);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm whitespace-nowrap"
+                    >
+                      <StickyNote className="w-4 h-4" />
+                      <span>付箋を全て削除</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        const imageWidgets = activeWidgets.filter((w) => w.type === 'image');
+                        imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                        setShowDeleteMenu(false);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm whitespace-nowrap"
+                    >
+                      <Image className="w-4 h-4" />
+                      <span>画像を全て削除</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        const allRemovableWidgets = activeWidgets.filter(
+                          (w) => w.type === 'sticky' || w.type === 'image'
+                        );
+                        allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                        setShowDeleteMenu(false);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm border-t border-gray-200 whitespace-nowrap"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>全ての要素を削除</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -644,6 +916,31 @@ function Sidebar({
         onConfirm={handleWarningConfirm}
         actionType={warningActionType}
       />
+
+      {/* カスタムツールチップ */}
+      {tooltip &&
+        createPortal(
+          <div
+            className="fixed bg-gray-800 text-white px-2.5 py-1.5 rounded text-xs font-medium whitespace-nowrap pointer-events-none z-[9999] shadow-md"
+            style={{
+              left: `${tooltipPos.x}px`,
+              top: `${tooltipPos.y}px`,
+              transform: 'translate(0, -50%)',
+            }}
+          >
+            {tooltip}
+            {/* 左向き三角形ポインター */}
+            <div
+              className="absolute w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-800"
+              style={{
+                left: '-4px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+              }}
+            />
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

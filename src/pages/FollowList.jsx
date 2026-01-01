@@ -23,7 +23,10 @@ function FollowList({ type }) {
 
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebarOpen');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
   const [profileUserId, setProfileUserId] = useState(null);
   const [profileUserName, setProfileUserName] = useState('');
 

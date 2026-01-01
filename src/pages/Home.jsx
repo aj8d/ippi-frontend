@@ -18,8 +18,11 @@ import FreeCanvas from '../components/FreeCanvas';
 import { useWidgets } from '../hooks/useWidgets'; // 🆕 カスタムフック
 
 function Home() {
-  // 📚 サイドバーの開閉状態
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // 📚 サイドバーの開閉状態（localStorageから読み込む）
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebarOpen');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   // 📚 タイマーの設定（サイドバーのアコーディオンで変更）
   const [timerSettings, setTimerSettings] = useState({

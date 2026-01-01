@@ -26,7 +26,10 @@ function SearchPage() {
   const [results, setResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebarOpen');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   // 📚 カスタムフックでフォロー機能を管理
   const { fetchFollowingIds, isFollowing, currentUserId } = useFollow();
