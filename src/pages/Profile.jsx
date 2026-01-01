@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import ActivityCalendar from '../components/ActivityCalendar';
 import StatsWidget from '../components/StatsWidget';
 import Sidebar from '../components/Sidebar';
-import ProfileWidgetManager from '../components/ProfileWidgetManager';
-import { UserPlus, UserMinus, Users } from 'lucide-react';
+import ProfileWidgetManager, { WidgetAddButton } from '../components/ProfileWidgetManager';
+import { UserPlus, UserMinus, Users, MoreVertical, Edit, Upload } from 'lucide-react';
 import { API_ENDPOINTS, API_BASE_URL } from '../config';
 
 export default function Profile() {
@@ -32,6 +32,8 @@ export default function Profile() {
   const [profileUserId, setProfileUserId] = useState(null);
   const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0, isFollowing: false });
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [addRowFunction, setAddRowFunction] = useState(null);
 
   // ログイン後のプロフィール初期化
   useEffect(() => {
@@ -290,7 +292,13 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} onTimerSettingsChange={() => {}} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
+        onTimerSettingsChange={() => {}}
+        isOwnProfile={isOwnProfile}
+        addRowFunction={addRowFunction}
+      />
 
       {/* メインコンテンツ */}
       <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} flex-1 transition-all duration-300`}>
@@ -358,37 +366,51 @@ export default function Profile() {
                 </button>
               )}
 
+              {/* オプションメニュー（自分のプロフィールの場合） */}
               {isOwnProfile && (
-                <>
+                <div className="relative">
                   <button
-                    onClick={() => {
-                      setIsEditing(true);
-                      setEditingCustomId(userCustomId);
-                    }}
-                    className="px-4 py-2 bg-green-500 text-white rounded cursor-pointer mb-2.5 hover:bg-green-600"
+                    onClick={() => setShowOptionsMenu(!showOptionsMenu)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                   >
-                    編集
+                    <MoreVertical className="w-5 h-5" />
+                    <span>オプション</span>
                   </button>
 
-                  {/* 画像アップロード */}
-                  <div className="mt-2.5">
-                    <label
-                      className={`inline-block px-4 py-2 bg-green-500 text-white rounded cursor-pointer transition-opacity ${
-                        uploading ? 'opacity-60 cursor-not-allowed' : 'opacity-100 hover:bg-green-600'
-                      }`}
-                    >
-                      {uploading ? '保存中...' : '画像をアップロード'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProfileImageUpload}
-                        disabled={uploading}
-                        className="hidden"
-                      />
-                    </label>
-                    {uploadError && <p className="text-red-500 mt-2 text-xs">{uploadError}</p>}
-                  </div>
-                </>
+                  {showOptionsMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowOptionsMenu(false)} />
+                      <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                        <button
+                          onClick={() => {
+                            setIsEditing(true);
+                            setEditingCustomId(userCustomId);
+                            setShowOptionsMenu(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span>プロフィールを編集</span>
+                        </button>
+                        <label className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300 cursor-pointer">
+                          <Upload className="w-4 h-4" />
+                          <span>{uploading ? '保存中...' : '画像をアップロード'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              handleProfileImageUpload(e);
+                              setShowOptionsMenu(false);
+                            }}
+                            disabled={uploading}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    </>
+                  )}
+                  {uploadError && <p className="text-red-500 mt-2 text-xs">{uploadError}</p>}
+                </div>
               )}
             </div>
           </div>
@@ -405,7 +427,12 @@ export default function Profile() {
           {stats && stats.length > 0 && <ActivityCalendar stats={stats} />}
 
           {/* 動的ウィジェットマネージャー（Swapy対応） */}
-          <ProfileWidgetManager customId={userCustomId} token={token} isOwnProfile={isOwnProfile} />
+          <ProfileWidgetManager
+            customId={userCustomId}
+            token={token}
+            isOwnProfile={isOwnProfile}
+            onAddRowCallback={(addRowFunc) => setAddRowFunction(() => addRowFunc)}
+          />
 
           <div className="mt-5">
             {isOwnProfile ? (

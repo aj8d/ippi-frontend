@@ -17,6 +17,8 @@ import {
   Search,
   MessageSquareHeart,
   BarChart3,
+  ArrowLeftFromLine,
+  ArrowRightFromLine,
 } from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'motion/react';
@@ -24,6 +26,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useTimer } from '../contexts/TimerContext';
 import StatsModal from './StatsModal';
 import TimerWarningModal from './TimerWarningModal';
+import { WidgetAddButton } from './ProfileWidgetManager';
 
 /**
  * 📚 一意のウィジェット（1つしか追加できない）
@@ -53,8 +56,19 @@ const MULTIPLE_WIDGETS = [
  * @param {Array} activeWidgets - 現在キャンバスにあるウィジェットの配列
  * @param {Function} onAddWidget - ウィジェット追加関数
  * @param {Function} onRemoveWidget - ウィジェット削除関数（typeで削除）
+ * @param {boolean} isOwnProfile - 自分のプロフィールかどうか
+ * @param {Function} addRowFunction - カスタム要素追加関数
  */
-function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemoveWidget, activeWidgets = [] }) {
+function Sidebar({
+  isOpen,
+  setIsOpen,
+  onTimerSettingsChange,
+  onAddWidget,
+  onRemoveWidget,
+  activeWidgets = [],
+  isOwnProfile = false,
+  addRowFunction = null,
+}) {
   const { logout, user } = useAuth();
   const { isTimerRunning, stopTimer } = useTimer();
   const location = useLocation();
@@ -69,6 +83,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
   const isSearchPage = location.pathname === '/search';
   const isFeedPage = location.pathname === '/feed';
+  const isProfilePage = location.pathname.includes('/@') || (user && location.pathname === `/${user.customId}`);
 
   /**
    * 📚 一意ウィジェットが追加済みかチェック
@@ -269,7 +284,11 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
         {isOpen && <h1 className="text-2xl font-bold text-gray-800">iPPi</h1>}
         <button onClick={() => setIsOpen(!isOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-          {isOpen ? <X className="w-5 h-5 text-gray-600" /> : <Menu className="w-5 h-5 text-gray-600" />}
+          {isOpen ? (
+            <ArrowLeftFromLine className="w-5 h-5 text-gray-600" />
+          ) : (
+            <ArrowRightFromLine className="w-5 h-5 text-gray-600" />
+          )}
         </button>
       </div>
 
@@ -336,6 +355,13 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
             <Settings className="w-4 h-4 text-gray-600" />
             <span className="text-sm font-medium text-gray-700">タイマー設定</span>
           </button>
+        </div>
+      )}
+
+      {/* 📚 カスタム要素追加セクション（プロフィールページ & 自分のプロフィール & サイドバー開いている時のみ） */}
+      {isProfilePage && isOwnProfile && addRowFunction && isOpen && (
+        <div className="border-b border-gray-200 p-4">
+          <WidgetAddButton onAddRow={addRowFunction} />
         </div>
       )}
 

@@ -6,7 +6,7 @@
  * - ウィジェットの追加・削除・並び替え
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createSwapy } from 'swapy';
 import { Plus, X, Flame, Clock, CheckCircle, Calendar, Type, TrendingUp } from 'lucide-react';
 import { API_ENDPOINTS } from '../config';
@@ -25,12 +25,42 @@ const WIDGET_TYPES = {
 // ウィジェットタイプの表示情報
 const WIDGET_INFO = {
   [WIDGET_TYPES.EMPTY]: { label: '空', icon: null },
-  [WIDGET_TYPES.STREAK]: { label: '連続作業日数', icon: Flame, color: 'from-orange-500 to-orange-600' },
-  [WIDGET_TYPES.TOTAL_TIME]: { label: '累計作業時間', icon: Clock, color: 'from-blue-500 to-blue-600' },
-  [WIDGET_TYPES.COMPLETED_TODOS]: { label: '完了Todo数', icon: CheckCircle, color: 'from-green-500 to-green-600' },
-  [WIDGET_TYPES.WORK_DAYS]: { label: '累計作業日数', icon: Calendar, color: 'from-purple-500 to-purple-600' },
-  [WIDGET_TYPES.WEEKLY_TIME]: { label: '今週の作業時間', icon: TrendingUp, color: 'from-pink-500 to-pink-600' },
-  [WIDGET_TYPES.TEXT]: { label: 'カスタムテキスト', icon: Type, color: 'from-gray-500 to-gray-600' },
+  [WIDGET_TYPES.STREAK]: {
+    label: '連続作業日数',
+    icon: Flame,
+    color: 'from-orange-50 to-orange-100',
+    textColor: 'text-orange-600 dark:text-orange-400',
+  },
+  [WIDGET_TYPES.TOTAL_TIME]: {
+    label: '累計作業時間',
+    icon: Clock,
+    color: 'from-blue-50 to-blue-100',
+    textColor: 'text-blue-600 dark:text-blue-400',
+  },
+  [WIDGET_TYPES.COMPLETED_TODOS]: {
+    label: '完了Todo数',
+    icon: CheckCircle,
+    color: 'from-green-50 to-green-100',
+    textColor: 'text-green-600 dark:text-green-400',
+  },
+  [WIDGET_TYPES.WORK_DAYS]: {
+    label: '累計作業日数',
+    icon: Calendar,
+    color: 'from-purple-50 to-purple-100',
+    textColor: 'text-purple-600 dark:text-purple-400',
+  },
+  [WIDGET_TYPES.WEEKLY_TIME]: {
+    label: '今週の作業時間',
+    icon: TrendingUp,
+    color: 'from-pink-50 to-pink-100',
+    textColor: 'text-pink-600 dark:text-pink-400',
+  },
+  [WIDGET_TYPES.TEXT]: {
+    label: 'カスタムテキスト',
+    icon: Type,
+    color: 'from-gray-50 to-gray-100',
+    textColor: 'text-gray-600 dark:text-gray-400',
+  },
 };
 
 /**
@@ -97,39 +127,44 @@ function Widget({ widget, stats, onTypeChange, onTextChange, onDelete, isOwnProf
   // テキストウィジェット
   if (widget.type === WIDGET_TYPES.TEXT) {
     return (
-      <div className={`bg-gradient-to-br ${info.color} rounded-2xl p-4 text-white shadow-lg relative group`}>
+      <div
+        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group`}
+      >
         <div className="flex items-center gap-2 mb-2">
-          {Icon && <Icon className="w-5 h-5" />}
-          {isOwnProfile && (
+          {Icon && <Icon className={`w-5 h-5 ${info.textColor}`} />}
+          {isOwnProfile ? (
             <select
               value={widget.type}
               onChange={(e) => onTypeChange(widget.id, e.target.value)}
-              className="text-sm bg-white/20 backdrop-blur-sm rounded px-2 py-1 border-0 text-white"
+              className="text-sm bg-white dark:bg-gray-800 rounded px-2 py-1 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
             >
               {Object.entries(WIDGET_INFO).map(([type, info]) => (
-                <option key={type} value={type} className="text-gray-900">
+                <option key={type} value={type}>
                   {info.label}
                 </option>
               ))}
             </select>
+          ) : (
+            <span className="text-sm text-gray-600 dark:text-gray-400">{info.label}</span>
           )}
-          {!isOwnProfile && <span className="text-sm">{info.label}</span>}
         </div>
         {isOwnProfile ? (
           <textarea
             value={widget.customText || ''}
             onChange={(e) => onTextChange(widget.id, e.target.value)}
             placeholder="テキストを入力..."
-            className="w-full bg-white/20 backdrop-blur-sm rounded-lg px-3 py-2 text-white placeholder-white/60 border-0 resize-none"
+            className="w-full bg-white dark:bg-gray-800 rounded-lg px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-200 dark:border-gray-700 resize-none"
             rows={3}
           />
         ) : (
-          <div className="text-base whitespace-pre-wrap">{widget.customText || ''}</div>
+          <div className="text-base whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+            {widget.customText || ''}
+          </div>
         )}
         {isOwnProfile && (
           <button
             onClick={() => onDelete(widget.id)}
-            className="absolute top-2 right-2 p-1 rounded-lg bg-white/20 hover:bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute top-2 right-2 p-1 rounded-lg bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <X className="w-4 h-4" />
           </button>
@@ -170,40 +205,98 @@ function Widget({ widget, stats, onTypeChange, onTextChange, onDelete, isOwnProf
   }
 
   return (
-    <div className={`bg-gradient-to-br ${info.color} rounded-2xl p-4 text-white shadow-lg relative group`}>
+    <div
+      className={`bg-gradient-to-br ${info.color} dark:from-${info.color.split('-')[1]}-900/20 dark:to-${
+        info.color.split('-')[1]
+      }-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group`}
+    >
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2">
-          {Icon && <Icon className="w-5 h-5" />}
+          {Icon && <Icon className={`w-5 h-5 ${info.textColor.split(' ')[0]}`} />}
           {isOwnProfile ? (
             <select
               value={widget.type}
               onChange={(e) => onTypeChange(widget.id, e.target.value)}
-              className="text-xs bg-white/20 backdrop-blur-sm rounded px-2 py-0.5 border-0 text-white"
+              className="text-xs bg-white dark:bg-gray-800 rounded px-2 py-0.5 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
             >
               {Object.entries(WIDGET_INFO).map(([type, info]) => (
-                <option key={type} value={type} className="text-gray-900">
+                <option key={type} value={type}>
                   {info.label}
                 </option>
               ))}
             </select>
           ) : (
-            <span className="text-xs opacity-90">{info.label}</span>
+            <span className="text-xs text-gray-600 dark:text-gray-400">{info.label}</span>
           )}
         </div>
         {isOwnProfile && (
           <button
             onClick={() => onDelete(widget.id)}
-            className="p-1 rounded-lg bg-white/20 hover:bg-white/30 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 rounded-lg bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
           >
             <X className="w-4 h-4" />
           </button>
         )}
       </div>
-      <div className="text-3xl font-bold">
+      <div className={`text-3xl font-bold ${info.textColor}`}>
         {value}
         <span className="text-lg font-normal ml-1">{unit}</span>
       </div>
-      {subtitle && <div className="text-sm opacity-80 mt-1">{subtitle}</div>}
+      {subtitle && <div className="text-sm text-gray-500 dark:text-gray-500 mt-1">{subtitle}</div>}
+    </div>
+  );
+}
+
+/**
+ * ウィジェット追加ボタン（サイドバー用）
+ */
+export function WidgetAddButton({ onAddRow }) {
+  const [showAddMenu, setShowAddMenu] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setShowAddMenu(!showAddMenu)}
+        className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+      >
+        <Plus className="w-5 h-5" />
+        カスタム要素を追加
+      </button>
+
+      {showAddMenu && (
+        <>
+          <div className="fixed inset-0 z-[100]" onClick={() => setShowAddMenu(false)} />
+          <div className="absolute left-0 mt-2 w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 z-[101]">
+            <button
+              onClick={() => {
+                onAddRow(1);
+                setShowAddMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-900 dark:text-white"
+            >
+              1列（1要素）
+            </button>
+            <button
+              onClick={() => {
+                onAddRow(2);
+                setShowAddMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-900 dark:text-white"
+            >
+              2列（2要素）
+            </button>
+            <button
+              onClick={() => {
+                onAddRow(3);
+                setShowAddMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-900 dark:text-white"
+            >
+              3列（3要素）
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -211,15 +304,31 @@ function Widget({ widget, stats, onTypeChange, onTextChange, onDelete, isOwnProf
 /**
  * プロフィールウィジェットマネージャー
  */
-export default function ProfileWidgetManager({ customId, token, isOwnProfile }) {
-  // ローカルストレージキー
-  const STORAGE_KEY = `profile_widgets_${customId}`;
+export default function ProfileWidgetManager({ customId, token, isOwnProfile, onAddRowCallback }) {
+  // ローカルストレージキー（データ構造変更のため v2 に更新）
+  const STORAGE_KEY = `profile_widgets_v2_${customId}`;
 
   // ローカルストレージから初期データを読み込み
   const [rows, setRows] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+
+      const data = JSON.parse(saved);
+
+      // データがフラット配列かチェック
+      if (Array.isArray(data)) {
+        // 各アイテムがwidgetプロパティを持つ（フラット構造）かチェック
+        const isFlat = data.every((item) => item && typeof item === 'object' && 'id' in item && 'type' in item);
+
+        if (isFlat) {
+          return data;
+        }
+      }
+
+      // 古いデータ構造の場合は空配列を返す
+      console.warn('古いデータ構造を検出しました。新しい構造に移行してください。');
+      return [];
     } catch (e) {
       console.error('ウィジェット読み込みエラー:', e);
       return [];
@@ -227,7 +336,6 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile }) 
   });
 
   const [stats, setStats] = useState(null);
-  const [showAddMenu, setShowAddMenu] = useState(false);
   const swapyRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -262,6 +370,20 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile }) 
     }
   }, [rows, STORAGE_KEY]);
 
+  // Swapyのonswapイベントハンドラ
+  const handleSwap = useCallback((event) => {
+    const { data } = event;
+    if (!data) return;
+
+    // data.arrayは新しい順序を表す配列 [{slotId, itemId}, ...]
+    const newOrder = data.array.map((slot) => slot.itemId);
+
+    setRows((prevRows) => {
+      const reordered = newOrder.map((itemId) => prevRows.find((widget) => widget.id === itemId)).filter(Boolean);
+      return reordered;
+    });
+  }, []);
+
   // Swapyの初期化
   useEffect(() => {
     if (!isOwnProfile || !containerRef.current) return;
@@ -276,6 +398,9 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile }) 
       animation: 'dynamic',
     });
 
+    // Swapイベントを監視
+    swapy.onSwap(handleSwap);
+
     swapyRef.current = swapy;
 
     return () => {
@@ -283,47 +408,39 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile }) 
         swapyRef.current.destroy();
       }
     };
-  }, [isOwnProfile, rows]);
+  }, [isOwnProfile, rows, handleSwap]);
 
-  // 行を追加
-  const addRow = (columns) => {
-    const newRow = {
-      id: `row-${Date.now()}`,
-      columns,
-      widgets: Array.from({ length: columns }, (_, i) => ({
-        id: `widget-${Date.now()}-${i}`,
-        type: WIDGET_TYPES.EMPTY,
-        customText: '',
-      })),
-    };
-    setRows([...rows, newRow]);
-    setShowAddMenu(false);
-  };
+  // ウィジェットを追加（列数分）
+  const addRow = useCallback((columns) => {
+    const newWidgets = Array.from({ length: columns }, (_, i) => ({
+      id: `widget-${Date.now()}-${i}`,
+      type: WIDGET_TYPES.EMPTY,
+      customText: '',
+      width: columns === 1 ? 'full' : columns === 2 ? 'half' : 'third',
+    }));
+    setRows((prevRows) => [...prevRows, ...newWidgets]);
+  }, []);
+
+  // 外部からのコールバック登録
+  useEffect(() => {
+    if (onAddRowCallback) {
+      onAddRowCallback(addRow);
+    }
+  }, [addRow, onAddRowCallback]);
 
   // ウィジェットタイプを変更
   const handleTypeChange = (widgetId, newType) => {
-    setRows(
-      rows.map((row) => ({
-        ...row,
-        widgets: row.widgets.map((w) => (w.id === widgetId ? { ...w, type: newType } : w)),
-      }))
-    );
+    setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, type: newType } : widget)));
   };
 
   // カスタムテキストを変更
   const handleTextChange = (widgetId, text) => {
-    setRows(
-      rows.map((row) => ({
-        ...row,
-        widgets: row.widgets.map((w) => (w.id === widgetId ? { ...w, customText: text } : w)),
-      }))
-    );
+    setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, customText: text } : widget)));
   };
 
   // ウィジェットを削除
   const handleDelete = (widgetId) => {
-    // ウィジェットが属する行を探して、その行を削除
-    setRows(rows.filter((row) => !row.widgets.some((w) => w.id === widgetId)));
+    setRows(rows.filter((widget) => widget.id !== widgetId));
   };
 
   // ウィジェットがない場合は何も表示しない
@@ -333,74 +450,30 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile }) 
 
   return (
     <div className="mt-8">
-      {isOwnProfile && (
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">カスタムウィジェット</h3>
-          <div className="relative">
-            <button
-              onClick={() => setShowAddMenu(!showAddMenu)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              要素を追加
-            </button>
-
-            {showAddMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 z-10">
-                <button
-                  onClick={() => addRow(1)}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                >
-                  1列（1要素）
-                </button>
-                <button
-                  onClick={() => addRow(2)}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                >
-                  2列（2要素）
-                </button>
-                <button
-                  onClick={() => addRow(3)}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
-                >
-                  3列（3要素）
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {rows.length === 0 && isOwnProfile ? (
         <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600">
           <Plus className="w-12 h-12 text-gray-400 mx-auto mb-3" />
           <p className="text-gray-600 dark:text-gray-400">「要素を追加」ボタンからウィジェットを追加してください</p>
         </div>
       ) : rows.length > 0 ? (
-        <div ref={containerRef} className="space-y-4">
-          {rows.map((row) => (
-            <div key={row.id} data-swapy-slot={row.id}>
-              <div
-                data-swapy-item={row.id}
-                className={`grid gap-4 ${
-                  row.columns === 1
-                    ? 'grid-cols-1'
-                    : row.columns === 2
-                    ? 'grid-cols-1 md:grid-cols-2'
-                    : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-                }`}
-              >
-                {row.widgets.map((widget) => (
-                  <Widget
-                    key={widget.id}
-                    widget={widget}
-                    stats={stats}
-                    onTypeChange={handleTypeChange}
-                    onTextChange={handleTextChange}
-                    onDelete={handleDelete}
-                    isOwnProfile={isOwnProfile}
-                  />
-                ))}
+        <div ref={containerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {rows.map((widget) => (
+            <div
+              key={widget.id}
+              data-swapy-slot={widget.id}
+              className={
+                widget.width === 'full' ? 'md:col-span-2 lg:col-span-3' : widget.width === 'half' ? 'lg:col-span-2' : ''
+              }
+            >
+              <div data-swapy-item={widget.id}>
+                <Widget
+                  widget={widget}
+                  stats={stats}
+                  onTypeChange={handleTypeChange}
+                  onTextChange={handleTextChange}
+                  onDelete={handleDelete}
+                  isOwnProfile={isOwnProfile}
+                />
               </div>
             </div>
           ))}
