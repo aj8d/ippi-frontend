@@ -24,33 +24,32 @@ export default function ActivityCalendar({ stats }) {
     availableYears.length > 0 ? (availableYears.includes(currentYear) ? currentYear : availableYears[0]) : currentYear;
   const [selectedYear, setSelectedYear] = useState(defaultYear);
 
-  // 早期リターンはHooks定義の後
-  if (!stats || stats.length === 0) {
-    return <p>統計データがありません</p>;
-  }
+  // データがない場合でもカレンダーを表示（現在の年で）
+  const displayYear = availableYears.length > 0 ? selectedYear : currentYear;
 
   // 日付をパース（YYYY-MM-DD形式と仮定、タイムゾーン対応）
   const parseDate = (dateStr) => new Date(dateStr + 'T00:00:00Z');
 
-  // 統計データをマップ化（日付 -> 分数）
-  const statsMap = {};
-  stats.forEach((day) => {
-    statsMap[day.date] = day.count;
-  });
-
   // 選択された年のデータでフィルタリング
-  const filteredStats = stats.filter((day) => {
-    const year = parseInt(day.date.substring(0, 4), 10);
-    return year === selectedYear;
-  });
+  const filteredStats =
+    stats && stats.length > 0
+      ? stats.filter((day) => {
+          const year = parseInt(day.date.substring(0, 4), 10);
+          return year === displayYear;
+        })
+      : [];
 
-  if (filteredStats.length === 0) {
-    return <p>選択された年のデータがありません</p>;
+  // フィルタリングされた統計データをマッピング
+  const statsMap = {};
+  if (filteredStats && filteredStats.length > 0) {
+    filteredStats.forEach((day) => {
+      statsMap[day.date] = day.count;
+    });
   }
 
   // 選択年の1月1日と12月31日を設定
-  const firstDate = parseDate(`${selectedYear}-01-01`);
-  const lastDate = parseDate(`${selectedYear}-12-31`);
+  const firstDate = parseDate(`${displayYear}-01-01`);
+  const lastDate = parseDate(`${displayYear}-12-31`);
 
   // カラースケール関数（分数に基づいて色を決定）
   const getColor = (minutes) => {
@@ -154,19 +153,23 @@ export default function ActivityCalendar({ stats }) {
 
         {/* 年選択タブ */}
         <div className="flex gap-2">
-          {availableYears.map((year) => (
-            <button
-              key={year}
-              onClick={() => setSelectedYear(year)}
-              className={
-                selectedYear === year
-                  ? 'px-3 py-1 rounded text-sm font-medium transition-colors bg-blue-600 text-white'
-                  : 'px-3 py-1 rounded text-sm font-medium transition-colors bg-white text-gray-700 hover:bg-gray-200'
-              }
-            >
-              {year}年
-            </button>
-          ))}
+          {availableYears.length > 0 ? (
+            availableYears.map((year) => (
+              <button
+                key={year}
+                onClick={() => setSelectedYear(year)}
+                className={
+                  selectedYear === year
+                    ? 'px-3 py-1 rounded text-sm font-medium transition-colors bg-blue-600 text-white'
+                    : 'px-3 py-1 rounded text-sm font-medium transition-colors bg-white text-gray-700 hover:bg-gray-200'
+                }
+              >
+                {year}年
+              </button>
+            ))
+          ) : (
+            <button className="px-3 py-1 rounded text-sm font-medium bg-blue-600 text-white">{currentYear}年</button>
+          )}
         </div>
       </div>
 

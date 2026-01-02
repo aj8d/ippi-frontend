@@ -2,7 +2,8 @@
  * useWidgets.js - ウィジェット管理カスタムフック
  *
  * 📚 このフックの役割：
- * - バックエンドからウィジェットを読み込む
+ * - ログイン時: バックエンドからウィジェットを読み込む
+ * - 非ログイン時: ローカルストレージからウィジェットを読み込む
  * - ウィジェットの変更を自動保存する（デバウンス付き）
  * - ウィジェットの追加・削除・更新を管理
  *
@@ -24,6 +25,8 @@ import { API_ENDPOINTS } from '../config';
  */
 let saveTimeoutId = null;
 
+const LOCAL_STORAGE_KEY = 'guestWidgets';
+
 export function useWidgets() {
   const { token } = useAuth();
 
@@ -36,11 +39,33 @@ export function useWidgets() {
   const initialLoadDone = useRef(false);
 
   /**
-   * 📚 バックエンドからウィジェットを読み込む
+   * 📚 ローカルストレージからウィジェットを読み込む（非ログイン時）
+   */
+  const loadFromLocalStorage = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        const parsedWidgets = JSON.parse(saved);
+        setWidgets(parsedWidgets);
+      } else {
+        setWidgets([]);
+      }
+      initialLoadDone.current = true;
+      setLoading(false);
+    } catch (err) {
+      console.error('ローカルストレージの読み込みエラー:', err);
+      setWidgets([]);
+      setLoading(false);
+    }
+  }, []);
+
+  /**
+   * 📚 バックエンドからウィジェットを読み込む（ログイン時）
    */
   const loadWidgets = useCallback(async () => {
     if (!token) {
-      setLoading(false);
+      // 非ログイン時はローカルストレージから読み込む
+      loadFromLocalStorage();
       return;
     }
 
@@ -66,16 +91,18 @@ export function useWidgets() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, loadFromLocalStorage]);
 
   /**
-   * 📚 バックエンドにウィジェットを保存
+   * 📚 ウィジェットを保存
+   * ログイン時: バックエンドに保存
+   * 非ログイン時: ローカルストレージに保存
    *
    * デバウンス付き: 1秒間変更がなければ保存
    */
   const saveWidgets = useCallback(
     async (widgetsToSave) => {
-      if (!token || !initialLoadDone.current) return;
+      if (!initialLoadDone.current) return;
 
       // 既存のタイマーをクリア
       if (saveTimeoutId) {
@@ -84,23 +111,34 @@ export function useWidgets() {
 
       // 📚 1秒後に保存（デバウンス）
       saveTimeoutId = setTimeout(async () => {
-        try {
-          const response = await fetch(API_ENDPOINTS.WIDGETS.BASE, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(widgetsToSave),
-          });
-
-          if (!response.ok) {
-            throw new Error('保存に失敗しました');
+        if (!token) {
+          // 非ログイン時: ローカルストレージに保存
+          try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(widgetsToSave));
+            console.log('✅ ローカルストレージに保存完了');
+          } catch (err) {
+            console.error('ローカルストレージ保存エラー:', err);
           }
+        } else {
+          // ログイン時: バックエンドに保存
+          try {
+            const response = await fetch(API_ENDPOINTS.WIDGETS.BASE, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(widgetsToSave),
+            });
 
-          console.log('✅ ウィジェット保存完了');
-        } catch (err) {
-          console.error('Save widgets error:', err);
+            if (!response.ok) {
+              throw new Error('保存に失敗しました');
+            }
+
+            console.log('✅ ウィジェット保存完了');
+          } catch (err) {
+            console.error('Save widgets error:', err);
+          }
         }
       }, 1000);
     },

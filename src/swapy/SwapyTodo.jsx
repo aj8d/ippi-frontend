@@ -3,6 +3,8 @@ import { Plus, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
 
+const LOCAL_STORAGE_KEY = 'guestTodos';
+
 function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
   const [todos, setTodos] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -11,7 +13,37 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
   const [selectedTodoId, setSelectedTodoId] = useState(null); // 選択されたTODO ID
   const { token } = useAuth();
 
+  // ローカルストレージから読み込み
+  const loadFromLocalStorage = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        setTodos(JSON.parse(saved));
+      } else {
+        setTodos([]);
+      }
+    } catch (err) {
+      console.error('ローカルストレージの読み込みエラー:', err);
+      setTodos([]);
+    }
+  }, []);
+
+  // ローカルストレージに保存
+  const saveToLocalStorage = useCallback((todosToSave) => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todosToSave));
+    } catch (err) {
+      console.error('ローカルストレージ保存エラー:', err);
+    }
+  }, []);
+
   const fetchTodos = useCallback(async () => {
+    if (!token) {
+      // 非ログイン時はローカルストレージから読み込む
+      loadFromLocalStorage();
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch(API_ENDPOINTS.TEXT_DATA.BASE, {
@@ -29,10 +61,23 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, loadFromLocalStorage]);
 
   const updateTodoTimer = useCallback(
     async (todoId, seconds) => {
+      if (!token) {
+        // 非ログイン時: ローカルストレージで更新
+        setTodos((prevTodos) => {
+          const updatedTodos = prevTodos.map((todo) =>
+            todo.id === todoId ? { ...todo, timerSeconds: Math.round(seconds) } : todo
+          );
+          saveToLocalStorage(updatedTodos);
+          return updatedTodos;
+        });
+        return;
+      }
+
+      // ログイン時: バックエンドに保存
       try {
         const updateData = { timerSeconds: Math.round(seconds) };
         const jsonBody = JSON.stringify(updateData);
@@ -50,15 +95,13 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
         console.error('Failed to update todo timer:', err);
       }
     },
-    [token]
+    [token, saveToLocalStorage]
   );
 
-  // バックエンドから TODO を取得
+  // バックエンドまたはローカルストレージから TODO を取得
   useEffect(() => {
-    if (token) {
-      fetchTodos();
-    }
-  }, [token, fetchTodos]);
+    fetchTodos();
+  }, [fetchTodos]);
 
   // timerSeconds が更新されたとき（タイマー停止/完了時のみ）、選択された TODO の timerSeconds を更新
   useEffect(() => {
@@ -70,6 +113,22 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
   const addTodo = async () => {
     if (!inputValue.trim()) return;
 
+    if (!token) {
+      // 非ログイン時: ローカルストレージに保存
+      const newTodo = {
+        id: Date.now(), // 一意のIDを生成
+        text: inputValue,
+        timerSeconds: 0,
+      };
+      const updatedTodos = [...todos, newTodo];
+      setTodos(updatedTodos);
+      saveToLocalStorage(updatedTodos);
+      setInputValue('');
+      setError('');
+      return;
+    }
+
+    // ログイン時: バックエンドに保存
     try {
       const todoData = {
         text: inputValue,
@@ -108,6 +167,22 @@ function SwapyTodo({ timerSeconds, onSelectedTodoChange }) {
   };
 
   const completeTodo = async (id) => {
+    if (!token) {
+      // 非ログイン時: ローカルストレージから削除
+      const updatedTodos = todos.filter((todo) => todo.id !== id);
+      setTodos(updatedTodos);
+      saveToLocalStorage(updatedTodos);
+      setError('');
+      if (selectedTodoId === id) {
+        setSelectedTodoId(null);
+        if (onSelectedTodoChange) {
+          onSelectedTodoChange(null);
+        }
+      }
+      return;
+    }
+
+    // ログイン時: バックエンドから削除
     try {
       const response = await fetch(API_ENDPOINTS.TEXT_DATA.BY_ID(id), {
         method: 'DELETE',

@@ -3,14 +3,16 @@
  *
  * 📚 このコンポーネントの役割：
  * - タスクの追加・完了・削除
- * - バックエンドと同期（CRUD操作）
- * - タイマーと連携可能
+ * - ログイン時: バックエンドと同期
+ * - 非ログイン時: ローカルストレージで動作
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { API_ENDPOINTS } from '../../config';
+
+const LOCAL_STORAGE_KEY = 'guestTodos';
 
 function TodoWidget() {
   const { token } = useAuth();
@@ -22,20 +24,51 @@ function TodoWidget() {
   const [error, setError] = useState(''); // エラーメッセージ
 
   /**
-   * 📚 バックエンドからTODOを取得
-   *
-   * useCallback = 関数をメモ化（不要な再生成を防ぐ）
-   * token が変わった時だけ関数を再生成
+   * 📚 ローカルストレージから読み込み（非ログイン時）
+   */
+  const loadFromLocalStorage = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        setTodos(JSON.parse(saved));
+      } else {
+        setTodos([]);
+      }
+    } catch (err) {
+      console.error('ローカルストレージの読み込みエラー:', err);
+      setTodos([]);
+    }
+  }, []);
+
+  /**
+   * 📚 ローカルストレージに保存（非ログイン時）
+   */
+  const saveToLocalStorage = useCallback((todosToSave) => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(todosToSave));
+    } catch (err) {
+      console.error('ローカルストレージ保存エラー:', err);
+    }
+  }, []);
+
+  /**
+   * 📚 TODOを取得（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
    */
   const fetchTodos = useCallback(async () => {
+    if (!token) {
+      // 非ログイン時: ローカルストレージから読み込む
+      loadFromLocalStorage();
+      return;
+    }
+
+    // ログイン時: バックエンドから取得
     try {
       setLoading(true);
 
-      // 📚 fetch API でバックエンドにリクエスト
       const response = await fetch(API_ENDPOINTS.TEXT_DATA.BASE, {
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          Authorization: `Bearer ${token}`, // JWT認証トークン
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -48,33 +81,43 @@ function TodoWidget() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, loadFromLocalStorage]);
 
   /**
    * 📚 コンポーネントマウント時にTODOを取得
-   *
-   * useEffect の第2引数（依存配列）が空 = マウント時のみ実行
-   * [token, fetchTodos] = token か fetchTodos が変わったら再実行
    */
   useEffect(() => {
-    if (token) {
-      fetchTodos();
-    }
-  }, [token, fetchTodos]);
+    fetchTodos();
+  }, [fetchTodos]);
 
   /**
-   * 📚 TODOを追加
+   * 📚 TODOを追加（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
    */
   const addTodo = async () => {
     if (!inputValue.trim()) return;
 
+    if (!token) {
+      // 非ログイン時: ローカルストレージに保存
+      const newTodo = {
+        id: Date.now(), // 一意のIDを生成
+        text: inputValue,
+        timerSeconds: 0,
+      };
+      const updatedTodos = [...todos, newTodo];
+      setTodos(updatedTodos);
+      saveToLocalStorage(updatedTodos);
+      setInputValue('');
+      setError('');
+      return;
+    }
+
+    // ログイン時: バックエンドに保存
     try {
       const todoData = {
         text: inputValue,
         timerSeconds: 0,
       };
 
-      // 📚 POST リクエストで新しいTODOを作成
       const response = await fetch(API_ENDPOINTS.TEXT_DATA.BASE, {
         method: 'POST',
         headers: {
@@ -86,7 +129,6 @@ function TodoWidget() {
 
       if (response.ok) {
         const newTodo = await response.json();
-        // 📚 スプレッド演算子で既存配列に追加
         setTodos([...todos, newTodo]);
         setInputValue('');
         setError('');
@@ -98,11 +140,20 @@ function TodoWidget() {
   };
 
   /**
-   * 📚 TODOを削除（完了）
+   * 📚 TODOを削除（完了）（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
    */
   const completeTodo = async (id) => {
+    if (!token) {
+      // 非ログイン時: ローカルストレージから削除
+      const updatedTodos = todos.filter((todo) => todo.id !== id);
+      setTodos(updatedTodos);
+      saveToLocalStorage(updatedTodos);
+      setError('');
+      return;
+    }
+
+    // ログイン時: バックエンドから削除
     try {
-      // 📚 DELETE リクエストでTODOを削除
       const response = await fetch(API_ENDPOINTS.TEXT_DATA.BY_ID(id), {
         method: 'DELETE',
         headers: {
@@ -112,7 +163,6 @@ function TodoWidget() {
       });
 
       if (response.ok) {
-        // 📚 filter で該当IDを除外した新しい配列を作成
         setTodos(todos.filter((todo) => todo.id !== id));
         setError('');
       }

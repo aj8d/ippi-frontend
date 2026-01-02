@@ -6,6 +6,7 @@ import {
   X,
   Settings,
   LogOut,
+  LogIn,
   Timer,
   ListTodo,
   StickyNote,
@@ -361,18 +362,20 @@ function Sidebar({
             >
               <Search className={`w-5 h-5 ${isSearchPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
-            <button
-              onClick={handleFeedClick}
-              className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
-              onMouseEnter={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setTooltip('フィード');
-                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-              }}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
-            </button>
+            {user && (
+              <button
+                onClick={handleFeedClick}
+                className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setTooltip('フィード');
+                  setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+                }}
+                onMouseLeave={() => setTooltip(null)}
+              >
+                <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
+              </button>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
@@ -400,18 +403,20 @@ function Sidebar({
             >
               <Search className={`w-5 h-5 ${isSearchPage ? 'text-blue-600' : 'text-gray-600'}`} />
             </button>
-            <button
-              onClick={handleFeedClick}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              onMouseEnter={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setTooltip('フィード');
-                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-              }}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
-            </button>
+            {user && (
+              <button
+                onClick={handleFeedClick}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setTooltip('フィード');
+                  setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+                }}
+                onMouseLeave={() => setTooltip(null)}
+              >
+                <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -728,28 +733,42 @@ function Sidebar({
 
       {/* フッター */}
       <div className="p-4 border-t border-gray-200 space-y-2">
-        {/* 📊 統計ボタン */}
-        <button
-          onClick={handleStatsClick}
-          className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
-        >
-          <BarChart3 className="w-5 h-5 flex-shrink-0" />
-          {isOpen && <span className="text-sm font-medium">統計</span>}
-        </button>
-        <button
-          onClick={handleProfileClick}
-          className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
-        >
-          <Settings className="w-5 h-5 flex-shrink-0" />
-          {isOpen && <span className="text-sm font-medium">プロフィール</span>}
-        </button>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-        >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
-          {isOpen && <span className="text-sm font-medium">ログアウト</span>}
-        </button>
+        {user ? (
+          // ログイン時：統計、プロフィール、ログアウトを表示
+          <>
+            {/* 📊 統計ボタン */}
+            <button
+              onClick={handleStatsClick}
+              className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
+            >
+              <BarChart3 className="w-5 h-5 flex-shrink-0" />
+              {isOpen && <span className="text-sm font-medium">統計</span>}
+            </button>
+            <button
+              onClick={handleProfileClick}
+              className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
+            >
+              <Settings className="w-5 h-5 flex-shrink-0" />
+              {isOpen && <span className="text-sm font-medium">プロフィール</span>}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              {isOpen && <span className="text-sm font-medium">ログアウト</span>}
+            </button>
+          </>
+        ) : (
+          // ログオフ時：ログインボタンのみ表示
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full flex items-center gap-4 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+          >
+            <LogIn className="w-5 h-5 flex-shrink-0" />
+            {isOpen && <span className="text-sm font-medium">ログイン</span>}
+          </button>
+        )}
       </div>
 
       {/* タイマー設定モーダル（Portalで画面全体に表示） */}

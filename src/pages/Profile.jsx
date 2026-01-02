@@ -9,7 +9,7 @@ import { UserPlus, UserMinus, Users, MoreVertical, Edit, Upload } from 'lucide-r
 import { API_ENDPOINTS, API_BASE_URL } from '../config';
 
 export default function Profile() {
-  const { user, logout, token } = useAuth();
+  const { user, token } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -148,16 +148,15 @@ export default function Profile() {
     }
   };
 
-  // スタッツ取得（自分のプロフィール＆ログイン状態）
+  // スタッツ取得（全てのプロフィールで表示可能）
   useEffect(() => {
-    if (!isOwnProfile || !token) return;
+    if (!userCustomId) return;
 
     const fetchStats = async () => {
       try {
-        const response = await fetch(API_ENDPOINTS.AUTH.STATS, {
+        const response = await fetch(API_ENDPOINTS.USER_STATS.BY_CUSTOM_ID(userCustomId), {
           method: 'GET',
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         });
@@ -174,12 +173,7 @@ export default function Profile() {
     };
 
     fetchStats();
-  }, [isOwnProfile, token]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  }, [userCustomId]);
 
   const fetchLatestProfile = async () => {
     if (!token) return;
@@ -427,7 +421,7 @@ export default function Profile() {
           </div> */}
 
           {/* GitHub-style アクティビティカレンダーを追加 */}
-          {stats && stats.length > 0 && <ActivityCalendar stats={stats} />}
+          <ActivityCalendar stats={stats || []} />
 
           {/* 動的ウィジェットマネージャー（Swapy対応） */}
           <ProfileWidgetManager
@@ -437,7 +431,7 @@ export default function Profile() {
             onAddRowCallback={(addRowFunc) => setAddRowFunction(() => addRowFunc)}
           />
 
-          <div className="mt-5">
+          {/* <div className="mt-5">
             {isOwnProfile ? (
               <>
                 <button onClick={handleLogout} className="mr-2.5 px-3 py-2 bg-gray-300 rounded hover:bg-gray-400">
@@ -452,7 +446,7 @@ export default function Profile() {
                 ホームへ戻る
               </button>
             )}
-          </div>
+          </div> */}
         </div>
       </div>
 
