@@ -71,7 +71,7 @@ export default function CustomElementButtons({ isOpen, addRowFunction, onTooltip
             }}
             onMouseLeave={() => onTooltip(null)}
           >
-            <Columns2 className="w-4 h-4" />
+            <PanelRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => addRowFunction('1-2')}
@@ -82,7 +82,7 @@ export default function CustomElementButtons({ isOpen, addRowFunction, onTooltip
             }}
             onMouseLeave={() => onTooltip(null)}
           >
-            <Columns2 className="w-4 h-4" />
+            <PanelLeft className="w-4 h-4" />
           </button>
           <button
             onClick={() => addRowFunction(3)}
