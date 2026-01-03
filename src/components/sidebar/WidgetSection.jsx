@@ -133,7 +133,7 @@ export default function WidgetSection({
 
   // Closed sidebar
   return (
-    <div className="p-4 border-t border-gray-200">
+    <div className="p-4">
       <div className="flex flex-col items-center gap-2">
         {/* タイマー設定（アイコンのみ） */}
         <button
@@ -215,7 +215,7 @@ export default function WidgetSection({
                   stickyWidgets.forEach((w) => onRemoveWidget?.(w.id));
                   onDeleteMenuToggle(false);
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm whitespace-nowrap"
+                className="flex w-full items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm whitespace-nowrap"
               >
                 <span>付箋を全て削除</span>
               </button>
@@ -225,7 +225,7 @@ export default function WidgetSection({
                   imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
                   onDeleteMenuToggle(false);
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm whitespace-nowrap"
+                className="flex  w-full items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm whitespace-nowrap"
               >
                 <span>画像を全て削除</span>
               </button>
@@ -235,7 +235,7 @@ export default function WidgetSection({
                   allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
                   onDeleteMenuToggle(false);
                 }}
-                className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm border-t border-gray-200 whitespace-nowrap"
+                className="flex w-full items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm border-t border-gray-200 whitespace-nowrap"
               >
                 <span>全ての要素を削除</span>
               </button>
