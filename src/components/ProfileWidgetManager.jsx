@@ -278,12 +278,21 @@ export function WidgetAddButton({ onAddRow }) {
             </button>
             <button
               onClick={() => {
-                onAddRow(2);
+                onAddRow('2-1');
                 setShowAddMenu(false);
               }}
               className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-900 dark:text-white"
             >
-              2列（2要素）
+              2列（2/3 + 1/3）
+            </button>
+            <button
+              onClick={() => {
+                onAddRow('1-2');
+                setShowAddMenu(false);
+              }}
+              className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-900 dark:text-white"
+            >
+              2列（1/3 + 2/3）
             </button>
             <button
               onClick={() => {
@@ -410,14 +419,65 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
     };
   }, [isOwnProfile, rows, handleSwap]);
 
-  // ウィジェットを追加（列数分）
-  const addRow = useCallback((columns) => {
-    const newWidgets = Array.from({ length: columns }, (_, i) => ({
-      id: `widget-${Date.now()}-${i}`,
-      type: WIDGET_TYPES.EMPTY,
-      customText: '',
-      width: columns === 1 ? 'full' : columns === 2 ? 'half' : 'third',
-    }));
+  // ウィジェットを追加（列数分または特定パターン）
+  const addRow = useCallback((pattern) => {
+    let newWidgets;
+
+    if (pattern === 1) {
+      // 1列（全幅）
+      newWidgets = [
+        {
+          id: `widget-${Date.now()}-0`,
+          type: WIDGET_TYPES.EMPTY,
+          customText: '',
+          width: 'full',
+        },
+      ];
+    } else if (pattern === '2-1') {
+      // 2/3 + 1/3
+      newWidgets = [
+        {
+          id: `widget-${Date.now()}-0`,
+          type: WIDGET_TYPES.EMPTY,
+          customText: '',
+          width: 'two-thirds',
+        },
+        {
+          id: `widget-${Date.now()}-1`,
+          type: WIDGET_TYPES.EMPTY,
+          customText: '',
+          width: 'one-third',
+        },
+      ];
+    } else if (pattern === '1-2') {
+      // 1/3 + 2/3
+      newWidgets = [
+        {
+          id: `widget-${Date.now()}-0`,
+          type: WIDGET_TYPES.EMPTY,
+          customText: '',
+          width: 'one-third',
+        },
+        {
+          id: `widget-${Date.now()}-1`,
+          type: WIDGET_TYPES.EMPTY,
+          customText: '',
+          width: 'two-thirds',
+        },
+      ];
+    } else if (pattern === 3) {
+      // 3列（各1/3）
+      newWidgets = Array.from({ length: 3 }, (_, i) => ({
+        id: `widget-${Date.now()}-${i}`,
+        type: WIDGET_TYPES.EMPTY,
+        customText: '',
+        width: 'third',
+      }));
+    } else {
+      // デフォルト
+      newWidgets = [];
+    }
+
     setRows((prevRows) => [...prevRows, ...newWidgets]);
   }, []);
 
@@ -456,16 +516,22 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
           <p className="text-gray-600 dark:text-gray-400">「要素を追加」ボタンからウィジェットを追加してください</p>
         </div>
       ) : rows.length > 0 ? (
-        <div ref={containerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div ref={containerRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 select-none">
           {rows.map((widget) => (
             <div
               key={widget.id}
               data-swapy-slot={widget.id}
               className={
-                widget.width === 'full' ? 'md:col-span-2 lg:col-span-3' : widget.width === 'half' ? 'lg:col-span-2' : ''
+                widget.width === 'full'
+                  ? 'md:col-span-2 lg:col-span-3 select-none'
+                  : widget.width === 'two-thirds'
+                  ? 'md:col-span-2 lg:col-span-2 select-none'
+                  : widget.width === 'one-third'
+                  ? 'md:col-span-2 lg:col-span-1 select-none'
+                  : 'lg:col-span-1 select-none'
               }
             >
-              <div data-swapy-item={widget.id}>
+              <div data-swapy-item={widget.id} className="select-none">
                 <Widget
                   widget={widget}
                   stats={stats}

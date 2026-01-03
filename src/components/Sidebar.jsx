@@ -24,6 +24,8 @@ import {
   Columns2,
   Columns3,
   Settings2,
+  PanelLeft,
+  PanelRight,
 } from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'motion/react';
@@ -436,10 +438,17 @@ function Sidebar({
                   <span>1列追加</span>
                 </button>
                 <button
-                  onClick={() => addRowFunction(2)}
+                  onClick={() => addRowFunction('2-1')}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
                 >
-                  <Columns2 className="w-4 h-4" />
+                  <PanelRight className="w-4 h-4" />
+                  <span>2列追加</span>
+                </button>
+                <button
+                  onClick={() => addRowFunction('1-2')}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
+                >
+                  <PanelLeft className="w-4 h-4" />
                   <span>2列追加</span>
                 </button>
                 <button
@@ -467,11 +476,23 @@ function Sidebar({
                   <Square className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => addRowFunction(2)}
+                  onClick={() => addRowFunction('2-1')}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   onMouseEnter={(e) => {
                     const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip('2列追加');
+                    setTooltip('2列（2/3 + 1/3）');
+                    setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                >
+                  <Columns2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => addRowFunction('1-2')}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  onMouseEnter={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setTooltip('2列（1/3 + 2/3）');
                     setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
                   }}
                   onMouseLeave={() => setTooltip(null)}
