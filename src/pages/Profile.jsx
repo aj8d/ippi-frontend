@@ -1,202 +1,53 @@
 import { useAuth } from '../auth/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import ActivityCalendar from '../components/ActivityCalendar';
 import StatsWidget from '../components/StatsWidget';
 import Sidebar from '../components/Sidebar';
 import ProfileWidgetManager, { WidgetAddButton } from '../components/ProfileWidgetManager';
 import { UserPlus, UserMinus, Users, MoreVertical, Edit, Upload } from 'lucide-react';
 import { API_ENDPOINTS, API_BASE_URL } from '../config';
+import { useProfile } from '../hooks/useProfile';
+import { useProfileFollow } from '../hooks/useProfileFollow';
+import { useStats } from '../hooks/useStats';
 
 export default function Profile() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [stats, setStats] = useState(null);
+  // カスタムフックで状態管理を分離
+  const {
+    profileImageUrl,
+    setProfileImageUrl,
+    userName,
+    setUserName,
+    userDescription,
+    setUserDescription,
+    userCustomId,
+    setUserCustomId,
+    profileUserId,
+    isOwnProfile,
+    loading,
+    fetchLatestProfile,
+  } = useProfile(id, user);
+
+  const stats = useStats(userCustomId);
+  const { followStats, isFollowLoading, handleFollowToggle } = useProfileFollow(profileUserId, token);
+
+  // 残りのローカルステート
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem('sidebarOpen');
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [uploading, setUploading] = useState(false);
-  const [profileImageUrl, setProfileImageUrl] = useState(null);
   const [uploadError, setUploadError] = useState(null);
-  const [userName, setUserName] = useState('');
-  const [userDescription, setUserDescription] = useState('');
-  const [userCustomId, setUserCustomId] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [customIdError, setCustomIdError] = useState('');
   const [editingCustomId, setEditingCustomId] = useState('');
-
-  // フォロー関連のステート
-  const [profileUserId, setProfileUserId] = useState(null);
-  const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0, isFollowing: false });
-  const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [addRowFunction, setAddRowFunction] = useState(null);
-
-  // ログイン後のプロフィール初期化
-  useEffect(() => {
-    if (user && !id) {
-      // ログイン中で URL に id がない場合は、自分の customId で自動リダイレクト
-      if (user.customId) {
-        navigate(`/${user.customId}`, { replace: true });
-      }
-    }
-  }, [user, id, navigate]);
-
-  // URL パラメータでプロフィールを取得
-  useEffect(() => {
-    if (!id) {
-      return;
-    }
-
-    const fetchProfileById = async () => {
-      try {
-        const response = await fetch(API_ENDPOINTS.AUTH.PROFILE_BY_ID(id), {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setProfileImageUrl(data.profileImageUrl);
-          setUserName(data.name);
-          setUserDescription(data.description || '');
-          setUserCustomId(data.customId || '');
-          setProfileUserId(data.userId);
-          // 自分のプロフィールか判定（ログイン中で customId が一致）
-          setIsOwnProfile(user && user.customId === id);
-        } else {
-          console.error('Failed to fetch profile');
-        }
-      } catch (error) {
-        console.error('Error fetching profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    setLoading(true);
-    fetchProfileById();
-  }, [id, user]);
-
-  // フォロー統計取得
-  const fetchFollowStats = useCallback(async () => {
-    if (!profileUserId) return;
-
-    try {
-      const headers = token
-        ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-        : { 'Content-Type': 'application/json' };
-
-      const response = await fetch(API_ENDPOINTS.FOLLOW.STATS(profileUserId), {
-        headers,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFollowStats(data);
-      }
-    } catch (error) {
-      console.error('フォロー統計取得エラー:', error);
-    }
-  }, [profileUserId, token]);
-
-  useEffect(() => {
-    fetchFollowStats();
-  }, [fetchFollowStats]);
-
-  // フォロー/アンフォロー
-  const handleFollowToggle = async () => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    if (!profileUserId) return;
-
-    setIsFollowLoading(true);
-    const method = followStats.isFollowing ? 'DELETE' : 'POST';
-
-    try {
-      const response = await fetch(API_ENDPOINTS.FOLLOW.BASE(profileUserId), {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFollowStats((prev) => ({
-          ...prev,
-          isFollowing: !prev.isFollowing,
-          followersCount: data.followersCount,
-        }));
-      }
-    } catch (error) {
-      console.error('フォロー操作エラー:', error);
-    } finally {
-      setIsFollowLoading(false);
-    }
-  };
-
-  // スタッツ取得（全てのプロフィールで表示可能）
-  useEffect(() => {
-    if (!userCustomId) return;
-
-    const fetchStats = async () => {
-      try {
-        const response = await fetch(API_ENDPOINTS.USER_STATS.BY_CUSTOM_ID(userCustomId), {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setStats(data.stats);
-        } else {
-          console.error('Failed to fetch stats');
-        }
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      }
-    };
-
-    fetchStats();
-  }, [userCustomId]);
-
-  const fetchLatestProfile = async () => {
-    if (!token) return;
-    try {
-      const response = await fetch(API_ENDPOINTS.AUTH.PROFILE, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setProfileImageUrl(data.profileImageUrl);
-        setUserName(data.name);
-        setUserDescription(data.description || '');
-        setUserCustomId(data.customId || '');
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
 
   const handleSaveProfile = async () => {
     if (editingCustomId && editingCustomId.length < 3) {

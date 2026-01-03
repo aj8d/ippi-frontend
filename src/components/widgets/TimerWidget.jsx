@@ -9,14 +9,12 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { Play, Pause, Square, SkipForward, X } from 'lucide-react';
+import { Play, Pause, Square, SkipForward } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useTimer } from '../../contexts/TimerContext';
 import { API_ENDPOINTS } from '../../config';
-
-// 📚 デフォルトのポモドーロセクション
-const DEFAULT_SECTIONS = [{ id: 1, workMinutes: '25', workSeconds: '0', breakMinutes: '5', breakSeconds: '0' }];
+import { DEFAULT_SECTIONS, getTimeFromSection, formatTime } from './timerUtils';
+import TimerCompletionModal from './TimerCompletionModal';
 
 function TimerWidget({ settings = {} }) {
   const { token } = useAuth();
@@ -49,9 +47,7 @@ function TimerWidget({ settings = {} }) {
   const pausedElapsedRef = useRef(0); // 一時停止時の経過時間
 
   // 📚 累積作業時間をトラッキング（秒）
-  // eslint-disable-next-line no-unused-vars
-  const [totalWorkTime, setTotalWorkTime] = useState(0);
-  // eslint-disable-next-line no-unused-vars
+  const [_totalWorkTime, setTotalWorkTime] = useState(0);
   const [completedWorkSessions, setCompletedWorkSessions] = useState(0);
   const totalWorkTimeRef = useRef(0);
 
@@ -135,16 +131,9 @@ function TimerWidget({ settings = {} }) {
 
   /**
    * 📚 セクションから時間（秒）を計算
+   * (timerUtilsからインポート済みなのでコメントアウト)
    */
-  const getTimeFromSection = useCallback((section, isWork) => {
-    if (isWork) {
-      const mins = parseInt(section.workMinutes) || 0;
-      return mins * 60;
-    } else {
-      const mins = parseInt(section.breakMinutes) || 0;
-      return mins * 60;
-    }
-  }, []);
+  // const getTimeFromSection = ... は timerUtils.js に移動済み
 
   /**
    * 📚 次のフェーズに進む
@@ -252,7 +241,7 @@ function TimerWidget({ settings = {} }) {
         pausedElapsedRef.current = 0;
       }
     },
-    [getTimeFromSection, saveWorkTimeToBackend]
+    [saveWorkTimeToBackend]
   );
 
   /**
@@ -302,22 +291,13 @@ function TimerWidget({ settings = {} }) {
     };
   }, [isRunning, totalTime, goToNextPhase, elapsedTime]);
 
-  // 📚 進捗率の計算
+  // 📚 進捗率の計算（timerUtils.calculateProgressを使用可能だが、ここでは互換性のため維持）
   const progress = totalTime > 0 ? (elapsedTime / totalTime) * 100 : 0;
 
   // 📚 SVG円の計算
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
-
-  /**
-   * 📚 秒数を「MM:SS」形式に変換
-   */
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   /**
    * 📚 表示モードに応じた値を返す
@@ -366,7 +346,7 @@ function TimerWidget({ settings = {} }) {
       phaseStartTimeRef.current = null;
       pausedElapsedRef.current = 0;
     }
-  }, [sections, getTimeFromSection]);
+  }, [sections]);
 
   /**
    * 📚 停止ボタンの処理
@@ -563,37 +543,15 @@ function TimerWidget({ settings = {} }) {
       </div>
 
       {/* 📚 完了モーダル（Portalで画面全体に表示） */}
-      {showCompletionModal &&
-        createPortal(
-          <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
-            onClick={() => {
-              setShowCompletionModal(false);
-              handleStop();
-            }}
-          >
-            <div
-              className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-[90%] text-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="text-6xl mb-4">🎉</div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">完了！</h2>
-              <p className="text-gray-600 mb-6">
-                {totalCycles}サイクル ({sections.length}セクション × {totalCycles}) を完了しました！
-              </p>
-              <button
-                onClick={() => {
-                  setShowCompletionModal(false);
-                  handleStop();
-                }}
-                className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-              >
-                閉じる
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
+      <TimerCompletionModal
+        show={showCompletionModal}
+        totalCycles={totalCycles}
+        sectionsLength={sections.length}
+        onClose={() => {
+          setShowCompletionModal(false);
+          handleStop();
+        }}
+      />
     </div>
   );
 }

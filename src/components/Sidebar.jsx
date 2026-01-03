@@ -1,61 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Menu,
-  X,
-  Settings,
-  LogOut,
-  LogIn,
-  Timer,
-  ListTodo,
-  StickyNote,
-  Image,
-  Flame,
-  Plus,
-  Trash2,
-  Home,
-  Search,
-  MessageSquareHeart,
-  BarChart3,
-  ArrowLeftFromLine,
-  ArrowRightFromLine,
-  Square,
-  Columns2,
-  Columns3,
-  Settings2,
-  PanelLeft,
-  PanelRight,
-} from 'lucide-react';
-// eslint-disable-next-line no-unused-vars
-import { AnimatePresence, motion } from 'motion/react';
+import { ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useTimer } from '../contexts/TimerContext';
 import StatsModal from './StatsModal';
 import TimerWarningModal from './TimerWarningModal';
-import { WidgetAddButton } from './ProfileWidgetManager';
-
-/**
- * 📚 一意のウィジェット（1つしか追加できない）
- *
- * unique: true = キャンバスに1つだけ
- * 再クリックで削除される
- */
-const UNIQUE_WIDGETS = [
-  { id: 'timer', icon: Timer, label: 'タイマー', defaultSize: { width: 250, height: 320 } },
-  { id: 'todo', icon: ListTodo, label: 'TODO', defaultSize: { width: 280, height: 350 } },
-  { id: 'streak', icon: Flame, label: 'ストリーク', defaultSize: { width: 180, height: 180 } },
-];
-
-/**
- * 📚 複数追加可能なウィジェット
- *
- * クリックするたびに新しいインスタンスが追加される
- */
-const MULTIPLE_WIDGETS = [
-  { id: 'sticky', icon: StickyNote, label: '付箋', defaultSize: { width: 200, height: 200 } },
-  { id: 'image', icon: Image, label: '画像', defaultSize: { width: 250, height: 250 } },
-];
+import SidebarNavigation from './sidebar/SidebarNavigation';
+import WidgetSection from './sidebar/WidgetSection';
+import CustomElementButtons from './sidebar/CustomElementButtons';
+import SidebarFooter from './sidebar/SidebarFooter';
+import TimerSettingsModal from './sidebar/TimerSettingsModal';
 
 /**
  * Sidebar コンポーネント
@@ -296,6 +251,11 @@ function Sidebar({
     };
   }, [isTimerRunning]);
 
+  const handleTooltip = (text, pos = null) => {
+    setTooltip(text);
+    if (pos) setTooltipPos(pos);
+  };
+
   return (
     <div
       className={`${
@@ -317,631 +277,83 @@ function Sidebar({
               className="w-5 h-5 text-gray-600"
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                setTooltip('折りたたむ');
-                setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
+                handleTooltip('折りたたむ', { x: rect.right + 20, y: rect.top + rect.height / 2 });
               }}
-              onMouseLeave={() => setTooltip(null)}
+              onMouseLeave={() => handleTooltip(null)}
             />
           ) : (
             <ArrowRightFromLine
               className="w-5 h-5 text-gray-600"
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                setTooltip('展開');
-                setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
+                handleTooltip('展開', { x: rect.right + 20, y: rect.top + rect.height / 2 });
               }}
-              onMouseLeave={() => setTooltip(null)}
+              onMouseLeave={() => handleTooltip(null)}
             />
           )}
         </button>
       </div>
 
-      {/* アイコンナビゲーション */}
-      <div className="border-b border-gray-200 p-4">
-        {isOpen ? (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleHomeClick}
-              className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
-              onMouseEnter={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setTooltip('ホーム');
-                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-              }}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              <Home className={`w-5 h-5 ${isHomePage ? 'text-blue-600' : 'text-gray-600'}`} />
-            </button>
-            <button
-              onClick={handleSearchClick}
-              className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
-              onMouseEnter={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setTooltip('検索');
-                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-              }}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              <Search className={`w-5 h-5 ${isSearchPage ? 'text-blue-600' : 'text-gray-600'}`} />
-            </button>
-            {user && (
-              <button
-                onClick={handleFeedClick}
-                className="flex items-center justify-center p-2 hover:bg-gray-100 rounded-lg transition-colors flex-1"
-                onMouseEnter={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setTooltip('フィード');
-                  setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-                }}
-                onMouseLeave={() => setTooltip(null)}
-              >
-                <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center gap-2">
-            <button
-              onClick={handleHomeClick}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              onMouseEnter={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setTooltip('ホーム');
-                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-              }}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              <Home className={`w-5 h-5 ${isHomePage ? 'text-blue-600' : 'text-gray-600'}`} />
-            </button>
-            <button
-              onClick={handleSearchClick}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              onMouseEnter={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                setTooltip('検索');
-                setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-              }}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              <Search className={`w-5 h-5 ${isSearchPage ? 'text-blue-600' : 'text-gray-600'}`} />
-            </button>
-            {user && (
-              <button
-                onClick={handleFeedClick}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                onMouseEnter={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setTooltip('フィード');
-                  setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-                }}
-                onMouseLeave={() => setTooltip(null)}
-              >
-                <MessageSquareHeart className={`w-5 h-5 ${isFeedPage ? 'text-blue-600' : 'text-gray-600'}`} />
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      {/* ナビゲーション */}
+      <SidebarNavigation
+        isOpen={isOpen}
+        user={user}
+        isHomePage={isHomePage}
+        isSearchPage={isSearchPage}
+        isFeedPage={isFeedPage}
+        onHomeClick={handleHomeClick}
+        onSearchClick={handleSearchClick}
+        onFeedClick={handleFeedClick}
+        onTooltip={handleTooltip}
+      />
 
-      {/* 📚 カスタム要素追加セクション（プロフィールページ & 自分のプロフィール & サイドバー開いている時のみ） */}
-      {isProfilePage && isOwnProfile && addRowFunction && (
-        <div className="p-4">
-          {isOpen ? (
-            <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">カスタム要素追加</h3>
-              <div className="space-y-2">
-                <button
-                  onClick={() => addRowFunction(1)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
-                >
-                  <Square className="w-4 h-4" />
-                  <span>1列追加</span>
-                </button>
-                <button
-                  onClick={() => addRowFunction('2-1')}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
-                >
-                  <PanelRight className="w-4 h-4" />
-                  <span>2列追加</span>
-                </button>
-                <button
-                  onClick={() => addRowFunction('1-2')}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
-                >
-                  <PanelLeft className="w-4 h-4" />
-                  <span>2列追加</span>
-                </button>
-                <button
-                  onClick={() => addRowFunction(3)}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
-                >
-                  <Columns3 className="w-4 h-4" />
-                  <span>3列追加</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              <div className="flex flex-col items-center gap-2">
-                <button
-                  onClick={() => addRowFunction(1)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip('1列追加');
-                    setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                >
-                  <Square className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => addRowFunction('2-1')}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip('2列（2/3 + 1/3）');
-                    setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                >
-                  <Columns2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => addRowFunction('1-2')}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip('2列（1/3 + 2/3）');
-                    setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                >
-                  <Columns2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => addRowFunction(3)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip('3列追加');
-                    setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                >
-                  <Columns3 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+      {/* ウィジェットセクション（ホームページのみ表示） */}
+      {isHomePage && (
+        <WidgetSection
+          isOpen={isOpen}
+          isHomePage={isHomePage}
+          activeWidgets={activeWidgets}
+          showDeleteMenu={showDeleteMenu}
+          onTimerClick={handleTimerClick}
+          onUniqueWidgetClick={handleUniqueWidgetClick}
+          onAddWidget={onAddWidget}
+          onRemoveWidget={onRemoveWidget}
+          onDeleteMenuToggle={setShowDeleteMenu}
+          onTooltip={handleTooltip}
+        />
       )}
 
-      {/* 📚 ウィジェット追加セクション（Homeページでのみ表示） */}
-      {isHomePage && (
-        <div className=" p-4">
-          {isOpen ? (
-            // サイドバーが開いている時：ラベル付きボタン
-            <div className="space-y-4">
-              {/* タイマー設定 */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">設定</h3>
-                <button
-                  onClick={handleTimerClick}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
-                >
-                  <Settings2 className="w-4 h-4" />
-                  <span>インターバル設定</span>
-                </button>
-              </div>
-              {/* 一意ウィジェット（1つだけ） */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">ツール</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {UNIQUE_WIDGETS.map((widget) => {
-                    const isActive = isWidgetActive(widget.id);
-                    return (
-                      <button
-                        key={widget.id}
-                        onClick={() => handleUniqueWidgetClick(widget)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
-                          isActive
-                            ? 'bg-blue-500 text-white hover:bg-blue-600' // 追加済み：ハイライト
-                            : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-600' // 未追加
-                        }`}
-                      >
-                        <widget.icon className="w-4 h-4" />
-                        <span>{widget.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 複数追加可能なウィジェット */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">メモ</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {MULTIPLE_WIDGETS.map((widget) => (
-                    <button
-                      key={widget.id}
-                      onClick={() => onAddWidget?.(widget.id, widget.defaultSize)}
-                      className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
-                    >
-                      <widget.icon className="w-4 h-4" />
-                      <span>{widget.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* ウィジェットを削除 */}
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">削除</h3>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg transition-colors text-sm font-medium"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>ウィジェットを削除</span>
-                  </button>
-                  {showDeleteMenu && (
-                    <div className="absolute top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
-                      <button
-                        onClick={() => {
-                          const stickyWidgets = activeWidgets.filter((w) => w.type === 'sticky');
-                          stickyWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                          setShowDeleteMenu(false);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm"
-                      >
-                        <StickyNote className="w-4 h-4" />
-                        <span>付箋を全て削除</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          const imageWidgets = activeWidgets.filter((w) => w.type === 'image');
-                          imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                          setShowDeleteMenu(false);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm"
-                      >
-                        <Image className="w-4 h-4" />
-                        <span>画像を全て削除</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          const allRemovableWidgets = activeWidgets.filter(
-                            (w) => w.type === 'sticky' || w.type === 'image'
-                          );
-                          allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                          setShowDeleteMenu(false);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm border-t border-gray-200"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>全ての要素を削除</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            // サイドバーが閉じている時：アイコンのみ
-            <div className="flex flex-col items-center gap-2">
-              {/* タイマー設定（アイコンのみ） */}
-              <button
-                onClick={handleTimerClick}
-                className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-gray-600"
-                onMouseEnter={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setTooltip('インターバル設定');
-                  setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
-                }}
-                onMouseLeave={() => setTooltip(null)}
-              >
-                <Settings2 className="w-5 h-5" />
-              </button>
-              {/* 区切り線 */}
-              <div className="w-8 border-t border-gray-200 my-1" />
-
-              {/* 一意ウィジェット */}
-              {UNIQUE_WIDGETS.map((widget) => {
-                const isActive = isWidgetActive(widget.id);
-                return (
-                  <button
-                    key={widget.id}
-                    onClick={() => handleUniqueWidgetClick(widget)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-blue-500 text-white hover:bg-blue-600'
-                        : 'text-gray-600 hover:bg-blue-100 hover:text-blue-600'
-                    }`}
-                    onMouseEnter={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      setTooltip(isActive ? `${widget.label}を削除` : widget.label);
-                      setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
-                    }}
-                    onMouseLeave={() => setTooltip(null)}
-                  >
-                    <widget.icon className="w-5 h-5" />
-                  </button>
-                );
-              })}
-              {/* 区切り線 */}
-              <div className="w-8 border-t border-gray-200 my-1" />
-              {/* 複数追加可能なウィジェット */}
-              {MULTIPLE_WIDGETS.map((widget) => (
-                <button
-                  key={widget.id}
-                  onClick={() => onAddWidget?.(widget.id, widget.defaultSize)}
-                  className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-gray-600"
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip(widget.label);
-                    setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                >
-                  <widget.icon className="w-5 h-5" />
-                </button>
-              ))}
-              {/* 区切り線 */}
-              <div className="w-8 border-t border-gray-200 my-1" />
-              {/* 削除メニュー（アイコンのみ） */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowDeleteMenu(!showDeleteMenu)}
-                  className="p-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors"
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setTooltip('削除メニュー');
-                    setTooltipPos({ x: rect.right + 20, y: rect.top + rect.height / 2 });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-                {showDeleteMenu && (
-                  <div className="absolute left-full ml-2 top-0 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
-                    <button
-                      onClick={() => {
-                        const stickyWidgets = activeWidgets.filter((w) => w.type === 'sticky');
-                        stickyWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                        setShowDeleteMenu(false);
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm whitespace-nowrap"
-                    >
-                      <StickyNote className="w-4 h-4" />
-                      <span>付箋を全て削除</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        const imageWidgets = activeWidgets.filter((w) => w.type === 'image');
-                        imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                        setShowDeleteMenu(false);
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm whitespace-nowrap"
-                    >
-                      <Image className="w-4 h-4" />
-                      <span>画像を全て削除</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        const allRemovableWidgets = activeWidgets.filter(
-                          (w) => w.type === 'sticky' || w.type === 'image'
-                        );
-                        allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                        setShowDeleteMenu(false);
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm border-t border-gray-200 whitespace-nowrap"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>全ての要素を削除</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+      {/* カスタム要素追加ボタン（プロフィールページ） */}
+      {isProfilePage && isOwnProfile && (
+        <CustomElementButtons isOpen={isOpen} addRowFunction={addRowFunction} onTooltip={handleTooltip} />
       )}
 
       {/* 空のスペーサー */}
       <div className="flex-1"></div>
 
       {/* フッター */}
-      <div className="p-4 border-t border-gray-200 space-y-2">
-        {user ? (
-          // ログイン時：統計、プロフィール、ログアウトを表示
-          <>
-            {/* 📊 統計ボタン */}
-            <button
-              onClick={handleStatsClick}
-              className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
-            >
-              <BarChart3 className="w-5 h-5 flex-shrink-0" />
-              {isOpen && <span className="text-sm font-medium">統計</span>}
-            </button>
-            <button
-              onClick={handleProfileClick}
-              className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
-            >
-              <Settings className="w-5 h-5 flex-shrink-0" />
-              {isOpen && <span className="text-sm font-medium">プロフィール</span>}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-            >
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              {isOpen && <span className="text-sm font-medium">ログアウト</span>}
-            </button>
-          </>
-        ) : (
-          // ログオフ時：ログインボタンのみ表示
-          <button
-            onClick={() => navigate('/login')}
-            className="w-full flex items-center gap-4 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-          >
-            <LogIn className="w-5 h-5 flex-shrink-0" />
-            {isOpen && <span className="text-sm font-medium">ログイン</span>}
-          </button>
-        )}
-      </div>
+      <SidebarFooter
+        isOpen={isOpen}
+        user={user}
+        onStatsClick={handleStatsClick}
+        onProfileClick={handleProfileClick}
+        onLogout={handleLogout}
+        onLoginClick={() => navigate('/login')}
+      />
 
-      {/* タイマー設定モーダル（Portalで画面全体に表示） */}
-      {isTimerModalOpen &&
-        createPortal(
-          <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
-            onClick={handleCloseModal}
-          >
-            {/* モーダルコンテンツ */}
-            <div
-              className="bg-white rounded-xl shadow-2xl w-[90%] max-w-lg p-6 max-h-[85vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* ヘッダー */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <Timer className="w-5 h-5 text-blue-600" />
-                  <h2 className="text-xl font-bold text-gray-800">インターバル設定</h2>
-                </div>
-                <button onClick={handleCloseModal} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
-              </div>
-
-              {/* 設定内容 */}
-              <div className="space-y-6">
-                {/* 表示モード */}
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-gray-700">表示モード</label>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleDisplayModeChange('countdown')}
-                      className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                        displayMode === 'countdown'
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      カウント
-                    </button>
-                    <button
-                      onClick={() => handleDisplayModeChange('progress')}
-                      className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                        displayMode === 'progress'
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      進行度
-                    </button>
-                  </div>
-                </div>
-
-                {/* サイクル数設定 */}
-                <div className="space-y-3">
-                  <label className="text-sm font-semibold text-gray-700">サイクル数</label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min="1"
-                      max="99"
-                      value={totalCycles}
-                      onChange={(e) => setTotalCycles(e.target.value)}
-                      className="w-20 px-3 py-2 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
-                    />
-                    <span className="text-sm text-gray-600">サイクル</span>
-                    <span className="text-xs text-gray-500">全セクションを何回繰り返すか</span>
-                  </div>
-                </div>
-
-                {/* ポモドーロセクション */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-semibold text-gray-700">セクション設定</label>
-                    <span className="text-xs text-gray-500">順番に繰り返します</span>
-                  </div>
-
-                  <div className="space-y-4">
-                    {pomodoroSections.map((section, index) => (
-                      <div key={section.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        {/* セクションヘッダー */}
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-medium text-gray-600">セクション {index + 1}</span>
-                          {pomodoroSections.length > 1 && (
-                            <button
-                              onClick={() => handleRemoveSection(section.id)}
-                              className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-
-                        {/* 作業時間・休憩時間（同じ行） */}
-                        <div className="flex items-center justify-between">
-                          {/* 作業時間 */}
-                          <div className="flex-1 flex items-center gap-2">
-                            <span className="text-xs text-gray-500">🔴</span>
-                            <input
-                              type="number"
-                              min="1"
-                              max="999"
-                              value={section.workMinutes}
-                              onChange={(e) => handleSectionChange(section.id, 'workMinutes', e.target.value)}
-                              className="flex-1 max-w-[60px] px-2 py-1.5 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
-                            />
-                            <span className="text-xs text-gray-600">分</span>
-                          </div>
-
-                          <span className="text-gray-400 px-2">→</span>
-
-                          {/* 休憩時間 */}
-                          <div className="flex-1 flex items-center justify-end gap-2">
-                            <span className="text-xs text-gray-500">🟢</span>
-                            <input
-                              type="number"
-                              min="1"
-                              max="999"
-                              value={section.breakMinutes}
-                              onChange={(e) => handleSectionChange(section.id, 'breakMinutes', e.target.value)}
-                              className="flex-1 max-w-[60px] px-2 py-1.5 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
-                            />
-                            <span className="text-xs text-gray-600">分</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* セクション追加ボタン */}
-                  <button
-                    onClick={handleAddSection}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="text-sm font-medium">セクションを追加</span>
-                  </button>
-                </div>
-
-                {/* 閉じるボタン */}
-                <button
-                  onClick={handleCloseModal}
-                  className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-                >
-                  完了
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {/* タイマー設定モーダル */}
+      <TimerSettingsModal
+        isOpen={isTimerModalOpen}
+        displayMode={displayMode}
+        totalCycles={totalCycles}
+        pomodoroSections={pomodoroSections}
+        onClose={handleCloseModal}
+        onDisplayModeChange={handleDisplayModeChange}
+        onTotalCyclesChange={setTotalCycles}
+        onSectionChange={handleSectionChange}
+        onAddSection={handleAddSection}
+        onRemoveSection={handleRemoveSection}
+      />
 
       {/* 📊 統計モーダル */}
       <StatsModal isOpen={isStatsModalOpen} onClose={() => setIsStatsModalOpen(false)} />
