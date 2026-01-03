@@ -10,7 +10,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, User, ArrowLeft } from 'lucide-react';
+import { Search, User, ArrowLeft, AtSign } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import UserCard from '../components/UserCard';
 import { useAuth } from '../auth/AuthContext';
@@ -126,7 +126,7 @@ function SearchPage() {
           {/* 検索フォーム */}
           <form onSubmit={handleSubmit} className="mb-8">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <AtSign className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 value={query}
