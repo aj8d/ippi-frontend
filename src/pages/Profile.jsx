@@ -5,7 +5,7 @@ import ActivityCalendar from '../components/ActivityCalendar';
 import StatsWidget from '../components/StatsWidget';
 import Sidebar from '../components/Sidebar';
 import ProfileWidgetManager, { WidgetAddButton } from '../components/ProfileWidgetManager';
-import { UserPlus, UserMinus, Users, MoreVertical, Edit, Upload } from 'lucide-react';
+import { UserPlus, UserMinus, Users, MoreVertical, Edit, Upload, AtSign } from 'lucide-react';
 import { API_ENDPOINTS, API_BASE_URL } from '../config';
 import { useProfile } from '../hooks/useProfile';
 import { useProfileFollow } from '../hooks/useProfileFollow';
@@ -151,48 +151,16 @@ export default function Profile() {
       {/* メインコンテンツ */}
       <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} flex-1 transition-all duration-300`}>
         <div className="p-5 max-w-6xl mx-auto">
-          {/* プロフィール画像セクション */}
-          <div className="mb-8 flex items-center gap-5">
-            <div className="w-48 h-48 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-4 border-green-500">
-              {profileImageUrl ? (
-                <img src={profileImageUrl} alt="プロフィール" className="w-full h-full object-cover" />
-              ) : (
-                <div className="text-5xl">👤</div>
-              )}
-            </div>
-
-            <div>
-              <p className="text-lg mb-2.5 font-bold">{userName || '名前なし'}</p>
-              {userCustomId && <p className="text-sm text-gray-500 mb-2">ID: {userCustomId}</p>}
-              <p className="text-sm text-gray-600 mb-3.75 whitespace-pre-wrap">
-                {userDescription || '説明文はまだ設定されていません'}
-              </p>
-
-              {/* フォロー統計 */}
-              <div className="flex items-center gap-4 mb-4">
-                <button
-                  onClick={() => navigate(`/${userCustomId}/followers`)}
-                  className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                  <Users className="w-4 h-4" />
-                  <span className="font-semibold">{followStats.followersCount}</span>
-                  <span className="text-gray-500">フォロワー</span>
-                </button>
-                <button
-                  onClick={() => navigate(`/${userCustomId}/following`)}
-                  className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                  <span className="font-semibold">{followStats.followingCount}</span>
-                  <span className="text-gray-500">フォロー中</span>
-                </button>
-              </div>
-
+          {/* プロフィールセクション */}
+          <div className="mb-8 relative">
+            {/* 右上のボタン（フォローボタンまたはオプションメニュー） */}
+            <div className="absolute top-0 right-0 z-10">
               {/* フォローボタン（他人のプロフィールの場合） */}
               {!isOwnProfile && (
                 <button
                   onClick={handleFollowToggle}
                   disabled={isFollowLoading}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors mb-4 ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                     followStats.isFollowing
                       ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -228,7 +196,7 @@ export default function Profile() {
                   {showOptionsMenu && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowOptionsMenu(false)} />
-                      <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                      <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
                         <button
                           onClick={() => {
                             setIsEditing(true);
@@ -250,26 +218,63 @@ export default function Profile() {
                               handleProfileImageUpload(e);
                               setShowOptionsMenu(false);
                             }}
-                            disabled={uploading}
                             className="hidden"
+                            disabled={uploading}
                           />
                         </label>
                       </div>
                     </>
                   )}
-                  {uploadError && <p className="text-red-500 mt-2 text-xs">{uploadError}</p>}
+                  {uploadError && <p className="text-red-500 mt-2 text-xs absolute right-0">{uploadError}</p>}
                 </div>
               )}
+            </div>
+
+            {/* プロフィール情報 */}
+            <div className="flex items-center gap-5">
+              <div className="w-48 h-48 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-4 border-green-500">
+                {profileImageUrl ? (
+                  <img src={profileImageUrl} alt="プロフィール" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-5xl">👤</div>
+                )}
+              </div>
+
+              <div className="flex flex-col">
+                <p className="text-lg mb-2.5 font-bold">{userName || '名前なし'}</p>
+                {userCustomId && (
+                  <p className="flex items-center gap-1 text-sm text-gray-500 mb-2 whitespace-nowrap">
+                    <AtSign className="size-4" />
+                    <span>{userCustomId}</span>
+                  </p>
+                )}
+                <p className="text-sm text-gray-600 mb-3.75 whitespace-pre-wrap">
+                  {userDescription || '説明文はまだ設定されていません'}
+                </p>
+
+                {/* フォロー統計 */}
+                <div className="flex items-center gap-4 mt-auto">
+                  <button
+                    onClick={() => navigate(`/${userCustomId}/following`)}
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors"
+                  >
+                    <span className="font-semibold">{followStats.followingCount}</span>
+                    <span className="text-gray-500">フォロー中</span>
+                  </button>
+                  <button
+                    onClick={() => navigate(`/${userCustomId}/followers`)}
+                    className="flex items-center gap-1 text-gray-700 hover:text-blue-600 transition-colors"
+                  >
+                    <span className="font-semibold">{followStats.followersCount}</span>
+                    <span className="text-gray-500">フォロワー</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* ユーザー情報 */}
           <hr className="my-5" />
-
-          {/* 統計ウィジェット */}
-          {/* <div className="mb-8">
-            <StatsWidget customId={userCustomId} token={token} />
-          </div> */}
 
           {/* GitHub-style アクティビティカレンダーを追加 */}
           <ActivityCalendar stats={stats || []} />
@@ -281,23 +286,6 @@ export default function Profile() {
             isOwnProfile={isOwnProfile}
             onAddRowCallback={(addRowFunc) => setAddRowFunction(() => addRowFunc)}
           />
-
-          {/* <div className="mt-5">
-            {isOwnProfile ? (
-              <>
-                <button onClick={handleLogout} className="mr-2.5 px-3 py-2 bg-gray-300 rounded hover:bg-gray-400">
-                  ログアウト
-                </button>
-                <button onClick={() => navigate('/')} className="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400">
-                  ホームへ戻る
-                </button>
-              </>
-            ) : (
-              <button onClick={() => navigate('/')} className="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400">
-                ホームへ戻る
-              </button>
-            )}
-          </div> */}
         </div>
       </div>
 
