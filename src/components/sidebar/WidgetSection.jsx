@@ -92,9 +92,11 @@ export default function WidgetSection({
                 <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
                   <button
                     onClick={() => {
-                      const stickyWidgets = activeWidgets.filter((w) => w.type === 'sticky');
-                      stickyWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                      onDeleteMenuToggle(false);
+                      if (window.confirm('付箋を全て削除しますか？この操作は取り消せません。')) {
+                        const stickyWidgets = activeWidgets.filter((w) => w.type === 'sticky');
+                        stickyWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                        onDeleteMenuToggle(false);
+                      }
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm"
                   >
@@ -102,9 +104,11 @@ export default function WidgetSection({
                   </button>
                   <button
                     onClick={() => {
-                      const imageWidgets = activeWidgets.filter((w) => w.type === 'image');
-                      imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                      onDeleteMenuToggle(false);
+                      if (window.confirm('画像を全て削除しますか？この操作は取り消せません。')) {
+                        const imageWidgets = activeWidgets.filter((w) => w.type === 'image');
+                        imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                        onDeleteMenuToggle(false);
+                      }
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm"
                   >
@@ -112,15 +116,23 @@ export default function WidgetSection({
                   </button>
                   <button
                     onClick={() => {
-                      const allRemovableWidgets = activeWidgets.filter(
-                        (w) => w.type === 'sticky' || w.type === 'image'
-                      );
-                      allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                      onDeleteMenuToggle(false);
+                      if (window.confirm('ツールとメモを全て削除しますか？この操作は取り消せません。')) {
+                        // ツール（UNIQUE_WIDGETS）とメモ（付箋・画像）を全て削除
+                        const allRemovableWidgets = activeWidgets.filter(
+                          (w) =>
+                            w.type === 'sticky' ||
+                            w.type === 'image' ||
+                            w.type === 'timer' ||
+                            w.type === 'todo' ||
+                            w.type === 'streak'
+                        );
+                        allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                        onDeleteMenuToggle(false);
+                      }
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm border-t border-gray-200"
                   >
-                    <span>全ての要素を削除</span>
+                    <span>全て削除</span>
                   </button>
                 </div>
               )}

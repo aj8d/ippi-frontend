@@ -98,14 +98,26 @@ function Home() {
   );
 
   /**
-   * 📚 ウィジェットをタイプで削除する関数
+   * 📚 ウィジェットをタイプまたはIDで削除する関数
    *
    * 一意ウィジェット（タイマー、TODO、ストリーク）を
    * サイドバーから削除する時に使用
+   * 複数ウィジェット（付箋、画像）を個別に削除する時にも使用
    */
-  const handleRemoveWidgetByType = useCallback(
-    (type) => {
-      setWidgets((prev) => prev.filter((widget) => widget.type !== type));
+  const handleRemoveWidget = useCallback(
+    (typeOrId) => {
+      setWidgets((prev) => {
+        // まずIDでマッチするか確認
+        const hasMatchingId = prev.some((widget) => widget.id === typeOrId);
+
+        if (hasMatchingId) {
+          // IDでマッチした場合はIDで削除
+          return prev.filter((widget) => widget.id !== typeOrId);
+        } else {
+          // IDでマッチしない場合はtypeで削除（一意ウィジェット用）
+          return prev.filter((widget) => widget.type !== typeOrId);
+        }
+      });
     },
     [setWidgets]
   );
@@ -118,7 +130,7 @@ function Home() {
         setIsOpen={setSidebarOpen}
         onTimerSettingsChange={handleTimerSettingsChange}
         onAddWidget={handleAddWidget}
-        onRemoveWidget={handleRemoveWidgetByType} // 📚 タイプで削除する関数
+        onRemoveWidget={handleRemoveWidget} // 📚 タイプまたはIDで削除する関数
         activeWidgets={widgets} // 📚 現在のウィジェット配列を渡す
       />
 
