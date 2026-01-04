@@ -1,0 +1,166 @@
+import { createPortal } from 'react-dom';
+import { Timer, X, Plus, Trash2 } from 'lucide-react';
+
+/**
+ * タイマー設定モーダルコンポーネント
+ */
+export default function TimerSettingsModal({
+  isOpen,
+  displayMode,
+  totalCycles,
+  pomodoroSections,
+  onClose,
+  onDisplayModeChange,
+  onTotalCyclesChange,
+  onSectionChange,
+  onAddSection,
+  onRemoveSection,
+}) {
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] animate-fadeIn" onClick={onClose}>
+      {/* モーダルコンテンツ */}
+      <div
+        className="bg-white rounded-xl shadow-2xl w-[90%] max-w-lg p-6 max-h-[85vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ヘッダー */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Timer className="w-5 h-5 text-blue-600" />
+            <h2 className="text-xl font-bold text-gray-800">インターバル設定</h2>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+            <X className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+
+        {/* 設定内容 */}
+        <div className="space-y-6">
+          {/* 表示モード */}
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-gray-700">表示モード</label>
+            <div className="flex gap-3">
+              <button
+                onClick={() => onDisplayModeChange('countdown')}
+                className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                  displayMode === 'countdown'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                カウント
+              </button>
+              <button
+                onClick={() => onDisplayModeChange('progress')}
+                className={`flex-1 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                  displayMode === 'progress'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                進行度
+              </button>
+            </div>
+          </div>
+
+          {/* サイクル数設定 */}
+          <div className="space-y-3">
+            <label className="text-sm font-semibold text-gray-700">サイクル数</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="number"
+                min="1"
+                max="99"
+                value={totalCycles}
+                onChange={(e) => onTotalCyclesChange(e.target.value)}
+                className="w-20 px-3 py-2 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
+              />
+              <span className="text-sm text-gray-600">サイクル</span>
+              <span className="text-xs text-gray-500">全セクションを何回繰り返すか</span>
+            </div>
+          </div>
+
+          {/* ポモドーロセクション */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-gray-700">セクション設定</label>
+              <span className="text-xs text-gray-500">順番に繰り返します</span>
+            </div>
+
+            <div className="space-y-4">
+              {pomodoroSections.map((section, index) => (
+                <div key={section.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  {/* セクションヘッダー */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-600">セクション {index + 1}</span>
+                    {pomodoroSections.length > 1 && (
+                      <button
+                        onClick={() => onRemoveSection(section.id)}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* 作業時間・休憩時間（同じ行） */}
+                  <div className="flex items-center justify-between">
+                    {/* 作業時間 */}
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="text-xs text-gray-500">🔴</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="999"
+                        value={section.workMinutes}
+                        onChange={(e) => onSectionChange(section.id, 'workMinutes', e.target.value)}
+                        className="flex-1 max-w-[60px] px-2 py-1.5 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
+                      />
+                      <span className="text-xs text-gray-600">分</span>
+                    </div>
+
+                    <span className="text-gray-400 px-2">→</span>
+
+                    {/* 休憩時間 */}
+                    <div className="flex-1 flex items-center justify-end gap-2">
+                      <span className="text-xs text-gray-500">🟢</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="999"
+                        value={section.breakMinutes}
+                        onChange={(e) => onSectionChange(section.id, 'breakMinutes', e.target.value)}
+                        className="flex-1 max-w-[60px] px-2 py-1.5 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
+                      />
+                      <span className="text-xs text-gray-600">分</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* セクション追加ボタン */}
+            <button
+              onClick={onAddSection}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 text-gray-600 hover:border-blue-400 hover:text-blue-600 rounded-lg transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="text-sm font-medium">セクションを追加</span>
+            </button>
+          </div>
+
+          {/* 閉じるボタン */}
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+          >
+            完了
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
