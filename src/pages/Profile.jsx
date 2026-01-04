@@ -22,8 +22,6 @@ export default function Profile() {
     setProfileImageUrl,
     userName,
     setUserName,
-    userDescription,
-    setUserDescription,
     userCustomId,
     setUserCustomId,
     profileUserId,
@@ -46,6 +44,7 @@ export default function Profile() {
   const [isSaving, setIsSaving] = useState(false);
   const [customIdError, setCustomIdError] = useState('');
   const [editingCustomId, setEditingCustomId] = useState('');
+  const [editingName, setEditingName] = useState('');
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [addRowFunction, setAddRowFunction] = useState(null);
 
@@ -64,8 +63,7 @@ export default function Profile() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: userName,
-          description: userDescription,
+          name: editingName,
           customId: editingCustomId,
         }),
       });
@@ -73,8 +71,10 @@ export default function Profile() {
       if (response.ok) {
         const data = await response.json();
         setIsEditing(false);
+        setUserName(data.name || '');
         setUserCustomId(data.customId || '');
         setEditingCustomId('');
+        setEditingName('');
         setCustomIdError('');
         await fetchLatestProfile();
       } else {
@@ -201,6 +201,7 @@ export default function Profile() {
                           onClick={() => {
                             setIsEditing(true);
                             setEditingCustomId(userCustomId);
+                            setEditingName(userName);
                             setShowOptionsMenu(false);
                           }}
                           className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
@@ -248,9 +249,6 @@ export default function Profile() {
                     <span>{userCustomId}</span>
                   </p>
                 )}
-                <p className="text-sm text-gray-600 mb-3.75 whitespace-pre-wrap">
-                  {userDescription || '説明文はまだ設定されていません'}
-                </p>
 
                 {/* フォロー統計 */}
                 <div className="flex items-center gap-4 mt-auto">
@@ -296,6 +294,7 @@ export default function Profile() {
           onClick={() => {
             setIsEditing(false);
             setEditingCustomId('');
+            setEditingName('');
             setCustomIdError('');
           }}
         >
@@ -304,7 +303,7 @@ export default function Profile() {
             <h2 className="mb-5 mt-0 text-xl font-bold">プロフィールを編集</h2>
 
             <div className="mb-3.75">
-              <label className="block mb-1.25 font-bold">カスタムID</label>
+              <label className="block mb-1.25 font-bold">ID</label>
               <input
                 type="text"
                 value={editingCustomId}
@@ -319,24 +318,16 @@ export default function Profile() {
               <p className="text-xs text-gray-500 mt-1">3〜50文字の英数字とハイフン、アンダースコアが使用できます</p>
             </div>
 
-            <div className="mb-3.75">
+            <div className="mb-5">
               <label className="block mb-1.25 font-bold">名前</label>
               <input
                 type="text"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                maxLength={30}
                 className="w-full p-2.5 rounded border border-gray-300 text-sm box-border"
               />
-            </div>
-
-            <div className="mb-5">
-              <label className="block mb-1.25 font-bold">説明文</label>
-              <textarea
-                value={userDescription}
-                onChange={(e) => setUserDescription(e.target.value)}
-                placeholder="自己紹介を入力してください..."
-                className="w-full p-2.5 rounded border border-gray-300 text-sm min-h-24 font-inherit resize-vertical box-border"
-              />
+              <p className="text-xs text-gray-500 mt-1">30文字以内で入力してください</p>
             </div>
 
             <div className="flex gap-2.5 justify-end">
@@ -344,6 +335,7 @@ export default function Profile() {
                 onClick={() => {
                   setIsEditing(false);
                   setEditingCustomId('');
+                  setEditingName('');
                   setCustomIdError('');
                 }}
                 className="px-5 py-2.5 bg-gray-600 text-white rounded cursor-pointer text-sm hover:bg-gray-700"
