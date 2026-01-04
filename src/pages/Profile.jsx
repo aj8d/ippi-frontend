@@ -233,11 +233,13 @@ export default function Profile() {
 
             {/* プロフィール情報 */}
             <div className="flex items-center gap-5">
-              <div className="w-48 h-48 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden border-4 border-green-500">
+              <div className="w-48 h-48 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-green-500">
                 {profileImageUrl ? (
                   <img src={profileImageUrl} alt="プロフィール" className="w-full h-full object-cover" />
                 ) : (
-                  <div className="text-5xl">👤</div>
+                  <div className="w-full h-full flex items-center justify-center text-gray-600 text-7xl font-bold">
+                    {userName?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
                 )}
               </div>
 

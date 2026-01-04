@@ -8,7 +8,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Clock, Flame, Trophy, Heart, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Flame, Trophy, Heart, RefreshCw, MessageCircle, Send, Trash2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
@@ -26,6 +26,9 @@ function Feed() {
   const [page, setPage] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [emptyMessage, setEmptyMessage] = useState('');
+  const [expandedComments, setExpandedComments] = useState({});
+  const [commentTexts, setCommentTexts] = useState({});
+  const [submittingComment, setSubmittingComment] = useState({});
 
   // 📚 フィードデータを取得
   const fetchFeed = useCallback(
@@ -86,6 +89,119 @@ function Feed() {
   const handleRefresh = () => {
     setPage(0);
     fetchFeed(0, false);
+  };
+
+  // 📚 いいねをトグル
+  const handleLike = async (feedId, isLiked) => {
+    if (!token) return;
+
+    try {
+      const endpoint = isLiked ? API_ENDPOINTS.FEED.UNLIKE(feedId) : API_ENDPOINTS.FEED.LIKE(feedId);
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // いいね状態を更新
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.id === feedId
+              ? {
+                  ...item,
+                  isLiked: !isLiked,
+                  likeCount: isLiked ? (item.likeCount || 1) - 1 : (item.likeCount || 0) + 1,
+                }
+              : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error('いいねエラー:', error);
+    }
+  };
+
+  // 📚 コメントを投稿
+  const handleSubmitComment = async (feedId) => {
+    const commentText = commentTexts[feedId]?.trim();
+    if (!commentText || !token) return;
+
+    setSubmittingComment((prev) => ({ ...prev, [feedId]: true }));
+
+    try {
+      const response = await fetch(API_ENDPOINTS.FEED.COMMENTS(feedId), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: commentText }),
+      });
+
+      if (response.ok) {
+        const newComment = await response.json();
+        // コメントリストを更新
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.id === feedId
+              ? {
+                  ...item,
+                  comments: [...(item.comments || []), newComment],
+                  commentCount: (item.commentCount || 0) + 1,
+                }
+              : item
+          )
+        );
+        // 入力欄をクリア
+        setCommentTexts((prev) => ({ ...prev, [feedId]: '' }));
+      }
+    } catch (error) {
+      console.error('コメント投稿エラー:', error);
+    } finally {
+      setSubmittingComment((prev) => ({ ...prev, [feedId]: false }));
+    }
+  };
+
+  // 📚 コメントを削除
+  const handleDeleteComment = async (feedId, commentId) => {
+    if (!token || !window.confirm('このコメントを削除しますか？')) return;
+
+    try {
+      const response = await fetch(API_ENDPOINTS.FEED.COMMENT_DELETE(feedId, commentId), {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        // コメントリストから削除
+        setFeedItems((prev) =>
+          prev.map((item) =>
+            item.id === feedId
+              ? {
+                  ...item,
+                  comments: (item.comments || []).filter((c) => c.id !== commentId),
+                  commentCount: Math.max((item.commentCount || 1) - 1, 0),
+                }
+              : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error('コメント削除エラー:', error);
+    }
+  };
+
+  // 📚 コメント表示をトグル
+  const toggleComments = (feedId) => {
+    setExpandedComments((prev) => ({
+      ...prev,
+      [feedId]: !prev[feedId],
+    }));
   };
 
   // 📚 アクティビティの種類に応じたアイコンを取得
@@ -231,7 +347,7 @@ function Feed() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white text-lg font-bold">
+                        <div className="w-full h-full flex items-center justify-center text-gray-600 text-lg font-bold">
                           {item.userName?.charAt(0)?.toUpperCase() || '?'}
                         </div>
                       )}
@@ -254,6 +370,103 @@ function Feed() {
                         <span>{item.message}</span>
                       </div>
                       <p className="text-gray-500 text-sm mt-2">{formatRelativeTime(item.createdAt)}</p>
+
+                      {/* いいね・コメントボタン */}
+                      <div className="flex items-center gap-4 mt-3">
+                        {/* いいねボタン */}
+                        <button
+                          onClick={() => handleLike(item.id, item.isLiked)}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${
+                            item.isLiked
+                              ? 'text-pink-600 bg-pink-50 hover:bg-pink-100'
+                              : 'text-gray-600 bg-gray-50 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Heart className={`w-4 h-4 ${item.isLiked ? 'fill-current' : ''}`} />
+                          <span className="text-sm font-medium">{item.likeCount || 0}</span>
+                        </button>
+
+                        {/* コメントボタン */}
+                        <button
+                          onClick={() => toggleComments(item.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">{item.commentCount || 0}</span>
+                        </button>
+                      </div>
+
+                      {/* コメントセクション */}
+                      {expandedComments[item.id] && (
+                        <div className="mt-4 space-y-3">
+                          {/* コメント入力 */}
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={commentTexts[item.id] || ''}
+                              onChange={(e) => setCommentTexts((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSubmitComment(item.id);
+                                }
+                              }}
+                              placeholder="コメントを追加..."
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                              disabled={submittingComment[item.id]}
+                            />
+                            <button
+                              onClick={() => handleSubmitComment(item.id)}
+                              disabled={!commentTexts[item.id]?.trim() || submittingComment[item.id]}
+                              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <Send className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          {/* コメントリスト */}
+                          {item.comments && item.comments.length > 0 && (
+                            <div className="space-y-2 pl-2 border-l-2 border-gray-200">
+                              {item.comments.map((comment) => (
+                                <div key={comment.id} className="flex items-start gap-2 group">
+                                  {/* コメント投稿者のアバター */}
+                                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                                    {comment.userProfileImageUrl ? (
+                                      <img
+                                        src={comment.userProfileImageUrl}
+                                        alt={comment.userName}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs font-bold">
+                                        {comment.userName?.charAt(0)?.toUpperCase() || '?'}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium text-sm text-gray-900">{comment.userName}</span>
+                                      <span className="text-xs text-gray-500">
+                                        {formatRelativeTime(comment.createdAt)}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-gray-700 mt-0.5">{comment.text}</p>
+                                  </div>
+                                  {comment.userId === localStorage.getItem('userId') && (
+                                    <button
+                                      onClick={() => handleDeleteComment(item.id, comment.id)}
+                                      className="opacity-0 group-hover:opacity-100 p-1 text-red-600 hover:bg-red-50 rounded transition-all"
+                                      title="削除"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

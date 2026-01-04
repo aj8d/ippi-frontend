@@ -48,6 +48,12 @@ export const API_ENDPOINTS = {
   FEED: {
     LIST: `${API_BASE_URL}/feed`,
     USER: (userId) => `${API_BASE_URL}/feed/user/${userId}`,
+    // いいね
+    LIKE: (feedId) => `${API_BASE_URL}/feed/${feedId}/like`,
+    UNLIKE: (feedId) => `${API_BASE_URL}/feed/${feedId}/unlike`,
+    // コメント
+    COMMENTS: (feedId) => `${API_BASE_URL}/feed/${feedId}/comments`,
+    COMMENT_DELETE: (feedId, commentId) => `${API_BASE_URL}/feed/${feedId}/comments/${commentId}`,
   },
 
   // テキストデータ
