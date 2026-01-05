@@ -1,4 +1,4 @@
-import { Flame, Clock, CheckCircle, Calendar, Type, TrendingUp } from 'lucide-react';
+import { Flame, Clock, CheckCircle, Calendar, Type, TrendingUp, Image } from 'lucide-react';
 import { WIDGET_TYPES } from './widgetUtils';
 
 // ウィジェットタイプの表示情報
@@ -39,5 +39,11 @@ export const WIDGET_INFO = {
     icon: Type,
     color: 'from-gray-50 to-gray-100',
     textColor: 'text-gray-600 dark:text-gray-400',
+  },
+  [WIDGET_TYPES.IMAGE]: {
+    label: '画像',
+    icon: Image,
+    color: 'from-indigo-50 to-indigo-100',
+    textColor: 'text-indigo-600 dark:text-indigo-400',
   },
 };

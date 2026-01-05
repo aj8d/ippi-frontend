@@ -7,6 +7,7 @@ export const WIDGET_TYPES = {
   WORK_DAYS: 'workDays',
   WEEKLY_TIME: 'weeklyTime',
   TEXT: 'text',
+  IMAGE: 'image',
 };
 
 /**

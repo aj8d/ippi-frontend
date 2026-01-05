@@ -265,6 +265,11 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
     setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, customText: text } : widget)));
   };
 
+  // 画像URLを変更
+  const handleImageChange = (widgetId, imageUrl) => {
+    setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, imageUrl } : widget)));
+  };
+
   // ウィジェットを削除
   const handleDelete = (widgetId) => {
     setRows(rows.filter((widget) => widget.id !== widgetId));
@@ -304,6 +309,7 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
                   stats={stats}
                   onTypeChange={handleTypeChange}
                   onTextChange={handleTextChange}
+                  onImageChange={handleImageChange}
                   onDelete={handleDelete}
                   isOwnProfile={isOwnProfile}
                 />
