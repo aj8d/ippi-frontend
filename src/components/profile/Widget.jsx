@@ -15,13 +15,13 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
     // 他ユーザーの場合は何も表示しない
     if (!isOwnProfile) {
       return (
-        <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-full min-h-[120px] flex items-center justify-center"></div>
+        <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-auto min-h-[130px] flex items-center justify-center"></div>
       );
     }
 
     // 自分のプロフィールの場合はドロップダウンを表示
     return (
-      <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-full min-h-[120px] flex items-center justify-center relative group">
+      <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-auto min-h-[130px] flex items-center justify-center relative group">
         <select
           value={widget.type}
           onChange={(e) => onTypeChange(widget.id, e.target.value)}
@@ -53,11 +53,11 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
   if (widget.type === WIDGET_TYPES.TEXT) {
     return (
       <div
-        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group`}
+        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
       >
-        <div className="flex items-center gap-2 mb-2">
-          {Icon && <Icon className={`w-5 h-5 ${info.textColor}`} />}
-          {isOwnProfile ? (
+        {isOwnProfile && (
+          <div className="flex items-center gap-2 mb-2">
+            {Icon && <Icon className={`w-5 h-5 ${info.textColor}`} />}
             <select
               value={widget.type}
               onChange={(e) => onTypeChange(widget.id, e.target.value)}
@@ -69,10 +69,8 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
                 </option>
               ))}
             </select>
-          ) : (
-            <span className="text-sm text-gray-600 dark:text-gray-400">{info.label}</span>
-          )}
-        </div>
+          </div>
+        )}
         {isOwnProfile ? (
           <textarea
             value={widget.customText || ''}
@@ -82,7 +80,7 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
             rows={3}
           />
         ) : (
-          <div className="text-base whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+          <div className="text-base whitespace-pre-wrap break-words text-gray-700 dark:text-gray-300">
             {widget.customText || ''}
           </div>
         )}
@@ -133,7 +131,7 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
     <div
       className={`bg-gradient-to-br ${info.color} dark:from-${info.color.split('-')[1]}-900/20 dark:to-${
         info.color.split('-')[1]
-      }-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group`}
+      }-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
     >
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2">
