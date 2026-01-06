@@ -44,7 +44,6 @@ function TimerWidget({ settings = {} }) {
 
   // 📚 フローモドーロ用の状態管理
   const [flowmodoroWorkTime, setFlowmodoroWorkTime] = useState(0); // 今回の作業時間（秒）
-  const [showFlowmodoroBreakStart, setShowFlowmodoroBreakStart] = useState(false); // 休憩開始画面を表示するか
 
   const intervalRef = useRef(null);
   const hasCompletedRef = useRef(false);
@@ -296,6 +295,28 @@ function TimerWidget({ settings = {} }) {
             saveWorkTimeToBackend(workTime, 1);
           }
         }
+
+        // 📚 フローモドーロモードで休憩終了時、自動的に次の作業に移行
+        if (isFlowmodoroMode && !isWorkPhaseRef.current && elapsed >= totalTime && !hasCompletedRef.current) {
+          hasCompletedRef.current = true;
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+
+          // 今回の作業時間を保存
+          if (flowmodoroWorkTime >= 60) {
+            saveWorkTimeToBackend(flowmodoroWorkTime, 1);
+          }
+
+          // 次の作業を開始
+          setFlowmodoroWorkTime(0);
+          setIsWorkPhase(true);
+          isWorkPhaseRef.current = true;
+          setTotalTime(Infinity);
+          setElapsedTime(0);
+          setIsRunning(true);
+          phaseStartTimeRef.current = null;
+          pausedElapsedRef.current = 0;
+        }
       }, 100);
     } else {
       // 📚 一時停止時は現在の経過時間を保存
@@ -315,12 +336,33 @@ function TimerWidget({ settings = {} }) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, totalTime, goToNextPhase, isIntervalMode, isCountdownMode, saveWorkTimeToBackend]);
+  }, [
+    isRunning,
+    totalTime,
+    goToNextPhase,
+    isIntervalMode,
+    isCountdownMode,
+    isFlowmodoroMode,
+    flowmodoroWorkTime,
+    saveWorkTimeToBackend,
+  ]);
 
   // 📚 進捗率の計算
   const progress = (() => {
-    // カウントアップ・フローモドーロ: 進捗バーなし（100%固定）
-    if (isCountupMode || (isFlowmodoroMode && !hasStarted)) {
+    // カウントアップ: 進捗バーなし
+    if (isCountupMode) {
+      return 0;
+    }
+
+    // フローモドーロ: 作業中は進捗バーなし、休憩中は進捗率を表示
+    if (isFlowmodoroMode) {
+      if (!hasStarted || isWorkPhase) {
+        return 0;
+      }
+      // 休憩中は進捗率を計算
+      if (totalTime > 0 && totalTime !== Infinity) {
+        return (elapsedTime / totalTime) * 100;
+      }
       return 0;
     }
 
@@ -341,9 +383,20 @@ function TimerWidget({ settings = {} }) {
    * 📚 表示モードに応じた値を返す
    */
   const getDisplayValue = () => {
-    // カウントアップ・フローモドーロ: 経過時間を表示
-    if (isCountupMode || isFlowmodoroMode) {
+    // カウントアップ: 経過時間を表示
+    if (isCountupMode) {
       return formatTime(elapsedTime);
+    }
+
+    // フローモドーロ: 作業中は経過時間、休憩中は残り時間
+    if (isFlowmodoroMode) {
+      if (isWorkPhase) {
+        return formatTime(elapsedTime);
+      } else {
+        // 休憩中は残り時間を表示
+        const remaining = Math.max(0, totalTime - elapsedTime);
+        return formatTime(remaining);
+      }
     }
 
     // カウントダウン: 残り時間を表示
@@ -454,12 +507,14 @@ function TimerWidget({ settings = {} }) {
       finalWorkTime = Math.floor(elapsedTime);
     }
 
-    // 📚 1分以上の作業時間があれば保存
+    // 📚 1分以上の作業時間があれば保存し、完了モーダルを表示
     if (finalWorkTime >= 60) {
       const sessionsCount = isIntervalMode
         ? completedWorkSessions + (elapsedTime > 0 && elapsedTime < totalTime ? 1 : 0)
         : 1;
       saveWorkTimeToBackend(finalWorkTime, sessionsCount);
+      // 1分以上の作業記録がある場合は完了モーダルを表示
+      setShowCompletionModal(true);
     }
 
     // 状態をリセット
@@ -482,7 +537,6 @@ function TimerWidget({ settings = {} }) {
     pausedElapsedRef.current = 0;
     // フローモドーロのリセット
     setFlowmodoroWorkTime(0);
-    setShowFlowmodoroBreakStart(false);
   }, [isIntervalMode, isWorkPhase, elapsedTime, totalTime, completedWorkSessions, saveWorkTimeToBackend]);
 
   // 📚 停止関数をコンテキストに登録
@@ -520,55 +574,21 @@ function TimerWidget({ settings = {} }) {
     const workTimeInSeconds = Math.floor(elapsedTime);
     const workTimeInMinutes = Math.floor(workTimeInSeconds / 60);
 
-    // 作業時間の /5 を休憩時間として計算（最小1分）
+    // 作業時間の /5 を休憩時間として計算（分未満は切り捨て、最小1分）
     const breakTimeInMinutes = Math.max(1, Math.floor(workTimeInMinutes / 5));
     const breakTimeInSeconds = breakTimeInMinutes * 60;
 
     // 作業時間を記録
     setFlowmodoroWorkTime(workTimeInSeconds);
 
-    // タイマーを停止して休憩開始画面を表示
-    setIsRunning(false);
-    setShowFlowmodoroBreakStart(true);
-
-    // 休憩時間を設定（自動開始の準備）
+    // 休憩時間を設定して自動的に休憩を開始
     setTotalTime(breakTimeInSeconds);
     setElapsedTime(0);
     setIsWorkPhase(false);
     isWorkPhaseRef.current = false;
-
-    // 1秒後に自動的に休憩を開始
-    setTimeout(() => {
-      setIsRunning(true);
-      setShowFlowmodoroBreakStart(false);
-      phaseStartTimeRef.current = null;
-      pausedElapsedRef.current = 0;
-    }, 1000);
-  }, [isFlowmodoroMode, isRunning, elapsedTime]);
-
-  /**
-   * 📚 フローモドーロ用：次の作業へボタンの処理
-   * 作業時間をバックエンドに保存して次の作業をスタート
-   */
-  const handleFlowmodoroNextWork = useCallback(() => {
-    if (!isFlowmodoroMode) return;
-
-    // 今回の作業時間を記録
-    if (flowmodoroWorkTime >= 60) {
-      saveWorkTimeToBackend(flowmodoroWorkTime, 1);
-    }
-
-    // リセットして次の作業を開始
-    setFlowmodoroWorkTime(0);
-    setShowFlowmodoroBreakStart(false);
-    setIsWorkPhase(true);
-    isWorkPhaseRef.current = true;
-    setTotalTime(Infinity);
-    setElapsedTime(0);
-    setIsRunning(true);
     phaseStartTimeRef.current = null;
     pausedElapsedRef.current = 0;
-  }, [isFlowmodoroMode, flowmodoroWorkTime, saveWorkTimeToBackend]);
+  }, [isFlowmodoroMode, isRunning, elapsedTime, saveWorkTimeToBackend]);
 
   // 📚 プログレスバーの色（停止中=グレー、作業中=オレンジ、休憩中=緑）
   const getColors = () => {
@@ -744,57 +764,16 @@ function TimerWidget({ settings = {} }) {
         )}
       </div>
 
-      {/* 📚 フローモドーロ用：休憩開始画面 */}
-      {isFlowmodoroMode && showFlowmodoroBreakStart && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fadeIn">
-          <div className="bg-white rounded-xl shadow-2xl p-8 text-center max-w-md">
-            <h3 className="text-lg font-bold text-gray-800 mb-4">お疲れ様でした！</h3>
-            <p className="text-gray-600 mb-2">
-              作業時間:{' '}
-              <span className="font-bold text-orange-600">
-                {Math.floor(flowmodoroWorkTime / 60)}分{flowmodoroWorkTime % 60}秒
-              </span>
-            </p>
-            <p className="text-gray-600 mb-6">
-              休憩時間: <span className="font-bold text-green-600">{Math.floor(totalTime / 60)}分</span>
-            </p>
-            <p className="text-sm text-gray-500 mb-6">自動的に休憩が開始されます...</p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={() => {
-                  setShowFlowmodoroBreakStart(false);
-                  handleFlowmodoroNextWork();
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-              >
-                次の作業へ
-              </button>
-              <button
-                onClick={() => {
-                  setShowFlowmodoroBreakStart(false);
-                  handleStop();
-                }}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
-              >
-                終了
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 📚 完了モーダル（Portalで画面全体に表示） - インターバルモードのみ */}
-      {isIntervalMode && (
-        <TimerCompletionModal
-          show={showCompletionModal}
-          totalCycles={totalCycles}
-          sectionsLength={sections.length}
-          onClose={() => {
-            setShowCompletionModal(false);
-            handleStop();
-          }}
-        />
-      )}
+      {/* 📚 完了モーダル（Portalで画面全体に表示） */}
+      <TimerCompletionModal
+        show={showCompletionModal}
+        totalCycles={totalCycles}
+        sectionsLength={sections.length}
+        onClose={() => {
+          setShowCompletionModal(false);
+          handleStop();
+        }}
+      />
     </div>
   );
 }
