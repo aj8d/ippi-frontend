@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Square, SkipForward } from 'lucide-react';
+import { Play, Pause, Square, SkipForward, Check } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useTimer } from '../../contexts/TimerContext';
 import { API_ENDPOINTS } from '../../config';
@@ -21,9 +21,16 @@ function TimerWidget({ settings = {} }) {
   const { updateTimerState, registerStopCallback } = useTimer();
 
   // 📚 props から設定を取得
-  const displayMode = settings.displayMode || 'countdown';
+  const displayMode = settings.displayMode || 'interval';
   const sections = settings.sections || DEFAULT_SECTIONS;
   const totalCycles = settings.totalCycles || 3; // デフォルト3サイクル
+  const countdownMinutes = settings.countdownMinutes || 25; // デフォルト25分
+
+  // 📚 モードの判定
+  const isIntervalMode = displayMode === 'interval';
+  const isCountupMode = displayMode === 'countup';
+  const isCountdownMode = displayMode === 'countdown';
+  const isFlowmodoroMode = displayMode === 'flowmodoro';
 
   // 📚 タイマーの状態管理
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0); // 現在のセクション
@@ -34,6 +41,9 @@ function TimerWidget({ settings = {} }) {
   const [isRunning, setIsRunning] = useState(false); // 実行中かどうか
   const [hasStarted, setHasStarted] = useState(false); // タイマーが開始されたか
   const [showCompletionModal, setShowCompletionModal] = useState(false); // 完了モーダル
+
+  // 📚 フローモドーロ用の状態管理
+  const [flowmodoroWorkTime, setFlowmodoroWorkTime] = useState(0); // 今回の作業時間（秒）
 
   const intervalRef = useRef(null);
   const hasCompletedRef = useRef(false);
@@ -264,23 +274,60 @@ function TimerWidget({ settings = {} }) {
 
         setElapsedTime(elapsed);
 
-        // タイマー完了チェック
-        if (elapsed >= totalTime && !hasCompletedRef.current) {
+        // 📚 インターバルモードのみ、タイマー完了チェックを行う
+        if (isIntervalMode && elapsed >= totalTime && !hasCompletedRef.current) {
           hasCompletedRef.current = true;
           // インターバルをクリアしてから次のフェーズへ
           clearInterval(intervalRef.current);
           intervalRef.current = null;
           goToNextPhase();
         }
+
+        // 📚 カウントダウンモードは設定時間に達したら停止
+        if (isCountdownMode && elapsed >= totalTime && !hasCompletedRef.current) {
+          hasCompletedRef.current = true;
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setIsRunning(false);
+          // 作業時間を保存
+          const workTime = Math.floor(elapsed);
+          if (workTime >= 60) {
+            saveWorkTimeToBackend(workTime, 1);
+          }
+        }
+
+        // 📚 フローモドーロモードで休憩終了時、自動的に次の作業に移行
+        if (isFlowmodoroMode && !isWorkPhaseRef.current && elapsed >= totalTime && !hasCompletedRef.current) {
+          hasCompletedRef.current = true;
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+
+          // 今回の作業時間を保存
+          if (flowmodoroWorkTime >= 60) {
+            saveWorkTimeToBackend(flowmodoroWorkTime, 1);
+          }
+
+          // 次の作業を開始
+          setFlowmodoroWorkTime(0);
+          setIsWorkPhase(true);
+          isWorkPhaseRef.current = true;
+          setTotalTime(Infinity);
+          setElapsedTime(0);
+          setIsRunning(true);
+          phaseStartTimeRef.current = null;
+          pausedElapsedRef.current = 0;
+        }
       }, 100);
     } else {
       // 📚 一時停止時は現在の経過時間を保存
       if (phaseStartTimeRef.current !== null) {
         pausedElapsedRef.current = elapsedTime;
+        phaseStartTimeRef.current = null; // リセットして再開時に再計算
       }
 
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     }
 
@@ -289,10 +336,43 @@ function TimerWidget({ settings = {} }) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, totalTime, goToNextPhase, elapsedTime]);
+  }, [
+    isRunning,
+    totalTime,
+    goToNextPhase,
+    isIntervalMode,
+    isCountdownMode,
+    isFlowmodoroMode,
+    flowmodoroWorkTime,
+    saveWorkTimeToBackend,
+  ]);
 
-  // 📚 進捗率の計算（timerUtils.calculateProgressを使用可能だが、ここでは互換性のため維持）
-  const progress = totalTime > 0 ? (elapsedTime / totalTime) * 100 : 0;
+  // 📚 進捗率の計算
+  const progress = (() => {
+    // カウントアップ: 進捗バーなし
+    if (isCountupMode) {
+      return 0;
+    }
+
+    // フローモドーロ: 作業中は進捗バーなし、休憩中は進捗率を表示
+    if (isFlowmodoroMode) {
+      if (!hasStarted || isWorkPhase) {
+        return 0;
+      }
+      // 休憩中は進捗率を計算
+      if (totalTime > 0 && totalTime !== Infinity) {
+        return (elapsedTime / totalTime) * 100;
+      }
+      return 0;
+    }
+
+    // カウントダウン・インターバル: 経過率を計算
+    if (totalTime > 0 && totalTime !== Infinity) {
+      return (elapsedTime / totalTime) * 100;
+    }
+
+    return 0;
+  })();
 
   // 📚 SVG円の計算
   const radius = 80;
@@ -303,80 +383,141 @@ function TimerWidget({ settings = {} }) {
    * 📚 表示モードに応じた値を返す
    */
   const getDisplayValue = () => {
-    // 開始前は最初のセクションの作業時間を表示
-    if (!hasStarted) {
-      const initialTime = getTimeFromSection(sections[0], true);
-      if (displayMode === 'countdown') {
-        return formatTime(initialTime);
+    // カウントアップ: 経過時間を表示
+    if (isCountupMode) {
+      return formatTime(elapsedTime);
+    }
+
+    // フローモドーロ: 作業中は経過時間、休憩中は残り時間
+    if (isFlowmodoroMode) {
+      if (isWorkPhase) {
+        return formatTime(elapsedTime);
       } else {
-        return '0%';
+        // 休憩中は残り時間を表示
+        const remaining = Math.max(0, totalTime - elapsedTime);
+        return formatTime(remaining);
       }
     }
 
-    // 実行中・完了後
-    if (displayMode === 'countdown') {
+    // カウントダウン: 残り時間を表示
+    if (isCountdownMode) {
+      if (!hasStarted) {
+        return formatTime(totalTime > 0 ? totalTime : 0);
+      }
       const remaining = Math.max(0, totalTime - elapsedTime);
       return formatTime(remaining);
-    } else {
-      return `${Math.round(progress)}%`;
     }
+
+    // インターバル（ポモドーロ）: 残り時間を表示
+    if (isIntervalMode) {
+      if (!hasStarted) {
+        const initialTime = getTimeFromSection(sections[0], true);
+        return formatTime(initialTime);
+      }
+      const remaining = Math.max(0, totalTime - elapsedTime);
+      return formatTime(remaining);
+    }
+
+    return formatTime(0);
   };
 
   /**
    * 📚 スタートボタンの処理
    */
   const handleStart = useCallback(() => {
-    const initialTime = getTimeFromSection(sections[0], true);
-    if (initialTime > 0) {
-      setCurrentSectionIndex(0);
-      currentSectionIndexRef.current = 0;
-      setCurrentCycle(1);
-      setIsWorkPhase(true);
-      isWorkPhaseRef.current = true;
-      setTotalTime(initialTime);
+    // インターバル（ポモドーロ）モード
+    if (isIntervalMode) {
+      const initialTime = getTimeFromSection(sections[0], true);
+      if (initialTime > 0) {
+        setCurrentSectionIndex(0);
+        currentSectionIndexRef.current = 0;
+        setCurrentCycle(1);
+        setIsWorkPhase(true);
+        isWorkPhaseRef.current = true;
+        setTotalTime(initialTime);
+        setElapsedTime(0);
+        setHasStarted(true);
+        setIsRunning(true);
+        setTotalWorkTime(0);
+        setCompletedWorkSessions(0);
+        totalWorkTimeRef.current = 0;
+        currentPhaseWorkTimeRef.current = 0;
+        phaseStartTimeRef.current = null;
+        pausedElapsedRef.current = 0;
+      }
+      return;
+    }
+
+    // カウントアップモード: 0から開始
+    if (isCountupMode) {
+      setTotalTime(Infinity); // 無制限
       setElapsedTime(0);
       setHasStarted(true);
       setIsRunning(true);
-      // 累積時間をリセット
-      setTotalWorkTime(0);
-      setCompletedWorkSessions(0);
       totalWorkTimeRef.current = 0;
-      currentPhaseWorkTimeRef.current = 0;
-      // 📚 開始時刻をリセット
       phaseStartTimeRef.current = null;
       pausedElapsedRef.current = 0;
+      return;
     }
-  }, [sections]);
+
+    // カウントダウンモード: 設定された時間から開始
+    if (isCountdownMode) {
+      const timeInSeconds = countdownMinutes * 60;
+      setTotalTime(timeInSeconds);
+      setElapsedTime(0);
+      setHasStarted(true);
+      setIsRunning(true);
+      totalWorkTimeRef.current = 0;
+      phaseStartTimeRef.current = null;
+      pausedElapsedRef.current = 0;
+      return;
+    }
+
+    // フローモドーロモード: 作業時間を自由に計測、休憩時間は作業時間の1/5
+    if (isFlowmodoroMode) {
+      setTotalTime(Infinity); // 無制限
+      setElapsedTime(0);
+      setHasStarted(true);
+      setIsRunning(true);
+      setIsWorkPhase(true);
+      totalWorkTimeRef.current = 0;
+      phaseStartTimeRef.current = null;
+      pausedElapsedRef.current = 0;
+      return;
+    }
+  }, [sections, isIntervalMode, isCountupMode, isCountdownMode, isFlowmodoroMode, countdownMinutes]);
 
   /**
    * 📚 停止ボタンの処理
    * 停止前に作業時間が1分以上あれば保存
    */
   const handleStop = useCallback(() => {
-    // 📚 現在の作業フェーズの経過時間を計算
-    let currentPhaseTime = 0;
-    if (isWorkPhase && elapsedTime > 0) {
-      // フェーズが完了している場合（elapsedTime >= totalTime）は設定時間を使用
-      // 完了していない場合は実際の経過時間を使用
-      currentPhaseTime =
-        elapsedTime >= totalTime
-          ? totalTime // 完了済み: 設定時間（goToNextPhaseで既に記録済みなので0にすべき？）
-          : Math.floor(elapsedTime); // 未完了: 実際の経過時間
+    let finalWorkTime = 0;
 
-      // 📚 フェーズが完了済みの場合は既にgoToNextPhaseで記録されているので加算しない
-      if (elapsedTime >= totalTime) {
-        currentPhaseTime = 0;
+    // インターバルモード: 累積作業時間 + 現在のフェーズ
+    if (isIntervalMode) {
+      let currentPhaseTime = 0;
+      if (isWorkPhase && elapsedTime > 0) {
+        currentPhaseTime = elapsedTime >= totalTime ? 0 : Math.floor(elapsedTime);
       }
+      finalWorkTime = totalWorkTimeRef.current + currentPhaseTime;
+    }
+    // カウントアップ・カウントダウン・フローモドーロ: 経過時間をそのまま保存
+    else {
+      finalWorkTime = Math.floor(elapsedTime);
     }
 
-    const finalWorkTime = totalWorkTimeRef.current + currentPhaseTime;
-
-    // 📚 1分以上の作業時間があれば保存
+    // 📚 1分以上の作業時間があれば保存し、完了モーダルを表示
     if (finalWorkTime >= 60) {
-      const sessionsCount = completedWorkSessions + (currentPhaseTime > 0 ? 1 : 0);
+      const sessionsCount = isIntervalMode
+        ? completedWorkSessions + (elapsedTime > 0 && elapsedTime < totalTime ? 1 : 0)
+        : 1;
       saveWorkTimeToBackend(finalWorkTime, sessionsCount);
+      // 1分以上の作業記録がある場合は完了モーダルを表示
+      setShowCompletionModal(true);
     }
 
+    // 状態をリセット
     hasCompletedRef.current = false;
     setIsRunning(false);
     setHasStarted(false);
@@ -388,15 +529,15 @@ function TimerWidget({ settings = {} }) {
     setElapsedTime(0);
     setTotalTime(0);
     setShowCompletionModal(false);
-    // 累積時間をリセット
     setTotalWorkTime(0);
     setCompletedWorkSessions(0);
     totalWorkTimeRef.current = 0;
     currentPhaseWorkTimeRef.current = 0;
-    // 📚 開始時刻をリセット
     phaseStartTimeRef.current = null;
     pausedElapsedRef.current = 0;
-  }, [isWorkPhase, elapsedTime, totalTime, completedWorkSessions, saveWorkTimeToBackend]);
+    // フローモドーロのリセット
+    setFlowmodoroWorkTime(0);
+  }, [isIntervalMode, isWorkPhase, elapsedTime, totalTime, completedWorkSessions, saveWorkTimeToBackend]);
 
   // 📚 停止関数をコンテキストに登録
   useEffect(() => {
@@ -422,6 +563,33 @@ function TimerWidget({ settings = {} }) {
     goToNextPhase(actualTime);
   }, [goToNextPhase, isWorkPhase, elapsedTime]);
 
+  /**
+   * 📚 フローモドーロ用：作業完了ボタンの処理
+   * 作業時間から休憩時間を計算して自動的に休憩を開始
+   */
+  const handleFlowmodoroWorkComplete = useCallback(() => {
+    if (!isFlowmodoroMode || !isRunning) return;
+
+    // 作業時間を秒単位で計算（小数点以下は切り捨て）
+    const workTimeInSeconds = Math.floor(elapsedTime);
+    const workTimeInMinutes = Math.floor(workTimeInSeconds / 60);
+
+    // 作業時間の /5 を休憩時間として計算（分未満は切り捨て、最小1分）
+    const breakTimeInMinutes = Math.max(1, Math.floor(workTimeInMinutes / 5));
+    const breakTimeInSeconds = breakTimeInMinutes * 60;
+
+    // 作業時間を記録
+    setFlowmodoroWorkTime(workTimeInSeconds);
+
+    // 休憩時間を設定して自動的に休憩を開始
+    setTotalTime(breakTimeInSeconds);
+    setElapsedTime(0);
+    setIsWorkPhase(false);
+    isWorkPhaseRef.current = false;
+    phaseStartTimeRef.current = null;
+    pausedElapsedRef.current = 0;
+  }, [isFlowmodoroMode, isRunning, elapsedTime, saveWorkTimeToBackend]);
+
   // 📚 プログレスバーの色（停止中=グレー、作業中=オレンジ、休憩中=緑）
   const getColors = () => {
     if (!hasStarted || !isRunning) {
@@ -430,17 +598,37 @@ function TimerWidget({ settings = {} }) {
         progress: '#9ca3af', // gray-400
         bg: 'rgba(156, 163, 175, 0.1)',
       };
-    } else if (isWorkPhase) {
-      // 作業中
+    } else if (isIntervalMode) {
+      // インターバルモードのみ作業/休憩で色分け
+      if (isWorkPhase) {
+        return {
+          progress: '#f97316', // orange-500
+          bg: 'rgba(249, 115, 22, 0.1)',
+        };
+      } else {
+        return {
+          progress: '#22c55e', // green-500
+          bg: 'rgba(34, 197, 94, 0.1)',
+        };
+      }
+    } else if (isFlowmodoroMode) {
+      // フローモドーロモードも作業/休憩で色分け
+      if (isWorkPhase) {
+        return {
+          progress: '#f97316', // orange-500
+          bg: 'rgba(249, 115, 22, 0.1)',
+        };
+      } else {
+        return {
+          progress: '#22c55e', // green-500
+          bg: 'rgba(34, 197, 94, 0.1)',
+        };
+      }
+    } else {
+      // その他のモード（カウント系）は常にオレンジ
       return {
         progress: '#f97316', // orange-500
         bg: 'rgba(249, 115, 22, 0.1)',
-      };
-    } else {
-      // 休憩中
-      return {
-        progress: '#22c55e', // green-500
-        bg: 'rgba(34, 197, 94, 0.1)',
       };
     }
   };
@@ -453,11 +641,28 @@ function TimerWidget({ settings = {} }) {
   const getBadgeStyle = () => {
     if (!hasStarted || !isRunning) {
       return { className: 'bg-gray-100 text-gray-600', label: '⏸️ 停止中' };
-    } else if (isWorkPhase) {
-      return { className: 'bg-orange-100 text-orange-600', label: '🟠 作業中' };
-    } else {
-      return { className: 'bg-green-100 text-green-600', label: '🟢 休憩中' };
     }
+
+    // インターバルモードのみ作業/休憩を区別
+    if (isIntervalMode) {
+      if (isWorkPhase) {
+        return { className: 'bg-orange-100 text-orange-600', label: '🟠 作業中' };
+      } else {
+        return { className: 'bg-green-100 text-green-600', label: '🟢 休憩中' };
+      }
+    }
+
+    // フローモドーロモードも作業/休憩を区別
+    if (isFlowmodoroMode) {
+      if (isWorkPhase) {
+        return { className: 'bg-orange-100 text-orange-600', label: '🟠 作業中' };
+      } else {
+        return { className: 'bg-green-100 text-green-600', label: '🟢 休憩中' };
+      }
+    }
+
+    // その他のモードは常にオレンジ（計測中）
+    return { className: 'bg-orange-100 text-orange-600', label: '🟠 計測中' };
   };
 
   const badgeStyle = getBadgeStyle();
@@ -469,9 +674,12 @@ function TimerWidget({ settings = {} }) {
         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeStyle.className}`}>
           {badgeStyle.label}
         </span>
-        <div className="text-xs text-gray-500 mt-1">
-          サイクル {currentCycle} / {totalCycles} | セクション {currentSectionIndex + 1} / {sections.length}
-        </div>
+        {/* インターバルモードのみサイクル・セクション情報を表示 */}
+        {isIntervalMode && (
+          <div className="text-xs text-gray-500 mt-1">
+            サイクル {currentCycle} / {totalCycles} | セクション {currentSectionIndex + 1} / {sections.length}
+          </div>
+        )}
       </div>
       {/* 📚 円形プログレスバー */}
       <div className="relative flex items-center justify-center mb-4 w-[85%] max-w-[600px] aspect-square">
@@ -531,13 +739,27 @@ function TimerWidget({ settings = {} }) {
               {isRunning ? <Pause size={16} /> : <Play size={16} />}
             </button>
 
-            <button
-              onClick={handleSkip}
-              className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-              title="次のフェーズへスキップ"
-            >
-              <SkipForward size={16} />
-            </button>
+            {/* スキップボタンはインターバルモードのみ */}
+            {isIntervalMode && (
+              <button
+                onClick={handleSkip}
+                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
+                title="次のフェーズへスキップ"
+              >
+                <SkipForward size={16} />
+              </button>
+            )}
+
+            {/* フローモドーロの作業完了ボタン */}
+            {isFlowmodoroMode && isWorkPhase && (
+              <button
+                onClick={handleFlowmodoroWorkComplete}
+                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
+                title="作業を完了して休憩を開始"
+              >
+                <Check size={16} />
+              </button>
+            )}
           </>
         )}
       </div>

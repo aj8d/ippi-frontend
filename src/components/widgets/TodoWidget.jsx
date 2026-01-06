@@ -183,8 +183,8 @@ function TodoWidget() {
 
   return (
     <div className="flex flex-col h-full p-4 gap-3">
-      {/* ヘッダー */}
-      <div className="text-lg font-bold text-gray-800 flex-shrink-0">TODO</div>
+      {/* ヘッダー
+      <div className="text-lg font-bold text-gray-800 flex-shrink-0">TODO</div> */}
 
       {/* エラー表示 */}
       {error && <div className="p-2 bg-red-100 border border-red-300 text-red-700 rounded-lg text-xs">{error}</div>}
