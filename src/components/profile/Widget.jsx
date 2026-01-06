@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { WIDGET_TYPES } from './widgetUtils';
 import { WIDGET_INFO } from './widgetConfig';
 import { formatDuration } from './widgetUtils';
@@ -6,7 +6,7 @@ import { formatDuration } from './widgetUtils';
 /**
  * ウィジェットコンポーネント
  */
-export default function Widget({ widget, stats, onTypeChange, onTextChange, onDelete, isOwnProfile }) {
+export default function Widget({ widget, stats, onTypeChange, onTextChange, onDelete, isOwnProfile, onImageChange }) {
   const info = WIDGET_INFO[widget.type];
   const Icon = info?.icon;
 
@@ -15,13 +15,13 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
     // 他ユーザーの場合は何も表示しない
     if (!isOwnProfile) {
       return (
-        <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-full min-h-[120px] flex items-center justify-center"></div>
+        <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-auto min-h-[130px] flex items-center justify-center"></div>
       );
     }
 
     // 自分のプロフィールの場合はドロップダウンを表示
     return (
-      <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-full min-h-[120px] flex items-center justify-center relative group">
+      <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-auto min-h-[130px] flex items-center justify-center relative group">
         <select
           value={widget.type}
           onChange={(e) => onTypeChange(widget.id, e.target.value)}
@@ -53,11 +53,11 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
   if (widget.type === WIDGET_TYPES.TEXT) {
     return (
       <div
-        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group`}
+        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
       >
-        <div className="flex items-center gap-2 mb-2">
-          {Icon && <Icon className={`w-5 h-5 ${info.textColor}`} />}
-          {isOwnProfile ? (
+        {isOwnProfile && (
+          <div className="flex items-center gap-2 mb-2">
+            {Icon && <Icon className={`w-5 h-5 ${info.textColor}`} />}
             <select
               value={widget.type}
               onChange={(e) => onTypeChange(widget.id, e.target.value)}
@@ -69,10 +69,8 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
                 </option>
               ))}
             </select>
-          ) : (
-            <span className="text-sm text-gray-600 dark:text-gray-400">{info.label}</span>
-          )}
-        </div>
+          </div>
+        )}
         {isOwnProfile ? (
           <textarea
             value={widget.customText || ''}
@@ -82,7 +80,7 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
             rows={3}
           />
         ) : (
-          <div className="text-base whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+          <div className="text-base whitespace-pre-wrap break-words text-gray-700 dark:text-gray-300">
             {widget.customText || ''}
           </div>
         )}
@@ -90,6 +88,94 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
           <button
             onClick={() => onDelete(widget.id)}
             className="absolute top-2 right-2 p-1 rounded-lg bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // 画像ウィジェット
+  if (widget.type === WIDGET_TYPES.IMAGE) {
+    const handleImageUpload = async (e) => {
+      const file = e.target.files?.[0];
+      if (!file || !onImageChange) return;
+
+      try {
+        // Cloudinaryにアップロード
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/images/upload', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('画像アップロード失敗');
+        }
+
+        const data = await response.json();
+        onImageChange(widget.id, data.url);
+      } catch (error) {
+        console.error('画像アップロードエラー:', error);
+        alert('画像のアップロードに失敗しました');
+      }
+    };
+
+    return (
+      <div
+        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
+      >
+        {isOwnProfile && (
+          <div className="absolute top-2 left-2 z-10">
+            <select
+              value={widget.type}
+              onChange={(e) => onTypeChange(widget.id, e.target.value)}
+              className="text-xs bg-white dark:bg-gray-800 rounded px-2 py-1 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+            >
+              {Object.entries(WIDGET_INFO).map(([type, info]) => (
+                <option key={type} value={type}>
+                  {info.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {widget.imageUrl ? (
+          <div className="relative w-full h-full min-h-[130px]">
+            <img
+              src={widget.imageUrl}
+              alt="ウィジェット画像"
+              className="w-full h-full object-cover"
+              style={{ aspectRatio: '16 / 9' }}
+            />
+            {isOwnProfile && (
+              <label className="absolute bottom-2 right-2 p-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                <Upload className="w-4 h-4" />
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              </label>
+            )}
+          </div>
+        ) : isOwnProfile ? (
+          <label className="flex flex-col items-center justify-center w-full h-full min-h-[130px] cursor-pointer p-4">
+            <Upload className={`w-8 h-8 ${info.textColor} mb-2`} />
+            <span className="text-sm text-gray-600 dark:text-gray-400">画像をアップロード</span>
+            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+          </label>
+        ) : (
+          <div className="flex items-center justify-center w-full h-full min-h-[130px] bg-gray-100 dark:bg-gray-700"></div>
+        )}
+
+        {isOwnProfile && (
+          <button
+            onClick={() => onDelete(widget.id)}
+            className="absolute top-2 right-2 p-1 rounded-lg bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity z-10"
           >
             <X className="w-4 h-4" />
           </button>
@@ -133,7 +219,7 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
     <div
       className={`bg-gradient-to-br ${info.color} dark:from-${info.color.split('-')[1]}-900/20 dark:to-${
         info.color.split('-')[1]
-      }-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group`}
+      }-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
     >
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2">
