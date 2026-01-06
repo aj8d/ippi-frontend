@@ -34,7 +34,7 @@ export default function WidgetSection({
               className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-sm text-gray-700"
             >
               <Settings2 className="w-4 h-4" />
-              <span>インターバル設定</span>
+              <span>タイマー設定</span>
             </button>
 
             {/* 区切り線 */}

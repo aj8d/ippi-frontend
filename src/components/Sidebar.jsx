@@ -93,6 +93,7 @@ function Sidebar({
           displayMode: settings.displayMode || 'countdown',
           totalCycles: settings.totalCycles || '3',
           pomodoroSections: settings.pomodoroSections || [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
+          countdownMinutes: settings.countdownMinutes || '25',
         };
       }
     } catch (error) {
@@ -102,6 +103,7 @@ function Sidebar({
       displayMode: 'countdown',
       totalCycles: '3',
       pomodoroSections: [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
+      countdownMinutes: '25',
     };
   };
 
@@ -110,6 +112,7 @@ function Sidebar({
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false); // 統計モーダル
   const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles); // 📚 サイクル数（デフォルト3サイクル）
+  const [countdownMinutes, setCountdownMinutes] = useState(initialSettings.countdownMinutes); // 📚 カウントダウン時間（分）
 
   // 📚 ポモドーロセクション管理
   // 各セクションは { id, workMinutes, breakMinutes } を持つ
@@ -121,9 +124,10 @@ function Sidebar({
       displayMode,
       totalCycles,
       pomodoroSections,
+      countdownMinutes,
     };
     localStorage.setItem('timerSettings', JSON.stringify(settings));
-  }, [displayMode, totalCycles, pomodoroSections]);
+  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes]);
 
   // 📚 初回マウント時に保存された設定をTimerWidgetへ通知
   useEffect(() => {
@@ -150,11 +154,17 @@ function Sidebar({
   };
 
   // 📚 設定変更時にTimerWidgetへ通知
-  const notifyTimerSettings = (sections = pomodoroSections, mode = displayMode, cycles = totalCycles) => {
+  const notifyTimerSettings = (
+    sections = pomodoroSections,
+    mode = displayMode,
+    cycles = totalCycles,
+    cdMinutes = countdownMinutes
+  ) => {
     onTimerSettingsChange?.({
       displayMode: mode,
       sections: sections,
       totalCycles: parseInt(cycles) || 1,
+      countdownMinutes: parseInt(cdMinutes) || 25,
     });
   };
 
@@ -346,10 +356,12 @@ function Sidebar({
         isOpen={isTimerModalOpen}
         displayMode={displayMode}
         totalCycles={totalCycles}
+        countdownMinutes={countdownMinutes}
         pomodoroSections={pomodoroSections}
         onClose={handleCloseModal}
         onDisplayModeChange={handleDisplayModeChange}
         onTotalCyclesChange={setTotalCycles}
+        onCountdownMinutesChange={setCountdownMinutes}
         onSectionChange={handleSectionChange}
         onAddSection={handleAddSection}
         onRemoveSection={handleRemoveSection}
