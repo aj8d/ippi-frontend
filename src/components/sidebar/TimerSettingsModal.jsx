@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { Timer, X, Plus, Trash2 } from 'lucide-react';
+import { Timer, X, Plus, Trash2, MoveDown, MoveRight } from 'lucide-react';
 
 /**
  * タイマー設定モーダルコンポーネント
@@ -104,17 +104,19 @@ export default function TimerSettingsModal({
           {/* カウントダウン時間設定 - カウントダウンモードのみ */}
           {displayMode === 'countdown' && (
             <div className="space-y-3">
-              <label className="text-sm font-semibold text-gray-700">作業時間</label>
-              <div className="flex items-center gap-3 mt-2">
-                <input
-                  type="number"
-                  min="1"
-                  max="99"
-                  value={countdownMinutes}
-                  onChange={(e) => onCountdownMinutesChange(e.target.value)}
-                  className="w-20 px-3 py-2 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
-                />
-                <span className="text-sm text-gray-600">分</span>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-gray-700">作業時間</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={countdownMinutes}
+                    onChange={(e) => onCountdownMinutesChange(e.target.value)}
+                    className="w-20 px-3 py-2 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
+                  />
+                  <span className="text-sm text-gray-600">分</span>
+                </div>
               </div>
             </div>
           )}
@@ -122,18 +124,22 @@ export default function TimerSettingsModal({
           {/* サイクル数設定 - ポモドーロモードのみ */}
           {displayMode === 'interval' && (
             <div className="space-y-3">
-              <label className="text-sm font-semibold text-gray-700">サイクル数</label>
-              <div className="flex items-center gap-3 mt-2">
-                <input
-                  type="number"
-                  min="1"
-                  max="99"
-                  value={totalCycles}
-                  onChange={(e) => onTotalCyclesChange(e.target.value)}
-                  className="w-20 px-3 py-2 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
-                />
-                <span className="text-sm text-gray-600">サイクル</span>
-                <span className="text-xs text-gray-500">全セクションを何回繰り返すか</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col">
+                  <label className="text-sm font-semibold text-gray-700">サイクル数</label>
+                  <span className="text-xs text-gray-500">全セクションを何回繰り返すか</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="99"
+                    value={totalCycles}
+                    onChange={(e) => onTotalCyclesChange(e.target.value)}
+                    className="w-20 px-3 py-2 border border-gray-300 text-gray-800 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-center"
+                  />
+                  <span className="text-sm text-gray-600">サイクル</span>
+                </div>
               </div>
             </div>
           )}
@@ -178,7 +184,7 @@ export default function TimerSettingsModal({
                         <span className="text-xs text-gray-600">分</span>
                       </div>
 
-                      <span className="text-gray-400 px-2">→</span>
+                      <MoveRight className="text-gray-400 px-1" />
 
                       {/* 休憩時間 */}
                       <div className="flex-1 flex items-center justify-end gap-2">
