@@ -10,11 +10,15 @@ import { API_ENDPOINTS, API_BASE_URL } from '../config';
 import { useProfile } from '../hooks/useProfile';
 import { useProfileFollow } from '../hooks/useProfileFollow';
 import { useStats } from '../hooks/useStats';
+import { useAchievementChecker } from '../hooks/useAchievementChecker';
 
 export default function Profile() {
   const { user, token } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
+
+  // アチーブメント通知チェック
+  useAchievementChecker(token);
 
   // カスタムフックで状態管理を分離
   const {

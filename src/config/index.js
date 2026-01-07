@@ -84,6 +84,12 @@ export const API_ENDPOINTS = {
     BY_ID: (userId) => `${API_BASE_URL}/user-stats/${userId}`,
     BY_CUSTOM_ID: (customId) => `${API_BASE_URL}/user-stats/user/${customId}`,
   },
+
+  // アチーブメント
+  ACHIEVEMENTS: {
+    USER: `${API_BASE_URL}/achievements/user`,
+    ALL: `${API_BASE_URL}/achievements/all`,
+  },
 };
 
 // ページネーション設定

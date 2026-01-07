@@ -16,8 +16,15 @@ import { useState, useCallback } from 'react';
 import Sidebar from '../components/Sidebar';
 import FreeCanvas from '../components/FreeCanvas';
 import { useWidgets } from '../hooks/useWidgets'; // 🆕 カスタムフック
+import { useAchievementChecker } from '../hooks/useAchievementChecker';
+import { useAuth } from '../auth/AuthContext';
 
 function Home() {
+  const { token } = useAuth();
+
+  // アチーブメント通知チェック
+  useAchievementChecker(token);
+
   // 📚 サイドバーの開閉状態（localStorageから読み込む）
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     const saved = localStorage.getItem('sidebarOpen');
