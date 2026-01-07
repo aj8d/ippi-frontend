@@ -5,6 +5,7 @@ import { ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { useTimer } from '../contexts/TimerContext';
 import StatsModal from './StatsModal';
+import AchievementModal from './AchievementModal';
 import TimerWarningModal from './TimerWarningModal';
 import SidebarNavigation from './sidebar/SidebarNavigation';
 import WidgetSection from './sidebar/WidgetSection';
@@ -111,6 +112,7 @@ function Sidebar({
   const [displayMode, setDisplayMode] = useState(initialSettings.displayMode);
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false); // 統計モーダル
+  const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false); // アチーブメントモーダル
   const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles); // 📚 サイクル数（デフォルト3サイクル）
   const [countdownMinutes, setCountdownMinutes] = useState(initialSettings.countdownMinutes); // 📚 カウントダウン時間（分）
 
@@ -349,6 +351,7 @@ function Sidebar({
         onProfileClick={handleProfileClick}
         onLogout={handleLogout}
         onLoginClick={() => navigate('/login')}
+        onAchievementClick={() => setIsAchievementModalOpen(true)}
       />
 
       {/* タイマー設定モーダル */}
@@ -369,6 +372,9 @@ function Sidebar({
 
       {/* 📊 統計モーダル */}
       <StatsModal isOpen={isStatsModalOpen} onClose={() => setIsStatsModalOpen(false)} />
+
+      {/* 🏆 アチーブメントモーダル */}
+      <AchievementModal isOpen={isAchievementModalOpen} onClose={() => setIsAchievementModalOpen(false)} />
 
       {/* ⚠️ タイマー警告モーダル */}
       <TimerWarningModal

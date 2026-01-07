@@ -12,10 +12,15 @@ import { ArrowLeft, Users, Clock, Flame, Trophy, Heart, RefreshCw, MessageCircle
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
+import { useAchievementChecker } from '../hooks/useAchievementChecker';
 
 function Feed() {
   const navigate = useNavigate();
   const { token } = useAuth();
+  
+  // アチーブメント通知チェック
+  useAchievementChecker(token);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     const saved = localStorage.getItem('sidebarOpen');
     return saved !== null ? JSON.parse(saved) : true;
