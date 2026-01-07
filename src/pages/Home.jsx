@@ -21,7 +21,7 @@ import { useAuth } from '../auth/AuthContext';
 
 function Home() {
   const { token } = useAuth();
-  
+
   // アチーブメント通知チェック
   useAchievementChecker(token);
 

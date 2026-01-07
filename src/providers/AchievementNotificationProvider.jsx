@@ -49,10 +49,7 @@ function AchievementNotification({ notification, onClose }) {
                 <p className="text-white font-semibold mt-1">{notification.name}</p>
                 <p className="text-white/90 text-sm mt-0.5">{notification.description}</p>
               </div>
-              <button
-                onClick={onClose}
-                className="flex-shrink-0 text-white/80 hover:text-white transition-colors"
-              >
+              <button onClick={onClose} className="flex-shrink-0 text-white/80 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>

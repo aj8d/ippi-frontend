@@ -3,7 +3,15 @@ import { Settings, LogOut, LogIn, BarChart3, Trophy } from 'lucide-react';
 /**
  * サイドバーフッターコンポーネント
  */
-export default function SidebarFooter({ isOpen, user, onStatsClick, onProfileClick, onLogout, onLoginClick, onAchievementClick }) {
+export default function SidebarFooter({
+  isOpen,
+  user,
+  onStatsClick,
+  onProfileClick,
+  onLogout,
+  onLoginClick,
+  onAchievementClick,
+}) {
   return (
     <div className="p-4 border-t border-gray-200 space-y-2">
       {user ? (
