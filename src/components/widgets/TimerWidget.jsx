@@ -15,6 +15,7 @@ import { useTimer } from '../../contexts/TimerContext';
 import { API_ENDPOINTS } from '../../config';
 import { DEFAULT_SECTIONS, getTimeFromSection, formatTime } from './timerUtils';
 import TimerCompletionModal from './TimerCompletionModal';
+import TimerWarningModal from '../TimerWarningModal';
 
 function TimerWidget({ settings = {} }) {
   const { token } = useAuth();
@@ -41,6 +42,8 @@ function TimerWidget({ settings = {} }) {
   const [isRunning, setIsRunning] = useState(false); // 実行中かどうか
   const [hasStarted, setHasStarted] = useState(false); // タイマーが開始されたか
   const [showCompletionModal, setShowCompletionModal] = useState(false); // 完了モーダル
+  const [completionWorkTime, setCompletionWorkTime] = useState(0); // 完了モーダルに表示する作業時間
+  const [showStopConfirmModal, setShowStopConfirmModal] = useState(false); // 停止確認モーダル
 
   // 📚 フローモドーロ用の状態管理
   const [flowmodoroWorkTime, setFlowmodoroWorkTime] = useState(0); // 今回の作業時間（秒）
@@ -488,10 +491,17 @@ function TimerWidget({ settings = {} }) {
   }, [sections, isIntervalMode, isCountupMode, isCountdownMode, isFlowmodoroMode, countdownMinutes]);
 
   /**
-   * 📚 停止ボタンの処理
+   * 📚 停止ボタンクリック時の処理（確認モーダルを表示）
+   */
+  const handleStopClick = useCallback(() => {
+    setShowStopConfirmModal(true);
+  }, []);
+
+  /**
+   * 📚 停止確認後の実際の停止処理
    * 停止前に作業時間が1分以上あれば保存
    */
-  const handleStop = useCallback(() => {
+  const handleStopConfirmed = useCallback(() => {
     let finalWorkTime = 0;
 
     // インターバルモード: 累積作業時間 + 現在のフェーズ
@@ -514,6 +524,7 @@ function TimerWidget({ settings = {} }) {
         : 1;
       saveWorkTimeToBackend(finalWorkTime, sessionsCount);
       // 1分以上の作業記録がある場合は完了モーダルを表示
+      setCompletionWorkTime(finalWorkTime);
       setShowCompletionModal(true);
     }
 
@@ -528,7 +539,7 @@ function TimerWidget({ settings = {} }) {
     isWorkPhaseRef.current = true;
     setElapsedTime(0);
     setTotalTime(0);
-    setShowCompletionModal(false);
+    // 完了モーダルは表示する場合があるので、ここではリセットしない
     setTotalWorkTime(0);
     setCompletedWorkSessions(0);
     totalWorkTimeRef.current = 0;
@@ -537,12 +548,14 @@ function TimerWidget({ settings = {} }) {
     pausedElapsedRef.current = 0;
     // フローモドーロのリセット
     setFlowmodoroWorkTime(0);
+    // 停止確認モーダルを閉じる
+    setShowStopConfirmModal(false);
   }, [isIntervalMode, isWorkPhase, elapsedTime, totalTime, completedWorkSessions, saveWorkTimeToBackend]);
 
   // 📚 停止関数をコンテキストに登録
   useEffect(() => {
-    registerStopCallback(handleStop);
-  }, [handleStop, registerStopCallback]);
+    registerStopCallback(handleStopConfirmed);
+  }, [handleStopConfirmed, registerStopCallback]);
 
   /**
    * 📚 再生/一時停止ボタンの処理
@@ -726,7 +739,7 @@ function TimerWidget({ settings = {} }) {
           // 実行中・一時停止中：コントロールボタン
           <>
             <button
-              onClick={handleStop}
+              onClick={handleStopClick}
               className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
               title="停止"
             >
@@ -764,14 +777,22 @@ function TimerWidget({ settings = {} }) {
         )}
       </div>
 
+      {/* 📚 停止確認モーダル */}
+      <TimerWarningModal
+        isOpen={showStopConfirmModal}
+        onClose={() => setShowStopConfirmModal(false)}
+        onConfirm={handleStopConfirmed}
+        actionType="stop"
+      />
+
       {/* 📚 完了モーダル（Portalで画面全体に表示） */}
       <TimerCompletionModal
         show={showCompletionModal}
         totalCycles={totalCycles}
         sectionsLength={sections.length}
+        workTime={completionWorkTime}
         onClose={() => {
           setShowCompletionModal(false);
-          handleStop();
         }}
       />
     </div>

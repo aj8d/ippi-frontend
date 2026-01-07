@@ -24,6 +24,8 @@ function TimerWarningModal({ isOpen, onClose, onConfirm, actionType = 'navigate'
         return '統計を開こうとしています。';
       case 'close':
         return 'ページを閉じようとしています。';
+      case 'stop':
+        return '作業を終了しますか？';
       default:
         return '操作を実行しようとしています。';
     }
