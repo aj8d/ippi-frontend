@@ -209,7 +209,7 @@ function TimerWidget({ settings = {} }) {
 
       if (prevIsWorkPhase) {
         // 作業 → 休憩
-        
+
         const breakTime = getTimeFromSection(currentSections[prevSectionIndex], false);
         if (breakTime > 0) {
           // 休憩時間がある場合
@@ -347,8 +347,8 @@ function TimerWidget({ settings = {} }) {
           intervalRef.current = null;
 
           // 今回の作業時間を保存
-            // タイマー完了を記録
-            recordTimerCompletion();
+          // タイマー完了を記録
+          recordTimerCompletion();
           if (flowmodoroWorkTime >= 60) {
             saveWorkTimeToBackend(flowmodoroWorkTime, 1);
           }
@@ -595,7 +595,15 @@ function TimerWidget({ settings = {} }) {
     setFlowmodoroWorkTime(0);
     // 停止確認モーダルを閉じる
     setShowStopConfirmModal(false);
-  }, [isIntervalMode, isWorkPhase, elapsedTime, totalTime, completedWorkSessions, saveWorkTimeToBackend, showTimerCompletionNotification]);
+  }, [
+    isIntervalMode,
+    isWorkPhase,
+    elapsedTime,
+    totalTime,
+    completedWorkSessions,
+    saveWorkTimeToBackend,
+    showTimerCompletionNotification,
+  ]);
 
   // 📚 停止関数をコンテキストに登録
   useEffect(() => {

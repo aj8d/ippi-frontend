@@ -52,9 +52,7 @@ function TimerCompletionNotification({ notification, onClose }) {
               <div>
                 <p className="text-white font-bold text-sm">🎉 タイマー完了！</p>
                 <p className="text-white font-semibold mt-1">作業お疲れさまでした</p>
-                <p className="text-white/90 text-sm mt-0.5">
-                  作業時間: {formatTime(notification.totalTime)}
-                </p>
+                <p className="text-white/90 text-sm mt-0.5">作業時間: {formatTime(notification.totalTime)}</p>
               </div>
               <button onClick={onClose} className="flex-shrink-0 text-white/80 hover:text-white transition-colors">
                 <X className="w-5 h-5" />
