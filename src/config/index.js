@@ -64,6 +64,7 @@ export const API_ENDPOINTS = {
     START_TIMER: (id) => `${API_BASE_URL}/text-data/${id}/start-timer`,
     STOP_TIMER: (id) => `${API_BASE_URL}/text-data/${id}/stop-timer`,
     TIMER_STATUS: (id) => `${API_BASE_URL}/text-data/${id}/timer-status`,
+    TIMER_COMPLETION: `${API_BASE_URL}/text-data/timer-completion`,
   },
 
   // ウィジェット
