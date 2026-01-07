@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, UserMinus } from 'lucide-react';
 import { API_ENDPOINTS } from '../config';
+import UserAvatar from './UserAvatar';
 
 /**
  * ユーザーカードコンポーネント
@@ -38,20 +39,6 @@ export default function UserCard({
   useEffect(() => {
     setInternalIsFollowing(isFollowing);
   }, [isFollowing]);
-
-  // アバター画像URL
-  // profileImageUrlがフルURLの場合はそのまま使用、相対パスの場合はベースURLを追加
-  const getAvatarUrl = () => {
-    if (!user.profileImageUrl) return null;
-    // 既にフルURLの場合はそのまま返す
-    if (user.profileImageUrl.startsWith('http://') || user.profileImageUrl.startsWith('https://')) {
-      return user.profileImageUrl;
-    }
-    // 相対パスの場合はベースURLを追加
-    return `${API_ENDPOINTS.BASE}${user.profileImageUrl}`;
-  };
-
-  const avatarUrl = getAvatarUrl();
 
   // プロフィールページへ遷移
   const handleCardClick = () => {
@@ -141,15 +128,13 @@ export default function UserCard({
       {/* ユーザー情報 */}
       <div className="flex items-center gap-3">
         {/* アバター */}
-        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={user.userName} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-xl font-bold">
-              {user.userName?.charAt(0)?.toUpperCase() || '?'}
-            </div>
-          )}
-        </div>
+        <UserAvatar
+          userId={user.userId}
+          userName={user.userName}
+          profileImageUrl={user.profileImageUrl}
+          size="md"
+          showStreakBadge={true}
+        />
 
         {/* ユーザー詳細 */}
         <div className="flex flex-col">

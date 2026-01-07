@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, Flame, Trophy, Heart, RefreshCw, MessageCircle, Send, Trash2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import UserAvatar from '../components/UserAvatar';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
 import { useAchievementChecker } from '../hooks/useAchievementChecker';
@@ -342,20 +343,16 @@ function Feed() {
                   <div className="flex items-start gap-4">
                     {/* ユーザーアバター */}
                     <div
-                      className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => item.userCustomId && navigate(`/${item.userCustomId}`)}
                     >
-                      {item.userProfileImageUrl ? (
-                        <img
-                          src={item.userProfileImageUrl}
-                          alt={item.userName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-600 text-lg font-bold">
-                          {item.userName?.charAt(0)?.toUpperCase() || '?'}
-                        </div>
-                      )}
+                      <UserAvatar
+                        userId={item.userId}
+                        userName={item.userName}
+                        profileImageUrl={item.userProfileImageUrl}
+                        size="md"
+                        showStreakBadge={true}
+                      />
                     </div>
 
                     {/* アクティビティ内容 */}
@@ -435,19 +432,13 @@ function Feed() {
                               {item.comments.map((comment) => (
                                 <div key={comment.id} className="flex items-start gap-2 group">
                                   {/* コメント投稿者のアバター */}
-                                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                                    {comment.userProfileImageUrl ? (
-                                      <img
-                                        src={comment.userProfileImageUrl}
-                                        alt={comment.userName}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs font-bold">
-                                        {comment.userName?.charAt(0)?.toUpperCase() || '?'}
-                                      </div>
-                                    )}
-                                  </div>
+                                  <UserAvatar
+                                    userId={comment.userId}
+                                    userName={comment.userName}
+                                    profileImageUrl={comment.userProfileImageUrl}
+                                    size="sm"
+                                    showStreakBadge={true}
+                                  />
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                       <span className="font-medium text-sm text-gray-900">{comment.userName}</span>

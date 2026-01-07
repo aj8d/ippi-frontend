@@ -5,6 +5,7 @@ import ActivityCalendar from '../components/ActivityCalendar';
 import StatsWidget from '../components/StatsWidget';
 import Sidebar from '../components/Sidebar';
 import ProfileWidgetManager, { WidgetAddButton } from '../components/ProfileWidgetManager';
+import UserAvatar from '../components/UserAvatar';
 import { UserPlus, UserMinus, Users, MoreVertical, Edit, Upload, AtSign } from 'lucide-react';
 import { API_ENDPOINTS, API_BASE_URL } from '../config';
 import { useProfile } from '../hooks/useProfile';
@@ -237,15 +238,14 @@ export default function Profile() {
 
             {/* プロフィール情報 */}
             <div className="flex items-center gap-5">
-              <div className="w-48 h-48 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-green-500">
-                {profileImageUrl ? (
-                  <img src={profileImageUrl} alt="プロフィール" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-600 text-7xl font-bold">
-                    {userName?.charAt(0)?.toUpperCase() || '?'}
-                  </div>
-                )}
-              </div>
+              <UserAvatar
+                userId={profileUserId}
+                userName={userName}
+                profileImageUrl={profileImageUrl}
+                size="2xl"
+                showStreakBadge={true}
+                showBorder={true}
+              />
 
               <div className="flex flex-col">
                 <p className="text-lg mb-2.5 font-bold">{userName || '名前なし'}</p>
