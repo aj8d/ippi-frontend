@@ -1,9 +1,7 @@
 /**
- * Feed.jsx - フィードページ
+ * フィードページ
  *
- * 📚 このコンポーネントの役割：
  * - フォローしているユーザーのアクティビティを表示
- * - Duolingoライクなフィード形式
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -36,7 +34,7 @@ function Feed() {
   const [commentTexts, setCommentTexts] = useState({});
   const [submittingComment, setSubmittingComment] = useState({});
 
-  // 📚 フィードデータを取得
+  // フィードデータを取得
   const fetchFeed = useCallback(
     async (pageNum = 0, append = false) => {
       if (!token) return;
@@ -97,7 +95,7 @@ function Feed() {
     fetchFeed(0, false);
   };
 
-  // 📚 いいねをトグル
+  // いいねをトグル
   const handleLike = async (feedId, isLiked) => {
     if (!token) return;
 
@@ -130,7 +128,7 @@ function Feed() {
     }
   };
 
-  // 📚 コメントを投稿
+  // コメントを投稿
   const handleSubmitComment = async (feedId) => {
     const commentText = commentTexts[feedId]?.trim();
     if (!commentText || !token) return;
@@ -171,7 +169,7 @@ function Feed() {
     }
   };
 
-  // 📚 コメントを削除
+  // コメントを削除
   const handleDeleteComment = async (feedId, commentId) => {
     if (!token || !window.confirm('このコメントを削除しますか？')) return;
 
@@ -202,7 +200,7 @@ function Feed() {
     }
   };
 
-  // 📚 コメント表示をトグル
+  // コメント表示をトグル
   const toggleComments = (feedId) => {
     setExpandedComments((prev) => ({
       ...prev,
@@ -210,7 +208,7 @@ function Feed() {
     }));
   };
 
-  // 📚 アクティビティの種類に応じたアイコンを取得
+  // アクティビティの種類に応じたアイコンを取得
   const getActivityIcon = (type) => {
     switch (type) {
       case 'work_completed':
@@ -226,7 +224,7 @@ function Feed() {
     }
   };
 
-  // 📚 時間を相対表示に変換
+  // 時間を相対表示に変換
   const formatRelativeTime = (timestamp) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -241,7 +239,7 @@ function Feed() {
     return new Date(timestamp).toLocaleDateString('ja-JP');
   };
 
-  // 📚 relatedDataから追加情報を取得
+  // relatedDataから追加情報を取得
   const parseRelatedData = (relatedData) => {
     if (!relatedData) return null;
     try {
@@ -251,7 +249,7 @@ function Feed() {
     }
   };
 
-  // 📚 アクティビティのバッジを取得
+  // アクティビティのバッジを取得
   const getActivityBadge = (type, relatedData) => {
     const data = parseRelatedData(relatedData);
     if (!data) return null;

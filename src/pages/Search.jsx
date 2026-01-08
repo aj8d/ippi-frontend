@@ -1,7 +1,6 @@
 /**
- * Search.jsx - ユーザー検索ページ
+ * ユーザー検索ページ
  *
- * 📚 このコンポーネントの役割：
  * - ユーザー名またはIDで検索
  * - 検索結果をリスト表示
  * - クリックでプロフィールページへ遷移
@@ -31,7 +30,7 @@ function SearchPage() {
     return saved !== null ? JSON.parse(saved) : true;
   });
 
-  // 📚 カスタムフックでフォロー機能を管理
+  // カスタムフックでフォロー機能を管理
   const { fetchFollowingIds, isFollowing, currentUserId } = useFollow();
 
   // 初回読み込み時にフォロー中リストを取得
@@ -41,7 +40,7 @@ function SearchPage() {
     }
   }, [token, fetchFollowingIds]);
 
-  // 📚 検索実行
+  // 検索実行
   const performSearch = useCallback(async (searchQuery) => {
     if (!searchQuery.trim()) {
       setResults([]);
@@ -77,7 +76,7 @@ function SearchPage() {
     }
   }, []);
 
-  // 📚 URLパラメータから検索を実行
+  // URLパラメータから検索を実行
   useEffect(() => {
     const q = searchParams.get('q');
     if (q) {
@@ -86,7 +85,7 @@ function SearchPage() {
     }
   }, [searchParams, performSearch]);
 
-  // 📚 検索フォーム送信
+  // 検索フォーム送信
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) {
@@ -95,7 +94,7 @@ function SearchPage() {
     }
   };
 
-  // 📚 フォロートグルコールバック
+  // フォロートグルコールバック
   const handleFollowToggle = async (userId, isNowFollowing) => {
     console.log(`User ${userId} is now ${isNowFollowing ? 'followed' : 'unfollowed'}`);
     // フォロー中リストを再取得して最新状態に同期
