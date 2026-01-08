@@ -84,6 +84,7 @@ export const API_ENDPOINTS = {
     ME: `${API_BASE_URL}/user-stats/me`,
     BY_ID: (userId) => `${API_BASE_URL}/user-stats/${userId}`,
     BY_CUSTOM_ID: (customId) => `${API_BASE_URL}/user-stats/user/${customId}`,
+    DAILY_ACTIVITY: (customId) => `${API_BASE_URL}/user-stats/user/${customId}/daily-activity`,
   },
 
   // アチーブメント
