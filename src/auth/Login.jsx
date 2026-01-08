@@ -57,7 +57,7 @@ export default function Login() {
           description: data.description,
           customId: data.customId,
         });
-        
+
         // customId がある場合はプロフィールページにリダイレクト
         if (data.customId) {
           navigate(`/${data.customId}`);

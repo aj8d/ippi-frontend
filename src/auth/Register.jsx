@@ -8,7 +8,7 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const isGoogleRedirect = searchParams.get('google') === 'true';
   const initialStep = searchParams.get('step') === '2' ? 2 : 1;
-  
+
   const [step, setStep] = useState(initialStep); // 1: メール/パスワード, 2: ユーザーID/名前
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -157,16 +157,12 @@ export default function Register() {
         {/* ヘッダー */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            {(googleToken || isGoogleRedirect) ? 'ID設定' : 'Sign Up'}
+            {googleToken || isGoogleRedirect ? 'ID設定' : 'Sign Up'}
           </h1>
-          {(googleToken || isGoogleRedirect) ? (
-            <p className="text-gray-600 text-sm">
-              あと少しで完了です！ユーザーIDを設定してください
-            </p>
+          {googleToken || isGoogleRedirect ? (
+            <p className="text-gray-600 text-sm">あと少しで完了です！ユーザーIDを設定してください</p>
           ) : (
-            <p className="text-gray-600 text-sm">
-              Step {step} of 2
-            </p>
+            <p className="text-gray-600 text-sm">Step {step} of 2</p>
           )}
         </div>
 
