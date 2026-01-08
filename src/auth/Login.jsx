@@ -9,7 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, setTokenAndUser } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -21,7 +21,7 @@ export default function Login() {
     if (result.success && result.customId) {
       navigate(`/${result.customId}`);
     } else if (result.success) {
-      // customId がない場合はホームに遷移（通常は発生しない）
+      // customId がない場合はホームに遷移
       navigate('/');
     } else {
       setError(result.message);
@@ -48,14 +48,22 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        // JWT トークンを localStorage に保存
-        localStorage.setItem('token', data.token);
+        // AuthContextを更新してユーザー状態を反映
+        setTokenAndUser(data.token, {
+          userId: data.userId,
+          email: data.email,
+          name: data.name,
+          profileImageUrl: data.profileImageUrl,
+          description: data.description,
+          customId: data.customId,
+        });
+
         // customId がある場合はプロフィールページにリダイレクト
         if (data.customId) {
           navigate(`/${data.customId}`);
         } else {
-          // customId がない場合はホームに遷移
-          navigate('/');
+          // customId がない場合は設定ページへ誘導
+          navigate('/register?step=2&google=true');
         }
       } else {
         setError(data.message || 'Google ログインに失敗しました');

@@ -12,8 +12,10 @@ export function useProfile(id, user) {
   const [userDescription, setUserDescription] = useState('');
   const [userCustomId, setUserCustomId] = useState('');
   const [profileUserId, setProfileUserId] = useState(null);
-  const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // isOwnProfileを計算（userIdで比較）
+  const isOwnProfile = user && profileUserId && user.userId === profileUserId;
 
   // ログイン後のプロフィール初期化
   useEffect(() => {
@@ -46,7 +48,6 @@ export function useProfile(id, user) {
           setUserDescription(data.description || '');
           setUserCustomId(data.customId || '');
           setProfileUserId(data.userId);
-          setIsOwnProfile(user && user.customId === id);
         } else {
           console.error('Failed to fetch profile');
         }

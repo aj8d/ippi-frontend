@@ -37,31 +37,31 @@ function Sidebar({
   const location = useLocation();
   const navigate = useNavigate();
 
-  // 📚 警告モーダルの状態
+  // 警告モーダルの状態
   const [warningModalOpen, setWarningModalOpen] = useState(false);
   const [warningActionType, setWarningActionType] = useState('navigate');
   const [pendingAction, setPendingAction] = useState(null);
 
-  // 📚 カスタムツールチップの状態
+  // カスタムツールチップの状態
   const [tooltip, setTooltip] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  // 📚 削除メニューの状態
+  // 削除メニューの状態
   const [showDeleteMenu, setShowDeleteMenu] = useState(false);
 
-  // 📚 サイドバーの開閉状態をlocalStorageに保存
+  // サイドバーの開閉状態をlocalStorageに保存
   useEffect(() => {
     localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
   }, [isOpen]);
 
-  // 📚 現在のページを判定
+  // 現在のページを判定
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
   const isSearchPage = location.pathname === '/search';
   const isFeedPage = location.pathname === '/feed';
   const isProfilePage = location.pathname.includes('/@') || (user && location.pathname === `/${user.customId}`);
 
   /**
-   * 📚 一意ウィジェットが追加済みかチェック
+   * 一意ウィジェットが追加済みかチェック
    * activeWidgets 配列に同じ type があれば true
    */
   const isWidgetActive = (type) => {
@@ -69,7 +69,7 @@ function Sidebar({
   };
 
   /**
-   * 📚 一意ウィジェットのクリックハンドラー
+   * 一意ウィジェットのクリックハンドラー
    * - 未追加 → 追加
    * - 追加済み → 削除
    */
@@ -83,7 +83,7 @@ function Sidebar({
     }
   };
 
-  // 📚 モーダル状態管理
+  // モーダル状態管理
   // localStorageからタイマー設定を読み込む
   const loadTimerSettings = () => {
     try {
@@ -113,14 +113,14 @@ function Sidebar({
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false); // 統計モーダル
   const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false); // アチーブメントモーダル
-  const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles); // 📚 サイクル数（デフォルト3サイクル）
-  const [countdownMinutes, setCountdownMinutes] = useState(initialSettings.countdownMinutes); // 📚 カウントダウン時間（分）
+  const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles); // サイクル数（デフォルト3サイクル）
+  const [countdownMinutes, setCountdownMinutes] = useState(initialSettings.countdownMinutes); // カウントダウン時間（分）
 
-  // 📚 ポモドーロセクション管理
+  // ポモドーロセクション管理
   // 各セクションは { id, workMinutes, breakMinutes } を持つ
   const [pomodoroSections, setPomodoroSections] = useState(initialSettings.pomodoroSections);
 
-  // 📚 タイマー設定をlocalStorageに保存
+  // タイマー設定をlocalStorageに保存
   useEffect(() => {
     const settings = {
       displayMode,
@@ -131,31 +131,31 @@ function Sidebar({
     localStorage.setItem('timerSettings', JSON.stringify(settings));
   }, [displayMode, totalCycles, pomodoroSections, countdownMinutes]);
 
-  // 📚 初回マウント時に保存された設定をTimerWidgetへ通知
+  // 初回マウント時に保存された設定をTimerWidgetへ通知
   useEffect(() => {
     notifyTimerSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 初回のみ実行
 
-  // 📚 セクション追加
+  // セクション追加
   const handleAddSection = () => {
     const newId = Math.max(...pomodoroSections.map((s) => s.id), 0) + 1;
     setPomodoroSections([...pomodoroSections, { id: newId, workMinutes: '25', breakMinutes: '5' }]);
   };
 
-  // 📚 セクション削除
+  // セクション削除
   const handleRemoveSection = (id) => {
     if (pomodoroSections.length > 1) {
       setPomodoroSections(pomodoroSections.filter((s) => s.id !== id));
     }
   };
 
-  // 📚 セクションの値更新
+  // セクションの値更新
   const handleSectionChange = (id, field, value) => {
     setPomodoroSections(pomodoroSections.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   };
 
-  // 📚 設定変更時にTimerWidgetへ通知
+  // 設定変更時にTimerWidgetへ通知
   const notifyTimerSettings = (
     sections = pomodoroSections,
     mode = displayMode,
@@ -175,13 +175,13 @@ function Sidebar({
     notifyTimerSettings(pomodoroSections, mode);
   };
 
-  // 📚 モーダルを閉じる時に設定を適用
+  // モーダルを閉じる時に設定を適用
   const handleCloseModal = () => {
     notifyTimerSettings();
     setIsTimerModalOpen(false);
   };
 
-  // 📚 タイマー動作中の警告を表示して操作を遅延実行
+  // タイマー動作中の警告を表示して操作を遅延実行
   const showTimerWarning = useCallback(
     (actionType, action) => {
       if (isTimerRunning) {
@@ -195,7 +195,7 @@ function Sidebar({
     [isTimerRunning]
   );
 
-  // 📚 警告モーダルで確認後にアクション実行
+  // 警告モーダルで確認後にアクション実行
   const handleWarningConfirm = useCallback(() => {
     stopTimer();
     if (pendingAction) {
@@ -207,37 +207,37 @@ function Sidebar({
     }
   }, [stopTimer, pendingAction]);
 
-  // 📚 タイマー設定ボタンクリック
+  // タイマー設定ボタンクリック
   const handleTimerSettingsClick = () => {
     showTimerWarning('settings', () => setIsTimerModalOpen(true));
   };
 
-  // 📚 タイマー設定ボタンクリック（エイリアス）
+  // タイマー設定ボタンクリック（エイリアス）
   const handleTimerClick = handleTimerSettingsClick;
 
-  // 📚 統計ボタンクリック
+  // 統計ボタンクリック
   const handleStatsClick = () => {
     showTimerWarning('stats', () => setIsStatsModalOpen(true));
   };
 
-  // 📚 プロフィールクリック（ページ遷移）
+  // プロフィールクリック（ページ遷移）
   const handleProfileClick = () => {
     if (user?.customId) {
       showTimerWarning('navigate', () => navigate(`/${user.customId}`));
     }
   };
 
-  // 📚 ホームクリック（ページ遷移）
+  // ホームクリック（ページ遷移）
   const handleHomeClick = () => {
     showTimerWarning('navigate', () => navigate('/'));
   };
 
-  // 📚 検索クリック（ページ遷移）
+  // 検索クリック（ページ遷移）
   const handleSearchClick = () => {
     showTimerWarning('navigate', () => navigate('/search'));
   };
 
-  // 📚 フィードクリック（ページ遷移）
+  // フィードクリック（ページ遷移）
   const handleFeedClick = () => {
     showTimerWarning('navigate', () => navigate('/feed'));
   };
@@ -246,7 +246,7 @@ function Sidebar({
     showTimerWarning('navigate', () => logout());
   };
 
-  // 📚 ブラウザを閉じる/リロード時の警告
+  // ブラウザを閉じる/リロード時の警告
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (isTimerRunning) {
@@ -370,13 +370,13 @@ function Sidebar({
         onRemoveSection={handleRemoveSection}
       />
 
-      {/* 📊 統計モーダル */}
+      {/* 統計モーダル */}
       <StatsModal isOpen={isStatsModalOpen} onClose={() => setIsStatsModalOpen(false)} />
 
-      {/* 🏆 アチーブメントモーダル */}
+      {/* アチーブメントモーダル */}
       <AchievementModal isOpen={isAchievementModalOpen} onClose={() => setIsAchievementModalOpen(false)} />
 
-      {/* ⚠️ タイマー警告モーダル */}
+      {/* タイマー警告モーダル */}
       <TimerWarningModal
         isOpen={warningModalOpen}
         onClose={() => {

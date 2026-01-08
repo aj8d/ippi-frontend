@@ -1,17 +1,14 @@
 /**
- * StickyNote.jsx - 付箋ウィジェット
+ * 付箋ウィジェット
  *
- * 📚 このコンポーネントの役割：
  * - テキストを自由に入力できる付箋
  * - 背景色を変更可能（カラーパレット）
  * - 絵文字/アイコンを追加可能
- *
- * 💡 goghアプリのような付箋機能を実現
  */
 
 import { useState } from 'react';
 
-// 📚 使用可能な背景色（Tailwindのカラー）
+// 使用可能な背景色
 const COLORS = [
   { name: 'yellow', bg: 'bg-yellow-100', border: 'border-yellow-300' },
   { name: 'pink', bg: 'bg-pink-100', border: 'border-pink-300' },
@@ -21,25 +18,25 @@ const COLORS = [
   { name: 'orange', bg: 'bg-orange-100', border: 'border-orange-300' },
 ];
 
-// 📚 使用可能な絵文字
+// 使用可能な絵文字
 const EMOJIS = ['💡', '⭐', '❤️', '🔥', '✨', '📌', '🎯', '💪', '🚀', '✅'];
 
 /**
- * StickyNote - 付箋コンポーネント
+ * 付箋コンポーネント
  *
  * @param {Object} data - 付箋のデータ { text, color, emoji }
  * @param {Function} onUpdate - データ更新時のコールバック
  */
 function StickyNote({ data = {}, onUpdate }) {
-  // 📚 デフォルト値を設定
+  // デフォルト値を設定
   const { text = '', color = 'yellow', emoji = '' } = data;
 
-  // 📚 カラーピッカーの表示状態
+  // カラーピッカーの表示状態
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   /**
-   * 📚 現在の色設定を取得
+   * 現在の色設定を取得
    *
    * find でCOLORS配列から該当する色を探す
    * || で見つからない場合はデフォルト（黄色）
@@ -47,14 +44,14 @@ function StickyNote({ data = {}, onUpdate }) {
   const currentColor = COLORS.find((c) => c.name === color) || COLORS[0];
 
   /**
-   * 📚 テキスト変更ハンドラー
+   * テキスト変更ハンドラー
    */
   const handleTextChange = (e) => {
     onUpdate?.({ text: e.target.value });
   };
 
   /**
-   * 📚 色変更ハンドラー
+   * 色変更ハンドラー
    */
   const handleColorChange = (colorName) => {
     onUpdate?.({ color: colorName });
@@ -62,7 +59,7 @@ function StickyNote({ data = {}, onUpdate }) {
   };
 
   /**
-   * 📚 絵文字変更ハンドラー
+   * 絵文字変更ハンドラー
    */
   const handleEmojiChange = (selectedEmoji) => {
     // 同じ絵文字をクリックしたら解除
@@ -72,7 +69,7 @@ function StickyNote({ data = {}, onUpdate }) {
 
   return (
     <div className={`flex flex-col h-full ${currentColor.bg} p-3`}>
-      {/* 📚 ツールバー（色・絵文字選択） */}
+      {/* ツールバー（色・絵文字選択） */}
       <div className="flex items-center gap-2 mb-2 flex-shrink-0">
         {/* 色選択ボタン */}
         <div className="relative">
@@ -133,13 +130,13 @@ function StickyNote({ data = {}, onUpdate }) {
         </div>
       </div>
 
-      {/* 📚 テキストエリア */}
+      {/* テキストエリア */}
       <textarea
         value={text}
         onChange={handleTextChange}
         placeholder="メモを入力..."
         className={`flex-1 w-full resize-none bg-transparent border-none outline-none text-gray-800 placeholder-gray-400`}
-        // 📚 クリック時にピッカーを閉じる
+        // クリック時にピッカーを閉じる
         onClick={() => {
           setShowColorPicker(false);
           setShowEmojiPicker(false);

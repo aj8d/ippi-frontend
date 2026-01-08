@@ -12,7 +12,7 @@ export function useStats(userCustomId) {
 
     const fetchStats = async () => {
       try {
-        const response = await fetch(API_ENDPOINTS.USER_STATS.BY_CUSTOM_ID(userCustomId), {
+        const response = await fetch(API_ENDPOINTS.USER_STATS.DAILY_ACTIVITY(userCustomId), {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

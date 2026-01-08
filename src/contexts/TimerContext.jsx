@@ -1,7 +1,6 @@
 /**
- * TimerContext.jsx - タイマー状態の共有コンテキスト
+ * タイマー状態の共有コンテキスト
  *
- * 📚 このコンテキストの役割：
  * - タイマーの実行状態をアプリ全体で共有
  * - ページ遷移や設定変更時の警告表示に使用
  */
@@ -10,7 +9,7 @@ import { createContext, useContext, useState, useCallback } from 'react';
 
 const TimerContext = createContext(null);
 
-// 📚 カスタムフック
+// カスタムフック
 // eslint-disable-next-line react-refresh/only-export-components
 export function useTimer() {
   const context = useContext(TimerContext);
@@ -21,22 +20,22 @@ export function useTimer() {
 }
 
 export function TimerProvider({ children }) {
-  // 📚 タイマーが実行中かどうか
+  // タイマーが実行中かどうか
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  // 📚 タイマー停止関数を保持（TimerWidgetから登録）
+  // タイマー停止関数を保持（TimerWidgetから登録）
   const [stopTimerCallback, setStopTimerCallback] = useState(null);
 
-  // 📚 タイマー状態を更新
+  // タイマー状態を更新
   const updateTimerState = useCallback((running) => {
     setIsTimerRunning(running);
   }, []);
 
-  // 📚 停止関数を登録
+  // 停止関数を登録
   const registerStopCallback = useCallback((callback) => {
     setStopTimerCallback(() => callback);
   }, []);
 
-  // 📚 タイマーを停止
+  // タイマーを停止
   const stopTimer = useCallback(() => {
     if (stopTimerCallback) {
       stopTimerCallback();

@@ -1,7 +1,6 @@
 /**
- * Search.jsx - ユーザー検索ページ
+ * ユーザー検索ページ
  *
- * 📚 このコンポーネントの役割：
  * - ユーザー名またはIDで検索
  * - 検索結果をリスト表示
  * - クリックでプロフィールページへ遷移
@@ -12,6 +11,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, User, ArrowLeft, AtSign } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import UserCard from '../components/UserCard';
 import { useAuth } from '../auth/AuthContext';
 import { useFollow } from '../hooks/useFollow';
@@ -31,7 +31,7 @@ function SearchPage() {
     return saved !== null ? JSON.parse(saved) : true;
   });
 
-  // 📚 カスタムフックでフォロー機能を管理
+  // カスタムフックでフォロー機能を管理
   const { fetchFollowingIds, isFollowing, currentUserId } = useFollow();
 
   // 初回読み込み時にフォロー中リストを取得
@@ -41,7 +41,7 @@ function SearchPage() {
     }
   }, [token, fetchFollowingIds]);
 
-  // 📚 検索実行
+  // 検索実行
   const performSearch = useCallback(async (searchQuery) => {
     if (!searchQuery.trim()) {
       setResults([]);
@@ -77,7 +77,7 @@ function SearchPage() {
     }
   }, []);
 
-  // 📚 URLパラメータから検索を実行
+  // URLパラメータから検索を実行
   useEffect(() => {
     const q = searchParams.get('q');
     if (q) {
@@ -86,7 +86,7 @@ function SearchPage() {
     }
   }, [searchParams, performSearch]);
 
-  // 📚 検索フォーム送信
+  // 検索フォーム送信
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) {
@@ -95,7 +95,7 @@ function SearchPage() {
     }
   };
 
-  // 📚 フォロートグルコールバック
+  // フォロートグルコールバック
   const handleFollowToggle = async (userId, isNowFollowing) => {
     console.log(`User ${userId} is now ${isNowFollowing ? 'followed' : 'unfollowed'}`);
     // フォロー中リストを再取得して最新状態に同期
@@ -104,17 +104,19 @@ function SearchPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* サイドバー */}
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} activeWidgets={[]} />
+      {/* デスクトップ用サイドバー */}
+      <div className="hidden md:block">
+        <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} activeWidgets={[]} />
+      </div>
 
       {/* メインコンテンツ */}
-      <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <div className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
         <div className="max-w-2xl mx-auto px-4 py-8">
           {/* ヘッダー */}
           <div className="mb-8">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+              className="hidden md:flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>ホームに戻る</span>
@@ -180,6 +182,9 @@ function SearchPage() {
           )}
         </div>
       </div>
+
+      {/* モバイル用ボトムナビゲーション */}
+      <MobileBottomNav />
     </div>
   );
 }

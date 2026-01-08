@@ -1,15 +1,15 @@
 /**
- * Feed.jsx - フィードページ
+ * フィードページ
  *
- * 📚 このコンポーネントの役割：
  * - フォローしているユーザーのアクティビティを表示
- * - Duolingoライクなフィード形式
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, Flame, Trophy, Heart, RefreshCw, MessageCircle, Send, Trash2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import MobileBottomNav from '../components/mobile/MobileBottomNav';
+import UserAvatar from '../components/UserAvatar';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
 import { useAchievementChecker } from '../hooks/useAchievementChecker';
@@ -35,7 +35,7 @@ function Feed() {
   const [commentTexts, setCommentTexts] = useState({});
   const [submittingComment, setSubmittingComment] = useState({});
 
-  // 📚 フィードデータを取得
+  // フィードデータを取得
   const fetchFeed = useCallback(
     async (pageNum = 0, append = false) => {
       if (!token) return;
@@ -96,7 +96,7 @@ function Feed() {
     fetchFeed(0, false);
   };
 
-  // 📚 いいねをトグル
+  // いいねをトグル
   const handleLike = async (feedId, isLiked) => {
     if (!token) return;
 
@@ -129,7 +129,7 @@ function Feed() {
     }
   };
 
-  // 📚 コメントを投稿
+  // コメントを投稿
   const handleSubmitComment = async (feedId) => {
     const commentText = commentTexts[feedId]?.trim();
     if (!commentText || !token) return;
@@ -170,7 +170,7 @@ function Feed() {
     }
   };
 
-  // 📚 コメントを削除
+  // コメントを削除
   const handleDeleteComment = async (feedId, commentId) => {
     if (!token || !window.confirm('このコメントを削除しますか？')) return;
 
@@ -201,7 +201,7 @@ function Feed() {
     }
   };
 
-  // 📚 コメント表示をトグル
+  // コメント表示をトグル
   const toggleComments = (feedId) => {
     setExpandedComments((prev) => ({
       ...prev,
@@ -209,7 +209,7 @@ function Feed() {
     }));
   };
 
-  // 📚 アクティビティの種類に応じたアイコンを取得
+  // アクティビティの種類に応じたアイコンを取得
   const getActivityIcon = (type) => {
     switch (type) {
       case 'work_completed':
@@ -225,7 +225,7 @@ function Feed() {
     }
   };
 
-  // 📚 時間を相対表示に変換
+  // 時間を相対表示に変換
   const formatRelativeTime = (timestamp) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -240,7 +240,7 @@ function Feed() {
     return new Date(timestamp).toLocaleDateString('ja-JP');
   };
 
-  // 📚 relatedDataから追加情報を取得
+  // relatedDataから追加情報を取得
   const parseRelatedData = (relatedData) => {
     if (!relatedData) return null;
     try {
@@ -250,7 +250,7 @@ function Feed() {
     }
   };
 
-  // 📚 アクティビティのバッジを取得
+  // アクティビティのバッジを取得
   const getActivityBadge = (type, relatedData) => {
     const data = parseRelatedData(relatedData);
     if (!data) return null;
@@ -284,11 +284,13 @@ function Feed() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* サイドバー */}
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} activeWidgets={[]} />
+      {/* デスクトップ用サイドバー */}
+      <div className="hidden md:block">
+        <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} activeWidgets={[]} />
+      </div>
 
       {/* メインコンテンツ */}
-      <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <div className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
         <div className="max-w-2xl mx-auto px-4 py-8">
           {/* ヘッダー */}
           <div className="mb-8 flex items-center justify-between">
@@ -342,20 +344,16 @@ function Feed() {
                   <div className="flex items-start gap-4">
                     {/* ユーザーアバター */}
                     <div
-                      className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => item.userCustomId && navigate(`/${item.userCustomId}`)}
                     >
-                      {item.userProfileImageUrl ? (
-                        <img
-                          src={item.userProfileImageUrl}
-                          alt={item.userName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-600 text-lg font-bold">
-                          {item.userName?.charAt(0)?.toUpperCase() || '?'}
-                        </div>
-                      )}
+                      <UserAvatar
+                        userId={item.userId}
+                        userName={item.userName}
+                        profileImageUrl={item.userProfileImageUrl}
+                        size="md"
+                        showStreakBadge={true}
+                      />
                     </div>
 
                     {/* アクティビティ内容 */}
@@ -435,19 +433,13 @@ function Feed() {
                               {item.comments.map((comment) => (
                                 <div key={comment.id} className="flex items-start gap-2 group">
                                   {/* コメント投稿者のアバター */}
-                                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                                    {comment.userProfileImageUrl ? (
-                                      <img
-                                        src={comment.userProfileImageUrl}
-                                        alt={comment.userName}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs font-bold">
-                                        {comment.userName?.charAt(0)?.toUpperCase() || '?'}
-                                      </div>
-                                    )}
-                                  </div>
+                                  <UserAvatar
+                                    userId={comment.userId}
+                                    userName={comment.userName}
+                                    profileImageUrl={comment.userProfileImageUrl}
+                                    size="sm"
+                                    showStreakBadge={true}
+                                  />
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                       <span className="font-medium text-sm text-gray-900">{comment.userName}</span>
@@ -502,6 +494,9 @@ function Feed() {
           </div>
         </div>
       </div>
+
+      {/* モバイル用ボトムナビゲーション */}
+      <MobileBottomNav />
     </div>
   );
 }

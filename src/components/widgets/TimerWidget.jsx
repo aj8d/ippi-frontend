@@ -1,7 +1,6 @@
 /**
- * TimerWidget.jsx - ポモドーロタイマーウィジェット
+ * ポモドーロタイマーウィジェット
  *
- * 📚 このコンポーネントの役割：
  * - 円形プログレスバーでタイマーを表示
  * - カウントダウン/進行度の切り替え対応
  * - ポモドーロサイクル（作業→休憩→作業...）の繰り返し
@@ -12,28 +11,29 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Square, SkipForward, Check } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useTimer } from '../../contexts/TimerContext';
+import { useTimerCompletionNotification } from '../../hooks/useTimerCompletionNotification';
 import { API_ENDPOINTS } from '../../config';
 import { DEFAULT_SECTIONS, getTimeFromSection, formatTime } from './timerUtils';
-import TimerCompletionModal from './TimerCompletionModal';
 import TimerWarningModal from '../TimerWarningModal';
 
 function TimerWidget({ settings = {} }) {
   const { token } = useAuth();
   const { updateTimerState, registerStopCallback } = useTimer();
+  const { showTimerCompletionNotification } = useTimerCompletionNotification();
 
-  // 📚 props から設定を取得
+  // props から設定を取得
   const displayMode = settings.displayMode || 'interval';
   const sections = settings.sections || DEFAULT_SECTIONS;
   const totalCycles = settings.totalCycles || 3; // デフォルト3サイクル
   const countdownMinutes = settings.countdownMinutes || 25; // デフォルト25分
 
-  // 📚 モードの判定
+  // モードの判定
   const isIntervalMode = displayMode === 'interval';
   const isCountupMode = displayMode === 'countup';
   const isCountdownMode = displayMode === 'countdown';
   const isFlowmodoroMode = displayMode === 'flowmodoro';
 
-  // 📚 タイマーの状態管理
+  // タイマーの状態管理
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0); // 現在のセクション
   const [currentCycle, setCurrentCycle] = useState(1); // 現在のサイクル数
   const [isWorkPhase, setIsWorkPhase] = useState(true); // true=作業, false=休憩
@@ -41,11 +41,9 @@ function TimerWidget({ settings = {} }) {
   const [elapsedTime, setElapsedTime] = useState(0); // 経過時間（秒）
   const [isRunning, setIsRunning] = useState(false); // 実行中かどうか
   const [hasStarted, setHasStarted] = useState(false); // タイマーが開始されたか
-  const [showCompletionModal, setShowCompletionModal] = useState(false); // 完了モーダル
-  const [completionWorkTime, setCompletionWorkTime] = useState(0); // 完了モーダルに表示する作業時間
   const [showStopConfirmModal, setShowStopConfirmModal] = useState(false); // 停止確認モーダル
 
-  // 📚 フローモドーロ用の状態管理
+  // フローモドーロ用の状態管理
   const [flowmodoroWorkTime, setFlowmodoroWorkTime] = useState(0); // 今回の作業時間（秒）
 
   const intervalRef = useRef(null);
@@ -55,46 +53,46 @@ function TimerWidget({ settings = {} }) {
   const currentSectionIndexRef = useRef(0); // 現在のセクションインデックスを追跡
   const isWorkPhaseRef = useRef(true); // 現在の作業/休憩フェーズを追跡
 
-  // 📚 バックグラウンドでも正確に動作させるため、開始時刻を記録
+  // バックグラウンドでも正確に動作させるため、開始時刻を記録
   const phaseStartTimeRef = useRef(null); // フェーズ開始時刻（ミリ秒）
   const pausedElapsedRef = useRef(0); // 一時停止時の経過時間
 
-  // 📚 累積作業時間をトラッキング（秒）
+  // 累積作業時間をトラッキング（秒）
   const [_totalWorkTime, setTotalWorkTime] = useState(0);
   const [completedWorkSessions, setCompletedWorkSessions] = useState(0);
   const totalWorkTimeRef = useRef(0);
 
-  // 📚 現在のフェーズで経過した作業時間（秒）をトラッキング
+  // 現在のフェーズで経過した作業時間（秒）をトラッキング
   const currentPhaseWorkTimeRef = useRef(0);
 
-  // 📚 refs を最新の値で更新
+  // refs を最新の値で更新
   useEffect(() => {
     sectionsRef.current = sections;
     totalCyclesRef.current = totalCycles;
   }, [sections, totalCycles]);
 
-  // 📚 currentSectionIndexRefを同期
+  // currentSectionIndexRefを同期
   useEffect(() => {
     currentSectionIndexRef.current = currentSectionIndex;
   }, [currentSectionIndex]);
 
-  // 📚 isWorkPhaseRefを同期
+  // isWorkPhaseRefを同期
   useEffect(() => {
     isWorkPhaseRef.current = isWorkPhase;
   }, [isWorkPhase]);
 
-  // 📚 currentSectionIndexが変更されたらrefも更新
+  // currentSectionIndexが変更されたらrefも更新
   useEffect(() => {
     currentSectionIndexRef.current = currentSectionIndex;
   }, [currentSectionIndex]);
 
-  // 📚 タイマー状態をコンテキストに通知
+  // タイマー状態をコンテキストに通知
   useEffect(() => {
     updateTimerState(hasStarted);
   }, [hasStarted, updateTimerState]);
 
   /**
-   * 📚 バックエンドに作業時間を送信
+   * バックエンドに作業時間を送信
    * @param workSeconds 作業時間（秒）- 分単位に切り捨てて保存
    * @param sessionsCount セッション数（ログ用）
    */
@@ -102,16 +100,16 @@ function TimerWidget({ settings = {} }) {
     async (workSeconds, sessionsCount) => {
       if (!token) return;
 
-      // 📚 秒を分に変換し、端数を切り捨て（60秒未満は0分）
+      // 秒を分に変換し、端数を切り捨て（60秒未満は0分）
       const workMinutes = Math.floor(workSeconds / 60);
 
-      // 📚 1分未満の場合は保存しない
+      // 1分未満の場合は保存しない
       if (workMinutes < 1) {
         console.log(`⏭️ 作業時間が1分未満のため保存スキップ: ${workSeconds}秒`);
         return;
       }
 
-      // 📚 分を秒に戻す（端数切り捨て後の値）
+      // 分を秒に戻す（端数切り捨て後の値）
       const truncatedSeconds = workMinutes * 60;
 
       try {
@@ -143,13 +141,40 @@ function TimerWidget({ settings = {} }) {
   );
 
   /**
-   * 📚 セクションから時間（秒）を計算
+   * タイマー完了をバックエンドに記録（今日のカウント加算）
+   * ポモドーロ/フローモドーロの作業セッション完了時にのみ呼び出される
+   */
+  const recordTimerCompletion = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(API_ENDPOINTS.TEXT_DATA.TIMER_COMPLETION, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`🔥 タイマー完了を記録: 今日の完了数 ${data.dailyTimerCompletions}`);
+        // StreakWidgetに更新を通知
+        window.dispatchEvent(new CustomEvent('timerCompleted'));
+      }
+    } catch (error) {
+      console.error('タイマー完了の記録エラー:', error);
+    }
+  }, [token]);
+
+  /**
+   * セクションから時間（秒）を計算
    * (timerUtilsからインポート済みなのでコメントアウト)
    */
   // const getTimeFromSection = ... は timerUtils.js に移動済み
 
   /**
-   * 📚 次のフェーズに進む
+   * 次のフェーズに進む
    * @param actualElapsedTime スキップ時に渡される実際の経過時間（秒）
    */
   const goToNextPhase = useCallback(
@@ -159,9 +184,9 @@ function TimerWidget({ settings = {} }) {
       const prevIsWorkPhase = isWorkPhaseRef.current; // refから取得
       const prevSectionIndex = currentSectionIndexRef.current;
 
-      // 📚 作業フェーズが完了した場合のみ作業時間を累積（休憩時間は含まない）
+      // 作業フェーズが完了した場合のみ作業時間を累積（休憩時間は含まない）
       if (prevIsWorkPhase) {
-        // 📚 actualElapsedTimeが渡された場合（スキップ時）は実際の経過時間を使用
+        // actualElapsedTimeが渡された場合（スキップ時）は実際の経過時間を使用
         // そうでない場合（自然完了時）は設定された作業時間を使用
         const workTime =
           actualElapsedTime !== null
@@ -172,12 +197,18 @@ function TimerWidget({ settings = {} }) {
         setTotalWorkTime((prev) => prev + workTime);
         setCompletedWorkSessions((prev) => prev + 1);
 
-        // 📚 現在のフェーズの作業時間をリセット
+        // 1分以上の作業時間があればタイマー完了を記録
+        if (workTime >= 60) {
+          recordTimerCompletion();
+        }
+
+        // 現在のフェーズの作業時間をリセット
         currentPhaseWorkTimeRef.current = 0;
       }
 
       if (prevIsWorkPhase) {
         // 作業 → 休憩
+
         const breakTime = getTimeFromSection(currentSections[prevSectionIndex], false);
         if (breakTime > 0) {
           // 休憩時間がある場合
@@ -200,9 +231,9 @@ function TimerWidget({ settings = {} }) {
               if (nextCycle > currentTotalCycles) {
                 // 全サイクル完了
                 setIsRunning(false);
-                setShowCompletionModal(true);
                 // バックエンドに作業時間を送信
                 const finalWorkTime = totalWorkTimeRef.current;
+                showTimerCompletionNotification(finalWorkTime);
                 setTimeout(() => {
                   saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
                 }, 0);
@@ -231,9 +262,9 @@ function TimerWidget({ settings = {} }) {
             if (nextCycle > currentTotalCycles) {
               // 全サイクル完了
               setIsRunning(false);
-              setShowCompletionModal(true);
               // バックエンドに作業時間を送信
               const finalWorkTime = totalWorkTimeRef.current;
+              showTimerCompletionNotification(finalWorkTime);
               setTimeout(() => {
                 saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
               }, 0);
@@ -254,30 +285,30 @@ function TimerWidget({ settings = {} }) {
         pausedElapsedRef.current = 0;
       }
     },
-    [saveWorkTimeToBackend]
+    [saveWorkTimeToBackend, recordTimerCompletion, showTimerCompletionNotification]
   );
 
   /**
-   * 📚 タイマーのメインロジック（バックグラウンドでも正確に動作）
+   * タイマーのメインロジック（バックグラウンドでも正確に動作）
    * 開始時刻からの経過時間を計算する方式
    */
   useEffect(() => {
     if (isRunning) {
       hasCompletedRef.current = false;
 
-      // 📚 フェーズ開始時刻を記録（再開時は一時停止時の経過時間を考慮）
+      // フェーズ開始時刻を記録（再開時は一時停止時の経過時間を考慮）
       if (phaseStartTimeRef.current === null) {
         phaseStartTimeRef.current = Date.now() - pausedElapsedRef.current * 1000;
       }
 
       intervalRef.current = setInterval(() => {
-        // 📚 開始時刻からの経過時間を計算（バックグラウンドでも正確）
+        // 開始時刻からの経過時間を計算（バックグラウンドでも正確）
         const now = Date.now();
         const elapsed = (now - phaseStartTimeRef.current) / 1000; // 秒に変換
 
         setElapsedTime(elapsed);
 
-        // 📚 インターバルモードのみ、タイマー完了チェックを行う
+        // インターバルモードのみ、タイマー完了チェックを行う
         if (isIntervalMode && elapsed >= totalTime && !hasCompletedRef.current) {
           hasCompletedRef.current = true;
           // インターバルをクリアしてから次のフェーズへ
@@ -286,7 +317,7 @@ function TimerWidget({ settings = {} }) {
           goToNextPhase();
         }
 
-        // 📚 カウントダウンモードは設定時間に達したら停止
+        // カウントダウンモードは設定時間に達したら停止
         if (isCountdownMode && elapsed >= totalTime && !hasCompletedRef.current) {
           hasCompletedRef.current = true;
           clearInterval(intervalRef.current);
@@ -296,16 +327,27 @@ function TimerWidget({ settings = {} }) {
           const workTime = Math.floor(elapsed);
           if (workTime >= 60) {
             saveWorkTimeToBackend(workTime, 1);
+            // 完了通知を表示
+            showTimerCompletionNotification(workTime);
+            // タイマー完了を記録
+            recordTimerCompletion();
           }
+          // タイマーを初期状態にリセット
+          setHasStarted(false);
+          setElapsedTime(0);
+          phaseStartTimeRef.current = null;
+          pausedElapsedRef.current = 0;
         }
 
-        // 📚 フローモドーロモードで休憩終了時、自動的に次の作業に移行
+        // フローモドーロモードで休憩終了時、自動的に次の作業に移行
         if (isFlowmodoroMode && !isWorkPhaseRef.current && elapsed >= totalTime && !hasCompletedRef.current) {
           hasCompletedRef.current = true;
           clearInterval(intervalRef.current);
           intervalRef.current = null;
 
           // 今回の作業時間を保存
+          // タイマー完了を記録
+          recordTimerCompletion();
           if (flowmodoroWorkTime >= 60) {
             saveWorkTimeToBackend(flowmodoroWorkTime, 1);
           }
@@ -322,7 +364,7 @@ function TimerWidget({ settings = {} }) {
         }
       }, 100);
     } else {
-      // 📚 一時停止時は現在の経過時間を保存
+      // 一時停止時は現在の経過時間を保存
       if (phaseStartTimeRef.current !== null) {
         pausedElapsedRef.current = elapsedTime;
         phaseStartTimeRef.current = null; // リセットして再開時に再計算
@@ -348,9 +390,12 @@ function TimerWidget({ settings = {} }) {
     isFlowmodoroMode,
     flowmodoroWorkTime,
     saveWorkTimeToBackend,
+    elapsedTime,
+    recordTimerCompletion,
+    showTimerCompletionNotification,
   ]);
 
-  // 📚 進捗率の計算
+  // 進捗率の計算
   const progress = (() => {
     // カウントアップ: 進捗バーなし
     if (isCountupMode) {
@@ -377,13 +422,13 @@ function TimerWidget({ settings = {} }) {
     return 0;
   })();
 
-  // 📚 SVG円の計算
+  // SVG円の計算
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   /**
-   * 📚 表示モードに応じた値を返す
+   * 表示モードに応じた値を返す
    */
   const getDisplayValue = () => {
     // カウントアップ: 経過時間を表示
@@ -425,7 +470,7 @@ function TimerWidget({ settings = {} }) {
   };
 
   /**
-   * 📚 スタートボタンの処理
+   * スタートボタンの処理
    */
   const handleStart = useCallback(() => {
     // インターバル（ポモドーロ）モード
@@ -491,14 +536,14 @@ function TimerWidget({ settings = {} }) {
   }, [sections, isIntervalMode, isCountupMode, isCountdownMode, isFlowmodoroMode, countdownMinutes]);
 
   /**
-   * 📚 停止ボタンクリック時の処理（確認モーダルを表示）
+   * 停止ボタンクリック時の処理（確認モーダルを表示）
    */
   const handleStopClick = useCallback(() => {
     setShowStopConfirmModal(true);
   }, []);
 
   /**
-   * 📚 停止確認後の実際の停止処理
+   * 停止確認後の実際の停止処理
    * 停止前に作業時間が1分以上あれば保存
    */
   const handleStopConfirmed = useCallback(() => {
@@ -517,15 +562,14 @@ function TimerWidget({ settings = {} }) {
       finalWorkTime = Math.floor(elapsedTime);
     }
 
-    // 📚 1分以上の作業時間があれば保存し、完了モーダルを表示
+    // 1分以上の作業時間があれば保存し、完了通知を表示
     if (finalWorkTime >= 60) {
       const sessionsCount = isIntervalMode
         ? completedWorkSessions + (elapsedTime > 0 && elapsedTime < totalTime ? 1 : 0)
         : 1;
       saveWorkTimeToBackend(finalWorkTime, sessionsCount);
-      // 1分以上の作業記録がある場合は完了モーダルを表示
-      setCompletionWorkTime(finalWorkTime);
-      setShowCompletionModal(true);
+      // 1分以上の作業記録がある場合は完了通知を表示
+      showTimerCompletionNotification(finalWorkTime);
     }
 
     // 状態をリセット
@@ -550,15 +594,23 @@ function TimerWidget({ settings = {} }) {
     setFlowmodoroWorkTime(0);
     // 停止確認モーダルを閉じる
     setShowStopConfirmModal(false);
-  }, [isIntervalMode, isWorkPhase, elapsedTime, totalTime, completedWorkSessions, saveWorkTimeToBackend]);
+  }, [
+    isIntervalMode,
+    isWorkPhase,
+    elapsedTime,
+    totalTime,
+    completedWorkSessions,
+    saveWorkTimeToBackend,
+    showTimerCompletionNotification,
+  ]);
 
-  // 📚 停止関数をコンテキストに登録
+  // 停止関数をコンテキストに登録
   useEffect(() => {
     registerStopCallback(handleStopConfirmed);
   }, [handleStopConfirmed, registerStopCallback]);
 
   /**
-   * 📚 再生/一時停止ボタンの処理
+   * 再生/一時停止ボタンの処理
    * 一時停止では作業時間を保存しない（停止ボタンで保存する）
    */
   const togglePlayPause = useCallback(() => {
@@ -566,18 +618,18 @@ function TimerWidget({ settings = {} }) {
   }, [isRunning]);
 
   /**
-   * 📚 スキップボタンの処理（次のフェーズへ）
+   * スキップボタンの処理（次のフェーズへ）
    * 作業フェーズをスキップする場合は実際の経過時間を記録
    * 休憩フェーズをスキップする場合は何も記録しない
    */
   const handleSkip = useCallback(() => {
-    // 📚 作業フェーズの場合のみ実際の経過時間を渡す（休憩フェーズはnullで何も記録しない）
+    // 作業フェーズの場合のみ実際の経過時間を渡す（休憩フェーズはnullで何も記録しない）
     const actualTime = isWorkPhase ? elapsedTime : null;
     goToNextPhase(actualTime);
   }, [goToNextPhase, isWorkPhase, elapsedTime]);
 
   /**
-   * 📚 フローモドーロ用：作業完了ボタンの処理
+   * フローモドーロ用：作業完了ボタンの処理
    * 作業時間から休憩時間を計算して自動的に休憩を開始
    */
   const handleFlowmodoroWorkComplete = useCallback(() => {
@@ -601,9 +653,9 @@ function TimerWidget({ settings = {} }) {
     isWorkPhaseRef.current = false;
     phaseStartTimeRef.current = null;
     pausedElapsedRef.current = 0;
-  }, [isFlowmodoroMode, isRunning, elapsedTime, saveWorkTimeToBackend]);
+  }, [isFlowmodoroMode, isRunning, elapsedTime]);
 
-  // 📚 プログレスバーの色（停止中=グレー、作業中=オレンジ、休憩中=緑）
+  // プログレスバーの色（停止中=グレー、作業中=オレンジ、休憩中=緑）
   const getColors = () => {
     if (!hasStarted || !isRunning) {
       // 停止中（未開始または一時停止）
@@ -650,7 +702,7 @@ function TimerWidget({ settings = {} }) {
   const progressColor = colors.progress;
   const bgColor = colors.bg;
 
-  // 📚 フェーズバッジのスタイル
+  // フェーズバッジのスタイル
   const getBadgeStyle = () => {
     if (!hasStarted || !isRunning) {
       return { className: 'bg-gray-100 text-gray-600', label: '⏸️ 停止中' };
@@ -682,7 +734,7 @@ function TimerWidget({ settings = {} }) {
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-4 min-h-[200px] @container">
-      {/* 📚 フェーズ表示 */}
+      {/* フェーズ表示 */}
       <div className="mb-2 text-center">
         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeStyle.className}`}>
           {badgeStyle.label}
@@ -694,7 +746,7 @@ function TimerWidget({ settings = {} }) {
           </div>
         )}
       </div>
-      {/* 📚 円形プログレスバー */}
+      {/* 円形プログレスバー */}
       <div className="relative flex items-center justify-center mb-4 w-[85%] max-w-[600px] aspect-square">
         <svg className="transform -rotate-90 w-full h-full" viewBox="0 0 200 200">
           {/* 背景の円 */}
@@ -725,7 +777,7 @@ function TimerWidget({ settings = {} }) {
         </div>
       </div>
 
-      {/* 📚 コントロールボタン */}
+      {/* コントロールボタン */}
       <div className="flex gap-2 justify-center flex-shrink-0">
         {!hasStarted ? (
           // 開始前：スタートボタン
@@ -777,23 +829,12 @@ function TimerWidget({ settings = {} }) {
         )}
       </div>
 
-      {/* 📚 停止確認モーダル */}
+      {/* 停止確認モーダル */}
       <TimerWarningModal
         isOpen={showStopConfirmModal}
         onClose={() => setShowStopConfirmModal(false)}
         onConfirm={handleStopConfirmed}
         actionType="stop"
-      />
-
-      {/* 📚 完了モーダル（Portalで画面全体に表示） */}
-      <TimerCompletionModal
-        show={showCompletionModal}
-        totalCycles={totalCycles}
-        sectionsLength={sections.length}
-        workTime={completionWorkTime}
-        onClose={() => {
-          setShowCompletionModal(false);
-        }}
       />
     </div>
   );

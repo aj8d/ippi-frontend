@@ -109,8 +109,25 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
   };
 
+  // 外部からトークンを設定してユーザー情報を取得（Google認証用）
+  const setTokenAndUser = (newToken, userData) => {
+    setToken(newToken);
+    setUser(userData);
+    localStorage.setItem('token', newToken);
+  };
+
+  // ユーザー情報を再取得
+  const refreshUser = async () => {
+    const currentToken = token || localStorage.getItem('token');
+    if (currentToken) {
+      await fetchProfile(currentToken);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, register, login, logout }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, token, loading, register, login, logout, setTokenAndUser, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 

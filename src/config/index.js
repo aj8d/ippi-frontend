@@ -1,7 +1,6 @@
 /**
- * config.js - アプリケーション設定
+ * アプリケーション設定
  *
- * 📚 このファイルの役割：
  * - API URLなどの環境依存の設定を一元管理
  * - 環境変数から値を取得、デフォルト値を提供
  */
@@ -9,10 +8,15 @@
 // API Base URL
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
+// ベースURL（環境変数から取得、APIパスを除いたもの）
+const BASE_SERVER_URL = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace('/api', '')
+  : 'http://localhost:8080';
+
 // APIエンドポイント
 export const API_ENDPOINTS = {
   // ベースURL（画像URLの構築用）
-  BASE: 'http://localhost:8080',
+  BASE: BASE_SERVER_URL,
 
   // 認証
   AUTH: {
@@ -64,6 +68,7 @@ export const API_ENDPOINTS = {
     START_TIMER: (id) => `${API_BASE_URL}/text-data/${id}/start-timer`,
     STOP_TIMER: (id) => `${API_BASE_URL}/text-data/${id}/stop-timer`,
     TIMER_STATUS: (id) => `${API_BASE_URL}/text-data/${id}/timer-status`,
+    TIMER_COMPLETION: `${API_BASE_URL}/text-data/timer-completion`,
   },
 
   // ウィジェット
@@ -80,9 +85,11 @@ export const API_ENDPOINTS = {
 
   // ユーザー統計
   USER_STATS: {
+    BASE: `${API_BASE_URL}/user-stats`,
     ME: `${API_BASE_URL}/user-stats/me`,
     BY_ID: (userId) => `${API_BASE_URL}/user-stats/${userId}`,
     BY_CUSTOM_ID: (customId) => `${API_BASE_URL}/user-stats/user/${customId}`,
+    DAILY_ACTIVITY: (customId) => `${API_BASE_URL}/user-stats/user/${customId}/daily-activity`,
   },
 
   // アチーブメント

@@ -52,7 +52,7 @@ export default function TimerSettingsModal({
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                カウントアップ
+                ⏱️ カウントアップ
               </button>
               <button
                 onClick={() => onDisplayModeChange('countdown')}
@@ -62,7 +62,7 @@ export default function TimerSettingsModal({
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                カウントダウン
+                ⏳ カウントダウン
               </button>
               <button
                 onClick={() => onDisplayModeChange('interval')}
@@ -72,7 +72,7 @@ export default function TimerSettingsModal({
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                ポモドーロ
+                🍅 ポモドーロ
               </button>
               <button
                 onClick={() => onDisplayModeChange('flowmodoro')}
@@ -82,21 +82,73 @@ export default function TimerSettingsModal({
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                フローモドーロ
+                🌊 フローモドーロ
               </button>
             </div>
 
             {/* モードの説明文 */}
             <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <p className="text-xs text-gray-600 leading-relaxed">
-                {displayMode === 'countup' &&
-                  '⏱️ 0秒から開始して自由に時間を計測します。作業時間を記録したい時に便利です。'}
-                {displayMode === 'countdown' &&
-                  '⏳ 設定した時間から0までカウントダウンします。決まった時間だけ集中したい時に最適です。'}
-                {displayMode === 'interval' &&
-                  '🍅 作業と休憩を自動で切り替えます。複数セクションとサイクルで長時間の作業管理が可能です。'}
-                {displayMode === 'flowmodoro' &&
-                  '🌊 作業時間を自由に決めて、自動で休憩時間を計算します。集中が続く限り作業できます。'}
+                {displayMode === 'countup' && (
+                  <>
+                    タイマーは停止するまでカウントアップします。
+                    <br />
+                    シンプルな使い方ができ、集中時間の把握に最適です。
+                    <br />
+                    <br />
+                    ✅時間管理/没頭重視/シンプル
+                    <br />
+                    ✅ノンプレッシャー
+                    <br />
+                    ❌時間管理が必要
+                    <br />
+                    ❌休憩管理がない
+                  </>
+                )}
+
+                {displayMode === 'countdown' && (
+                  <>
+                    設定した時間からカウントダウンします。
+                    <br />
+                    時間内にタスクを終わらせる意識を持つことで、集中力と緊張感を高めます。
+                    <br />
+                    <br />
+                    ✅時間管理/締切重視/シンプル
+                    <br />
+                    ✅短時間集中
+                    <br />
+                    ❌休憩管理がない
+                  </>
+                )}
+                {displayMode === 'interval' && (
+                  <>
+                    事前に設定した全セクションをサイクル数分繰り返します。
+                    <br />
+                    25分(作業)+5分(休憩)の基本ポモドーロから、自由にカスタマイズ可能です。
+                    <br />
+                    <br />
+                    ✅習慣化/継続重視/リズム
+                    <br />
+                    ✅長時間作業に最適
+                    <br />
+                    ❌固定化されたサイクル
+                  </>
+                )}
+                {displayMode === 'flowmodoro' && (
+                  <>
+                    タイマー停止までの作業時間に応じて適切な休憩時間を計算します。
+                    <br />
+                    (作業時間/5 = 休憩時間)
+                    <br />
+                    <br />
+                    ✅創造/没頭重視/フロー
+                    <br />
+                    ✅ポモドーロをもっと柔軟に
+                    <br />
+                    ❌時間管理が必要
+                    <br />
+                  </>
+                )}
               </p>
             </div>
           </div>

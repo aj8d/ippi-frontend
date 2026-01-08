@@ -1,7 +1,6 @@
 /**
- * FollowList.jsx - フォロワー/フォロー中一覧ページ
+ * フォロワー/フォロー中一覧ページ
  *
- * 📚 このコンポーネントの役割：
  * - フォロワー一覧を表示
  * - フォロー中一覧を表示
  * - フォロー/アンフォロー機能
@@ -11,6 +10,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import UserCard from '../components/UserCard';
 import { useAuth } from '../auth/AuthContext';
 import { useFollow } from '../hooks/useFollow';
@@ -30,7 +30,7 @@ function FollowList({ type }) {
   const [profileUserId, setProfileUserId] = useState(null);
   const [profileUserName, setProfileUserName] = useState('');
 
-  // 📚 カスタムフックでフォロー機能を管理
+  // カスタムフックでフォロー機能を管理
   const { fetchFollowingIds, isFollowing, currentUserId } = useFollow();
 
   // プロフィールユーザーのIDを取得
@@ -100,7 +100,7 @@ function FollowList({ type }) {
     fetchUsers();
   }, [fetchUsers]);
 
-  // 📚 フォロートグルコールバック
+  // フォロートグルコールバック
   const handleFollowToggle = async (userId, isNowFollowing) => {
     console.log(`User ${userId} is now ${isNowFollowing ? 'followed' : 'unfollowed'}`);
     // フォロー中リストを再取得して最新状態に同期
@@ -113,17 +113,19 @@ function FollowList({ type }) {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* サイドバー */}
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} activeWidgets={[]} />
+      {/* デスクトップ用サイドバー */}
+      <div className="hidden md:block">
+        <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} activeWidgets={[]} />
+      </div>
 
       {/* メインコンテンツ */}
-      <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <div className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
         <div className="max-w-2xl mx-auto px-4 py-8">
           {/* ヘッダー */}
           <div className="mb-8">
             <button
               onClick={() => navigate(`/${id}`)}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+              className="hidden md:flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               <span>プロフィールに戻る</span>
@@ -163,6 +165,9 @@ function FollowList({ type }) {
           </div>
         </div>
       </div>
+
+      {/* モバイル用ボトムナビゲーション */}
+      <MobileBottomNav />
     </div>
   );
 }

@@ -1,12 +1,10 @@
 /**
- * ImageWidget.jsx - 画像ウィジェット
+ * 画像ウィジェット
  *
- * 📚 このコンポーネントの役割：
  * - ローカルから画像を選択
  * - Cloudinaryにアップロード
  * - キャンバス上に画像を表示
  *
- * 💡 仕組み：
  * 1. ユーザーが画像を選択
  * 2. バックエンドAPI経由でCloudinaryにアップロード
  * 3. 返ってきたURLを data.imageUrl に保存
@@ -21,18 +19,18 @@ import { API_ENDPOINTS } from '../../config';
 function ImageWidget({ data = {}, onUpdate }) {
   const { token } = useAuth();
 
-  // 📚 状態管理
+  // 状態管理
   const [uploading, setUploading] = useState(false); // アップロード中かどうか
   const [error, setError] = useState(''); // エラーメッセージ
 
-  // 📚 ファイル選択用の隠しinput要素への参照
+  // ファイル選択用の隠しinput要素への参照
   const fileInputRef = useRef(null);
 
   // data から画像情報を取得
   const { imageUrl, publicId } = data;
 
   /**
-   * 📚 ファイル選択ダイアログを開く
+   * ファイル選択ダイアログを開く
    *
    * ボタンクリック時に隠しinput要素をクリックする
    */
@@ -41,7 +39,7 @@ function ImageWidget({ data = {}, onUpdate }) {
   };
 
   /**
-   * 📚 ファイル選択時の処理
+   * ファイル選択時の処理
    *
    * 1. ファイルを取得
    * 2. FormDataに詰めてAPIに送信
@@ -61,11 +59,11 @@ function ImageWidget({ data = {}, onUpdate }) {
     setError('');
 
     try {
-      // 📚 FormData: ファイルをサーバーに送るための形式
+      // FormData: ファイルをサーバーに送るための形式
       const formData = new FormData();
       formData.append('file', file);
 
-      // 📚 fetch でアップロード
+      // fetch でアップロード
       const response = await fetch(API_ENDPOINTS.IMAGES.UPLOAD, {
         method: 'POST',
         headers: {
@@ -81,7 +79,7 @@ function ImageWidget({ data = {}, onUpdate }) {
         throw new Error(result.error || 'アップロードに失敗しました');
       }
 
-      // 📚 成功したら親コンポーネントに通知
+      // 成功したら親コンポーネントに通知
       onUpdate?.({
         imageUrl: result.url,
         publicId: result.publicId,
@@ -97,7 +95,7 @@ function ImageWidget({ data = {}, onUpdate }) {
   };
 
   /**
-   * 📚 画像を削除
+   * 画像を削除
    */
   const handleRemoveImage = async () => {
     if (!publicId) {
@@ -126,13 +124,13 @@ function ImageWidget({ data = {}, onUpdate }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* 📚 隠しファイル入力 */}
+      {/* 隠しファイル入力 */}
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
       {/* エラー表示 */}
       {error && <div className="m-2 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-xs">{error}</div>}
 
-      {/* 📚 メインコンテンツ */}
+      {/* メインコンテンツ */}
       <div className="flex-1 flex items-center justify-center p-2">
         {uploading ? (
           // アップロード中

@@ -4,7 +4,9 @@ import { useState } from 'react';
 import ActivityCalendar from '../components/ActivityCalendar';
 import StatsWidget from '../components/StatsWidget';
 import Sidebar from '../components/Sidebar';
+import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import ProfileWidgetManager, { WidgetAddButton } from '../components/ProfileWidgetManager';
+import UserAvatar from '../components/UserAvatar';
 import { UserPlus, UserMinus, Users, MoreVertical, Edit, Upload, AtSign } from 'lucide-react';
 import { API_ENDPOINTS, API_BASE_URL } from '../config';
 import { useProfile } from '../hooks/useProfile';
@@ -144,17 +146,20 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar
-        isOpen={sidebarOpen}
-        setIsOpen={setSidebarOpen}
-        onTimerSettingsChange={() => {}}
-        isOwnProfile={isOwnProfile}
-        addRowFunction={addRowFunction}
-      />
+      {/* デスクトップ用サイドバー */}
+      <div className="hidden md:block">
+        <Sidebar
+          isOpen={sidebarOpen}
+          setIsOpen={setSidebarOpen}
+          onTimerSettingsChange={() => {}}
+          isOwnProfile={isOwnProfile}
+          addRowFunction={addRowFunction}
+        />
+      </div>
 
       {/* メインコンテンツ */}
-      <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} flex-1 transition-all duration-300`}>
-        <div className="p-5 max-w-6xl mx-auto">
+      <div className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
+        <div className="p-4 md:p-5 max-w-6xl mx-auto">
           {/* プロフィールセクション */}
           <div className="mb-8 relative">
             {/* 右上のボタン（フォローボタンまたはオプションメニュー） */}
@@ -237,15 +242,14 @@ export default function Profile() {
 
             {/* プロフィール情報 */}
             <div className="flex items-center gap-5">
-              <div className="w-48 h-48 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-green-500">
-                {profileImageUrl ? (
-                  <img src={profileImageUrl} alt="プロフィール" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-600 text-7xl font-bold">
-                    {userName?.charAt(0)?.toUpperCase() || '?'}
-                  </div>
-                )}
-              </div>
+              <UserAvatar
+                userId={profileUserId}
+                userName={userName}
+                profileImageUrl={profileImageUrl}
+                size="2xl"
+                showStreakBadge={true}
+                showBorder={true}
+              />
 
               <div className="flex flex-col">
                 <p className="text-lg mb-2.5 font-bold">{userName || '名前なし'}</p>
@@ -292,6 +296,9 @@ export default function Profile() {
           />
         </div>
       </div>
+
+      {/* モバイル用ボトムナビゲーション */}
+      <MobileBottomNav />
 
       {/* モーダル */}
       {isEditing && isOwnProfile && (
