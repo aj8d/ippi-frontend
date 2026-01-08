@@ -1,7 +1,6 @@
 /**
- * FollowList.jsx - フォロワー/フォロー中一覧ページ
+ * フォロワー/フォロー中一覧ページ
  *
- * 📚 このコンポーネントの役割：
  * - フォロワー一覧を表示
  * - フォロー中一覧を表示
  * - フォロー/アンフォロー機能
@@ -30,7 +29,7 @@ function FollowList({ type }) {
   const [profileUserId, setProfileUserId] = useState(null);
   const [profileUserName, setProfileUserName] = useState('');
 
-  // 📚 カスタムフックでフォロー機能を管理
+  // カスタムフックでフォロー機能を管理
   const { fetchFollowingIds, isFollowing, currentUserId } = useFollow();
 
   // プロフィールユーザーのIDを取得
@@ -100,7 +99,7 @@ function FollowList({ type }) {
     fetchUsers();
   }, [fetchUsers]);
 
-  // 📚 フォロートグルコールバック
+  // フォロートグルコールバック
   const handleFollowToggle = async (userId, isNowFollowing) => {
     console.log(`User ${userId} is now ${isNowFollowing ? 'followed' : 'unfollowed'}`);
     // フォロー中リストを再取得して最新状態に同期

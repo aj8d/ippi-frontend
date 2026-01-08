@@ -1,5 +1,5 @@
 /**
- * TimerCompletionModal.jsx - タイマー完了モーダル
+ * タイマー完了モーダル
  */
 
 import { createPortal } from 'react-dom';

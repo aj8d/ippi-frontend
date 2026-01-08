@@ -17,7 +17,7 @@ export default function SidebarFooter({
       {user ? (
         // ログイン時：アチーブメント、統計、プロフィール、ログアウトを表示
         <>
-          {/* 🏆 アチーブメントボタン */}
+          {/* アチーブメントボタン */}
           <button
             onClick={onAchievementClick}
             className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg transition-colors duration-200"
@@ -25,7 +25,7 @@ export default function SidebarFooter({
             <Trophy className="w-5 h-5 flex-shrink-0" />
             {isOpen && <span className="text-sm font-medium">アチーブメント</span>}
           </button>
-          {/* 📊 統計ボタン */}
+          {/* 統計ボタン */}
           <button
             onClick={onStatsClick}
             className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"

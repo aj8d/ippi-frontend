@@ -1,8 +1,7 @@
 /**
- * UserAvatar.jsx - ユーザーアバターコンポーネント
+ * ユーザーアバターコンポーネント
  *
  * ストリークが1以上の場合、右下に炎マークを表示します。
- * Discordのオンライン表示のようなデザイン。
  */
 
 import { useState, useEffect } from 'react';

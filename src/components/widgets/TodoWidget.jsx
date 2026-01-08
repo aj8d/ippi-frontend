@@ -1,7 +1,6 @@
 /**
- * TodoWidget.jsx - キャンバス用TODOウィジェット
+ * キャンバス用TODOウィジェット
  *
- * 📚 このコンポーネントの役割：
  * - タスクの追加・完了・削除
  * - ログイン時: バックエンドと同期
  * - 非ログイン時: ローカルストレージで動作
@@ -17,14 +16,14 @@ const LOCAL_STORAGE_KEY = 'guestTodos';
 function TodoWidget() {
   const { token } = useAuth();
 
-  // 📚 状態管理
+  // 状態管理
   const [todos, setTodos] = useState([]); // TODOリスト
   const [inputValue, setInputValue] = useState(''); // 入力フィールドの値
   const [loading, setLoading] = useState(false); // ローディング状態
   const [error, setError] = useState(''); // エラーメッセージ
 
   /**
-   * 📚 ローカルストレージから読み込み（非ログイン時）
+   * ローカルストレージから読み込み（非ログイン時）
    */
   const loadFromLocalStorage = useCallback(() => {
     try {
@@ -41,7 +40,7 @@ function TodoWidget() {
   }, []);
 
   /**
-   * 📚 ローカルストレージに保存（非ログイン時）
+   * ローカルストレージに保存（非ログイン時）
    */
   const saveToLocalStorage = useCallback((todosToSave) => {
     try {
@@ -52,7 +51,7 @@ function TodoWidget() {
   }, []);
 
   /**
-   * 📚 TODOを取得（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
+   * TODOを取得（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
    */
   const fetchTodos = useCallback(async () => {
     if (!token) {
@@ -84,14 +83,14 @@ function TodoWidget() {
   }, [token, loadFromLocalStorage]);
 
   /**
-   * 📚 コンポーネントマウント時にTODOを取得
+   * コンポーネントマウント時にTODOを取得
    */
   useEffect(() => {
     fetchTodos();
   }, [fetchTodos]);
 
   /**
-   * 📚 TODOを追加（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
+   * TODOを追加（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
    */
   const addTodo = async () => {
     if (!inputValue.trim()) return;
@@ -140,7 +139,7 @@ function TodoWidget() {
   };
 
   /**
-   * 📚 TODOを削除（完了）（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
+   * TODOを削除（完了）（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
    */
   const completeTodo = async (id) => {
     if (!token) {
@@ -173,7 +172,7 @@ function TodoWidget() {
   };
 
   /**
-   * 📚 Enterキーで追加
+   * Enterキーで追加
    */
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -189,7 +188,7 @@ function TodoWidget() {
       {/* エラー表示 */}
       {error && <div className="p-2 bg-red-100 border border-red-300 text-red-700 rounded-lg text-xs">{error}</div>}
 
-      {/* 📚 入力フィールド */}
+      {/* 入力フィールド */}
       <div className="flex gap-2 flex-shrink-0">
         <input
           type="text"
@@ -209,7 +208,7 @@ function TodoWidget() {
         </button>
       </div>
 
-      {/* 📚 TODOリスト */}
+      {/* TODOリスト */}
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="flex flex-col gap-2">
           {loading && todos.length === 0 ? (

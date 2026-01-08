@@ -21,7 +21,7 @@ export default function Login() {
     if (result.success && result.customId) {
       navigate(`/${result.customId}`);
     } else if (result.success) {
-      // customId がない場合はホームに遷移（通常は発生しない）
+      // customId がない場合はホームに遷移
       navigate('/');
     } else {
       setError(result.message);

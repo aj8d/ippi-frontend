@@ -1,9 +1,9 @@
 import { Timer, ListTodo, Flame, StickyNote, Image } from 'lucide-react';
 
 /**
- * 📚 一意のウィジェット（1つしか追加できない）
+ * 一意のウィジェット
  *
- * unique: true = キャンバスに1つだけ
+ * unique: true
  * 再クリックで削除される
  */
 export const UNIQUE_WIDGETS = [
@@ -13,7 +13,7 @@ export const UNIQUE_WIDGETS = [
 ];
 
 /**
- * 📚 複数追加可能なウィジェット
+ * 複数追加可能なウィジェット
  *
  * クリックするたびに新しいインスタンスが追加される
  */

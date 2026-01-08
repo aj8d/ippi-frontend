@@ -1,7 +1,6 @@
 /**
- * StreakWidget.jsx - キャンバス用ストリークウィジェット
+ * キャンバス用ストリークウィジェット
  *
- * 📚 このコンポーネントの役割：
  * - 今日のタイマー完了回数を表示
  * - ポモドーロ/フローモドーロの作業セッション完了時にカウント
  */
@@ -77,13 +76,13 @@ function StreakWidget() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-4 relative overflow-hidden">
-      {/* 📚 炎アイコン（fill="currentColor" で塗りつぶし） */}
+      {/* 炎アイコン */}
       <Flame size={48} className="text-orange-500 relative z-10" fill="currentColor" />
 
       {/* カウント数 */}
       <div className="text-4xl font-bold text-orange-500 mt-2 relative z-10">{displayCount}</div>
 
-      {/* ステージ1: 上から下へのオレンジ色塗りつぶしアニメーション */}
+      {/* 上から下へのオレンジ色塗りつぶしアニメーション */}
       <AnimatePresence>
         {animationStage === 1 && (
           <motion.div
@@ -98,7 +97,7 @@ function StreakWidget() {
         )}
       </AnimatePresence>
 
-      {/* ステージ2: 上から下へのオレンジ色塗りつぶし解除アニメーション */}
+      {/* 上から下へのオレンジ色塗りつぶし解除アニメーション */}
       <AnimatePresence>
         {animationStage === 2 && (
           <motion.div
