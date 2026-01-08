@@ -5,6 +5,7 @@
  * - サイドバーからウィジェットを追加
  * - ウィジェットの位置・サイズを管理
  * - バックエンドにレイアウトを自動保存 ← 🆕
+ * - モバイル対応：縦並びリスト表示
  *
  * 構造：
  * - useWidgets: バックエンドと同期するカスタムフック
@@ -14,6 +15,9 @@
 import { useState, useCallback } from 'react';
 import Sidebar from '../components/Sidebar';
 import FreeCanvas from '../components/FreeCanvas';
+import MobileBottomNav from '../components/mobile/MobileBottomNav';
+import MobileListCanvas from '../components/mobile/MobileListCanvas';
+import FloatingAddButton from '../components/mobile/FloatingAddButton';
 import { useWidgets } from '../hooks/useWidgets'; // カスタムフック
 import { useAchievementChecker } from '../hooks/useAchievementChecker';
 import { useAuth } from '../auth/AuthContext';
@@ -130,27 +134,49 @@ function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* サイドバー */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        setIsOpen={setSidebarOpen}
-        onTimerSettingsChange={handleTimerSettingsChange}
-        onAddWidget={handleAddWidget}
-        onRemoveWidget={handleRemoveWidget} // タイプまたはIDで削除する関数
-        activeWidgets={widgets} // 現在のウィジェット配列を渡す
-      />
+      {/* デスクトップ用サイドバー */}
+      <div className="hidden md:block">
+        <Sidebar
+          isOpen={sidebarOpen}
+          setIsOpen={setSidebarOpen}
+          onTimerSettingsChange={handleTimerSettingsChange}
+          onAddWidget={handleAddWidget}
+          onRemoveWidget={handleRemoveWidget}
+          activeWidgets={widgets}
+        />
+      </div>
 
-      {/* メインコンテンツ（キャンバス） */}
-      <div className={`${sidebarOpen ? 'ml-64' : 'ml-20'} flex-1 transition-all duration-300`}>
+      {/* メインコンテンツ */}
+      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
         {/* ローディング中の表示 */}
         {loading ? (
           <div className="flex items-center justify-center h-screen">
             <div className="text-gray-500">読み込み中...</div>
           </div>
         ) : (
-          <FreeCanvas widgets={widgets} setWidgets={setWidgets} timerSettings={timerSettings} />
+          <>
+            {/* デスクトップ：自由配置キャンバス */}
+            <div className="hidden md:block h-screen">
+              <FreeCanvas widgets={widgets} setWidgets={setWidgets} timerSettings={timerSettings} />
+            </div>
+
+            {/* モバイル：リストキャンバス */}
+            <div className="md:hidden">
+              <MobileListCanvas widgets={widgets} setWidgets={setWidgets} timerSettings={timerSettings} />
+            </div>
+          </>
         )}
       </div>
+
+      {/* モバイル用フローティング追加ボタン */}
+      <FloatingAddButton
+        activeWidgets={widgets}
+        onAddWidget={handleAddWidget}
+        onRemoveWidget={handleRemoveWidget}
+      />
+
+      {/* モバイル用ボトムナビゲーション */}
+      <MobileBottomNav />
     </div>
   );
 }

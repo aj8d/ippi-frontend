@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, Flame, Trophy, Heart, RefreshCw, MessageCircle, Send, Trash2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import UserAvatar from '../components/UserAvatar';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
@@ -283,11 +284,13 @@ function Feed() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* サイドバー */}
-      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} activeWidgets={[]} />
+      {/* デスクトップ用サイドバー */}
+      <div className="hidden md:block">
+        <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} activeWidgets={[]} />
+      </div>
 
       {/* メインコンテンツ */}
-      <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <div className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${isSidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
         <div className="max-w-2xl mx-auto px-4 py-8">
           {/* ヘッダー */}
           <div className="mb-8 flex items-center justify-between">
@@ -491,6 +494,9 @@ function Feed() {
           </div>
         </div>
       </div>
+
+      {/* モバイル用ボトムナビゲーション */}
+      <MobileBottomNav />
     </div>
   );
 }
