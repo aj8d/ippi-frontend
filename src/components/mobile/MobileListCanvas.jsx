@@ -1,6 +1,6 @@
 /**
  * モバイル用リストキャンバス
- * 
+ *
  * - ウィジェットを縦並びリストで表示
  * - スワイプで削除
  * - タイマー設定を受け取る
@@ -34,11 +34,7 @@ function MobileListCanvas({ widgets, setWidgets, timerSettings }) {
   const handleUpdateData = useCallback(
     (id, newData) => {
       setWidgets((prev) =>
-        prev.map((widget) =>
-          widget.id === id
-            ? { ...widget, data: { ...widget.data, ...newData } }
-            : widget
-        )
+        prev.map((widget) => (widget.id === id ? { ...widget, data: { ...widget.data, ...newData } } : widget))
       );
     },
     [setWidgets]
@@ -56,19 +52,9 @@ function MobileListCanvas({ widgets, setWidgets, timerSettings }) {
       case 'streak':
         return <StreakWidget />;
       case 'sticky':
-        return (
-          <StickyNote
-            data={widget.data}
-            onUpdate={(newData) => handleUpdateData(widget.id, newData)}
-          />
-        );
+        return <StickyNote data={widget.data} onUpdate={(newData) => handleUpdateData(widget.id, newData)} />;
       case 'image':
-        return (
-          <ImageWidget
-            data={widget.data}
-            onUpdate={(newData) => handleUpdateData(widget.id, newData)}
-          />
-        );
+        return <ImageWidget data={widget.data} onUpdate={(newData) => handleUpdateData(widget.id, newData)} />;
       default:
         return <div className="p-4 text-gray-500">Unknown widget</div>;
     }
@@ -103,15 +89,10 @@ function MobileListCanvas({ widgets, setWidgets, timerSettings }) {
       {/* ウィジェットリスト */}
       <div className="p-4 space-y-4">
         {widgets.map((widget) => (
-          <div
-            key={widget.id}
-            className="bg-white rounded-xl shadow-md overflow-hidden"
-          >
+          <div key={widget.id} className="bg-white rounded-xl shadow-md overflow-hidden">
             {/* ヘッダー */}
             <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
-              <span className="text-sm font-medium text-gray-600 uppercase">
-                {getWidgetLabel(widget.type)}
-              </span>
+              <span className="text-sm font-medium text-gray-600 uppercase">{getWidgetLabel(widget.type)}</span>
               <button
                 onClick={() => handleDelete(widget.id)}
                 className="p-1.5 hover:bg-red-100 rounded-full transition-colors"
@@ -121,9 +102,7 @@ function MobileListCanvas({ widgets, setWidgets, timerSettings }) {
             </div>
 
             {/* コンテンツ */}
-            <div className="min-h-[200px]">
-              {renderWidget(widget)}
-            </div>
+            <div className="min-h-[200px]">{renderWidget(widget)}</div>
           </div>
         ))}
       </div>

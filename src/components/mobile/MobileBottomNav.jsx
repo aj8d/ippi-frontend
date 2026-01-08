@@ -1,6 +1,6 @@
 /**
  * モバイル用ボトムナビゲーション
- * 
+ *
  * - 768px以下で表示
  * - ヘッダー部分のナビゲーションをそのまま表示
  * - フッター部分はアコーディオン型メニュー
@@ -8,19 +8,7 @@
 
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Home,
-  Search,
-  Rss,
-  User,
-  Menu,
-  X,
-  Settings,
-  LogOut,
-  LogIn,
-  BarChart3,
-  Trophy,
-} from 'lucide-react';
+import { Home, Search, Rss, User, Menu, X, Settings, LogOut, LogIn, BarChart3, Trophy } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useTimer } from '../../contexts/TimerContext';
 import StatsModal from '../StatsModal';
@@ -98,9 +86,7 @@ export default function MobileBottomNav() {
                 key={item.path}
                 onClick={() => handleNavigation(item.path)}
                 className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-                  item.active
-                    ? 'text-orange-500'
-                    : 'text-gray-500 hover:text-gray-700'
+                  item.active ? 'text-orange-500' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <Icon className="w-6 h-6" />
@@ -126,11 +112,8 @@ export default function MobileBottomNav() {
       {isMenuOpen && (
         <>
           {/* オーバーレイ */}
-          <div
-            className="fixed inset-0 bg-black/30 z-40 md:hidden"
-            onClick={() => setIsMenuOpen(false)}
-          />
-          
+          <div className="fixed inset-0 bg-black/30 z-40 md:hidden" onClick={() => setIsMenuOpen(false)} />
+
           {/* メニューパネル */}
           <div className="fixed bottom-16 left-0 right-0 bg-white border-t border-gray-200 z-40 md:hidden animate-slide-up">
             <div className="p-4 space-y-2">

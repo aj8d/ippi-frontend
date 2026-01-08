@@ -169,11 +169,7 @@ function Home() {
       </div>
 
       {/* モバイル用フローティング追加ボタン */}
-      <FloatingAddButton
-        activeWidgets={widgets}
-        onAddWidget={handleAddWidget}
-        onRemoveWidget={handleRemoveWidget}
-      />
+      <FloatingAddButton activeWidgets={widgets} onAddWidget={handleAddWidget} onRemoveWidget={handleRemoveWidget} />
 
       {/* モバイル用ボトムナビゲーション */}
       <MobileBottomNav />
