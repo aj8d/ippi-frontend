@@ -1,11 +1,15 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { API_ENDPOINTS } from '../config';
 
 export default function Register() {
-  const [step, setStep] = useState(1); // 1: メール/パスワード, 2: ユーザーID/名前
+  const [searchParams] = useSearchParams();
+  const isGoogleRedirect = searchParams.get('google') === 'true';
+  const initialStep = searchParams.get('step') === '2' ? 2 : 1;
+  
+  const [step, setStep] = useState(initialStep); // 1: メール/パスワード, 2: ユーザーID/名前
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -13,8 +17,17 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleToken, setGoogleToken] = useState(null); // Google認証時のトークン
-  const { register } = useAuth();
+  const { register, user, token, refreshUser } = useAuth();
   const navigate = useNavigate();
+
+  // Google認証済みでStep 2に来た場合、既存のユーザー情報を使用
+  useEffect(() => {
+    if (isGoogleRedirect && token && user) {
+      setGoogleToken(token);
+      setEmail(user.email || '');
+      setName(user.name || '');
+    }
+  }, [isGoogleRedirect, token, user]);
 
   // Step 1: メール/パスワード入力の送信
   const handleStep1Submit = async (e) => {
@@ -57,6 +70,36 @@ export default function Register() {
 
     setLoading(true);
 
+    // Google認証済みの場合はプロフィール更新API を呼ぶ
+    if (googleToken || isGoogleRedirect) {
+      try {
+        const authToken = googleToken || token;
+        const response = await fetch(API_ENDPOINTS.AUTH.UPDATE_PROFILE, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ customId, name }),
+        });
+
+        if (response.ok) {
+          // AuthContextのユーザー情報を更新してから遷移
+          await refreshUser();
+          navigate(`/${customId}`);
+        } else {
+          const data = await response.json();
+          setError(data.message || data || 'プロフィールの更新に失敗しました');
+        }
+      } catch (err) {
+        setError('エラーが発生しました: ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // 通常の登録フロー
     const result = await register(email, password, name, customId);
     if (result.success && result.customId) {
       navigate(`/${result.customId}`);
@@ -113,10 +156,18 @@ export default function Register() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         {/* ヘッダー */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Sign Up</h1>
-          <p className="text-gray-600 text-sm">
-            Step {step} of {googleToken ? 1 : 2}
-          </p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            {(googleToken || isGoogleRedirect) ? 'ID設定' : 'Sign Up'}
+          </h1>
+          {(googleToken || isGoogleRedirect) ? (
+            <p className="text-gray-600 text-sm">
+              あと少しで完了です！ユーザーIDを設定してください
+            </p>
+          ) : (
+            <p className="text-gray-600 text-sm">
+              Step {step} of 2
+            </p>
+          )}
         </div>
 
         {/* エラーメッセージ */}
@@ -229,7 +280,7 @@ export default function Register() {
 
               {/* ボタングループ */}
               <div className="flex gap-3">
-                {!googleToken && (
+                {!googleToken && !isGoogleRedirect && (
                   <button
                     type="button"
                     onClick={() => setStep(1)}
@@ -242,7 +293,7 @@ export default function Register() {
                   type="submit"
                   disabled={loading}
                   className={`${
-                    !googleToken ? 'flex-1' : 'w-full'
+                    !googleToken && !isGoogleRedirect ? 'flex-1' : 'w-full'
                   } py-2 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition duration-200 transform hover:scale-105 active:scale-95`}
                 >
                   {loading ? '登録中...' : '登録'}
@@ -251,7 +302,7 @@ export default function Register() {
             </form>
 
             {/* 戻るリンク */}
-            {!googleToken && (
+            {!googleToken && !isGoogleRedirect && (
               <div className="text-center pt-4 border-t border-gray-200">
                 <button
                   onClick={() => setStep(1)}
