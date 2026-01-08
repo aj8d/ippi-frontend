@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Flame } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
@@ -20,6 +21,8 @@ function UserAvatar({
 }) {
   const { token } = useAuth();
   const [dailyCompletions, setDailyCompletions] = useState(0);
+  const [tooltip, setTooltip] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   // サイズの設定
   const sizeClasses = {
@@ -111,11 +114,16 @@ function UserAvatar({
         )}
       </div>
 
-      {/* ストリークバッジ（Discordのオンライン表示風） */}
+      {/* ストリークバッジ */}
       {showStreakBadge && hasStreak && (
         <div
-          className={`absolute bottom-0 right-0 ${badgeSizeClasses[size]} bg-orange-500 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center`}
-          title={`今日のタイマー完了数: ${dailyCompletions}`}
+          className={`absolute bottom-0 right-0 ${badgeSizeClasses[size]} bg-orange-500 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center cursor-pointer`}
+          onMouseEnter={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setTooltip(`今日のタイマー完了数: ${dailyCompletions}`);
+            setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+          }}
+          onMouseLeave={() => setTooltip(null)}
         >
           <Flame className={`${iconSizeClasses[size]} text-white`} fill="currentColor" />
         </div>
@@ -124,10 +132,40 @@ function UserAvatar({
       {/* ストリークが0の場合の灰色丸バッジ */}
       {showStreakBadge && !hasStreak && showBorder && (
         <div
-          className={`absolute bottom-0 right-0 ${badgeSizeClasses[size]} bg-gray-400 rounded-full border-2 border-white dark:border-gray-800`}
-          title="今日はまだタイマーを完了していません"
+          className={`absolute bottom-0 right-0 ${badgeSizeClasses[size]} bg-gray-400 rounded-full border-2 border-white dark:border-gray-800 cursor-pointer`}
+          onMouseEnter={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setTooltip('今日はまだタイマーを完了していません');
+            setTooltipPos({ x: rect.right + 10, y: rect.top + rect.height / 2 });
+          }}
+          onMouseLeave={() => setTooltip(null)}
         />
       )}
+
+      {/* カスタムツールチップ */}
+      {tooltip &&
+        createPortal(
+          <div
+            className="fixed bg-gray-800 text-white px-2.5 py-1.5 rounded text-xs font-medium whitespace-nowrap pointer-events-none z-[9999] shadow-md"
+            style={{
+              left: `${tooltipPos.x}px`,
+              top: `${tooltipPos.y}px`,
+              transform: 'translate(0, -50%)',
+            }}
+          >
+            {tooltip}
+            {/* 左向き三角形ポインター */}
+            <div
+              className="absolute w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-800"
+              style={{
+                left: '-4px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+              }}
+            />
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
