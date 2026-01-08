@@ -8,10 +8,15 @@
 // API Base URL
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
+// ベースURL（環境変数から取得、APIパスを除いたもの）
+const BASE_SERVER_URL = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace('/api', '')
+  : 'http://localhost:8080';
+
 // APIエンドポイント
 export const API_ENDPOINTS = {
   // ベースURL（画像URLの構築用）
-  BASE: 'http://localhost:8080',
+  BASE: BASE_SERVER_URL,
 
   // 認証
   AUTH: {
