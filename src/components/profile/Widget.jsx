@@ -2,6 +2,7 @@ import { X, Upload } from 'lucide-react';
 import { WIDGET_TYPES } from './widgetUtils';
 import { WIDGET_INFO } from './widgetConfig';
 import { formatDuration } from './widgetUtils';
+import { API_ENDPOINTS } from '../../config';
 
 /**
  * ウィジェットコンポーネント
@@ -107,7 +108,7 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch('/api/images/upload', {
+        const response = await fetch(API_ENDPOINTS.IMAGES.UPLOAD, {
           method: 'POST',
           body: formData,
           headers: {
