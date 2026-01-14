@@ -236,6 +236,8 @@ function TimerWidget({ settings = {} }) {
                 const finalWorkTime = totalWorkTimeRef.current;
                 showTimerCompletionNotification(finalWorkTime);
                 saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
+                // タイマー完了を記録
+                recordTimerCompletion();
                 // UI状態を初期状態にリセット
                 setCurrentSectionIndex(0);
                 setIsWorkPhase(true);
@@ -275,6 +277,8 @@ function TimerWidget({ settings = {} }) {
               const finalWorkTime = totalWorkTimeRef.current;
               showTimerCompletionNotification(finalWorkTime);
               saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
+              // タイマー完了を記録
+              recordTimerCompletion();
               // UI状態を初期状態にリセット
               setCurrentSectionIndex(0);
               setIsWorkPhase(true);
