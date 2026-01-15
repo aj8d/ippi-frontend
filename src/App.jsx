@@ -1,16 +1,17 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './auth/AuthContext';
-import { TimerProvider } from './contexts/TimerContext';
-import { AchievementNotificationProvider } from './providers/AchievementNotificationProvider';
-import { TimerCompletionNotificationProvider } from './providers/TimerCompletionNotificationProvider';
-import ProtectedRoute from './auth/ProtectedRoute';
-import Login from './auth/Login';
-import Register from './auth/Register';
-import Home from './pages/Home';
-import Profile from './pages/Profile';
-import Search from './pages/Search';
-import Feed from './pages/Feed';
-import FollowList from './pages/FollowList';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./auth/AuthContext";
+import { TimerProvider } from "./contexts/TimerContext";
+import { AchievementNotificationProvider } from "./providers/AchievementNotificationProvider";
+import { TimerCompletionNotificationProvider } from "./providers/TimerCompletionNotificationProvider";
+import ProtectedRoute from "./auth/ProtectedRoute";
+import Login from "./auth/Login";
+import Register from "./auth/Register";
+import Home from "./pages/Home";
+import Profile from "./pages/Profile";
+import Search from "./pages/Search";
+import Feed from "./pages/Feed";
+import FollowList from "./pages/FollowList";
+import Introduction from "./docs/pages/Introduction";
 
 function App() {
   return (
@@ -20,6 +21,11 @@ function App() {
           <AchievementNotificationProvider>
             <TimerCompletionNotificationProvider>
               <Routes>
+                {/* webサイト */}
+                <Route path="/docs" element={<Introduction />} />
+                <Route path="/docs/introduction" element={<Introduction />} />
+
+                {/* webアプリ */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/search" element={<Search />} />

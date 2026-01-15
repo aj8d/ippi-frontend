@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@react-oauth/google": "^0.13.4",
     "@tailwindcss/vite": "^4.1.17",
+    "@tailwindplus/elements": "^1.0.22",
     "lucide-react": "^0.561.0",
     "motion": "^11.18.2",
     "react": "^19.2.0",
