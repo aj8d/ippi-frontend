@@ -5,13 +5,13 @@
  * - ウィジェットの追加・削除・並び替え
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { createSwapy } from 'swapy';
-import { Plus } from 'lucide-react';
-import { API_ENDPOINTS } from '../config';
-import { WIDGET_TYPES } from './profile/widgetUtils';
-import { WIDGET_INFO } from './profile/widgetConfig';
-import Widget from './profile/Widget';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { createSwapy } from "swapy";
+import { Plus } from "lucide-react";
+import { API_ENDPOINTS } from "../config";
+import { WIDGET_TYPES } from "./profile/widgetUtils";
+import { WIDGET_INFO } from "./profile/widgetConfig";
+import Widget from "./profile/Widget";
 
 /**
  * ウィジェット追加ボタン（サイドバー用）
@@ -44,7 +44,7 @@ export function WidgetAddButton({ onAddRow }) {
             </button>
             <button
               onClick={() => {
-                onAddRow('2-1');
+                onAddRow("2-1");
                 setShowAddMenu(false);
               }}
               className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-900 dark:text-white"
@@ -53,7 +53,7 @@ export function WidgetAddButton({ onAddRow }) {
             </button>
             <button
               onClick={() => {
-                onAddRow('1-2');
+                onAddRow("1-2");
                 setShowAddMenu(false);
               }}
               className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-gray-900 dark:text-white"
@@ -94,7 +94,7 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
       // データがフラット配列かチェック
       if (Array.isArray(data)) {
         // 各アイテムがwidgetプロパティを持つ（フラット構造）かチェック
-        const isFlat = data.every((item) => item && typeof item === 'object' && 'id' in item && 'type' in item);
+        const isFlat = data.every((item) => item && typeof item === "object" && "id" in item && "type" in item);
 
         if (isFlat) {
           return data;
@@ -102,10 +102,10 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
       }
 
       // 古いデータ構造の場合は空配列を返す
-      console.warn('古いデータ構造を検出しました。新しい構造に移行してください。');
+      console.warn("古いデータ構造を検出しました。新しい構造に移行してください。");
       return [];
     } catch (e) {
-      console.error('ウィジェット読み込みエラー:', e);
+      console.error("ウィジェット読み込みエラー:", e);
       return [];
     }
   });
@@ -120,9 +120,7 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
 
     const fetchStats = async () => {
       try {
-        const headers = token
-          ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-          : { 'Content-Type': 'application/json' };
+        const headers = token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
 
         const response = await fetch(API_ENDPOINTS.USER_STATS.BY_CUSTOM_ID(customId), { headers });
 
@@ -131,7 +129,7 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
           setStats(data);
         }
       } catch (err) {
-        console.error('統計取得エラー:', err);
+        console.error("統計取得エラー:", err);
       }
     };
 
@@ -170,7 +168,7 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
 
     // 新しいSwapyインスタンスを作成
     const swapy = createSwapy(containerRef.current, {
-      animation: 'dynamic',
+      animation: "dynamic",
     });
 
     // Swapイベントを監視
@@ -195,40 +193,40 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
         {
           id: `widget-${Date.now()}-0`,
           type: WIDGET_TYPES.EMPTY,
-          customText: '',
-          width: 'full',
+          customText: "",
+          width: "full",
         },
       ];
-    } else if (pattern === '2-1') {
+    } else if (pattern === "2-1") {
       // 2/3 + 1/3
       newWidgets = [
         {
           id: `widget-${Date.now()}-0`,
           type: WIDGET_TYPES.EMPTY,
-          customText: '',
-          width: 'two-thirds',
+          customText: "",
+          width: "two-thirds",
         },
         {
           id: `widget-${Date.now()}-1`,
           type: WIDGET_TYPES.EMPTY,
-          customText: '',
-          width: 'one-third',
+          customText: "",
+          width: "one-third",
         },
       ];
-    } else if (pattern === '1-2') {
+    } else if (pattern === "1-2") {
       // 1/3 + 2/3
       newWidgets = [
         {
           id: `widget-${Date.now()}-0`,
           type: WIDGET_TYPES.EMPTY,
-          customText: '',
-          width: 'one-third',
+          customText: "",
+          width: "one-third",
         },
         {
           id: `widget-${Date.now()}-1`,
           type: WIDGET_TYPES.EMPTY,
-          customText: '',
-          width: 'two-thirds',
+          customText: "",
+          width: "two-thirds",
         },
       ];
     } else if (pattern === 3) {
@@ -236,8 +234,8 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
       newWidgets = Array.from({ length: 3 }, (_, i) => ({
         id: `widget-${Date.now()}-${i}`,
         type: WIDGET_TYPES.EMPTY,
-        customText: '',
-        width: 'third',
+        customText: "",
+        width: "third",
       }));
     } else {
       // デフォルト
@@ -269,6 +267,11 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
     setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, imageUrl } : widget)));
   };
 
+  // 画像のリンクURLを変更
+  const handleLinkChange = (widgetId, linkUrl) => {
+    setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, linkUrl } : widget)));
+  };
+
   // ウィジェットを削除
   const handleDelete = (widgetId) => {
     setRows(rows.filter((widget) => widget.id !== widgetId));
@@ -293,13 +296,13 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
               key={widget.id}
               data-swapy-slot={widget.id}
               className={
-                widget.width === 'full'
-                  ? 'md:col-span-2 lg:col-span-3 select-none'
-                  : widget.width === 'two-thirds'
-                  ? 'md:col-span-2 lg:col-span-2 select-none'
-                  : widget.width === 'one-third'
-                  ? 'md:col-span-2 lg:col-span-1 select-none'
-                  : 'lg:col-span-1 select-none'
+                widget.width === "full"
+                  ? "md:col-span-2 lg:col-span-3 select-none"
+                  : widget.width === "two-thirds"
+                  ? "md:col-span-2 lg:col-span-2 select-none"
+                  : widget.width === "one-third"
+                  ? "md:col-span-2 lg:col-span-1 select-none"
+                  : "lg:col-span-1 select-none"
               }
             >
               <div data-swapy-item={widget.id} className="select-none">
@@ -309,6 +312,7 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
                   onTypeChange={handleTypeChange}
                   onTextChange={handleTextChange}
                   onImageChange={handleImageChange}
+                  onLinkChange={handleLinkChange}
                   onDelete={handleDelete}
                   isOwnProfile={isOwnProfile}
                 />
