@@ -763,31 +763,23 @@ function TimerWidget({ settings = {} }) {
         ) : (
           // 実行中・一時停止中：コントロールボタン
           <>
-            <button onClick={handleStopClick} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all" title="停止">
+            <button onClick={handleStopClick} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
               <Square size={16} />
             </button>
             <button onClick={togglePlayPause} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
               {isRunning ? <Pause size={16} /> : <Play size={16} />}
             </button>
 
-            {/* スキップボタンはインターバルモードのみ */}
+            {/* スキップボタンはポモドーロモードのみ */}
             {isIntervalMode && (
-              <button
-                onClick={handleSkip}
-                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-                title="次のフェーズへスキップ"
-              >
+              <button onClick={handleSkip} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
                 <SkipForward size={16} />
               </button>
             )}
 
             {/* フローモドーロの作業完了ボタン */}
             {isFlowmodoroMode && isWorkPhase && (
-              <button
-                onClick={handleFlowmodoroWorkComplete}
-                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-                title="作業を完了して休憩を開始"
-              >
+              <button onClick={handleFlowmodoroWorkComplete} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
                 <Check size={16} />
               </button>
             )}
