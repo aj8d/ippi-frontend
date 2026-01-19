@@ -1,4 +1,4 @@
-import { Settings2, Plus, Trash2 } from "lucide-react";
+import { Settings2, Trash2 } from "lucide-react";
 import { UNIQUE_WIDGETS, MULTIPLE_WIDGETS } from "./SidebarWidgets";
 
 /**
@@ -159,7 +159,7 @@ export default function WidgetSection({ isOpen, isHomePage, activeWidgets, showD
               className={`p-2 rounded-lg transition-colors ${isActive ? "bg-blue-500 text-white hover:bg-blue-600" : "text-gray-600 hover:bg-blue-100 hover:text-blue-600"}`}
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                onTooltip(isActive ? `${widget.label}を削除` : widget.label, {
+                onTooltip(widget.label, {
                   x: rect.right + 20,
                   y: rect.top + rect.height / 2,
                 });
