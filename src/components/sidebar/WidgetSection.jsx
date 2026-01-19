@@ -1,21 +1,10 @@
-import { Settings2, Plus, Trash2 } from 'lucide-react';
-import { UNIQUE_WIDGETS, MULTIPLE_WIDGETS } from './SidebarWidgets';
+import { Settings2, Trash2 } from "lucide-react";
+import { UNIQUE_WIDGETS, MULTIPLE_WIDGETS } from "./SidebarWidgets";
 
 /**
  * ウィジェットセクションコンポーネント
  */
-export default function WidgetSection({
-  isOpen,
-  isHomePage,
-  activeWidgets,
-  showDeleteMenu,
-  onTimerClick,
-  onUniqueWidgetClick,
-  onAddWidget,
-  onRemoveWidget,
-  onDeleteMenuToggle,
-  onTooltip,
-}) {
+export default function WidgetSection({ isOpen, isHomePage, activeWidgets, showDeleteMenu, onTimerClick, onUniqueWidgetClick, onAddWidget, onRemoveWidget, onDeleteMenuToggle, onTooltip }) {
   const isWidgetActive = (type) => {
     return activeWidgets.some((w) => w.type === type);
   };
@@ -49,9 +38,7 @@ export default function WidgetSection({
                   key={widget.id}
                   onClick={() => onUniqueWidgetClick(widget)}
                   className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm ${
-                    isActive
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-600'
+                    isActive ? "bg-blue-500 text-white hover:bg-blue-600" : "bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-600"
                   }`}
                 >
                   <widget.icon className="w-4 h-4" />
@@ -92,8 +79,8 @@ export default function WidgetSection({
                 <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
                   <button
                     onClick={() => {
-                      if (window.confirm('付箋を全て削除しますか？この操作は取り消せません。')) {
-                        const stickyWidgets = activeWidgets.filter((w) => w.type === 'sticky');
+                      if (window.confirm("付箋を全て削除しますか？この操作は取り消せません。")) {
+                        const stickyWidgets = activeWidgets.filter((w) => w.type === "sticky");
                         stickyWidgets.forEach((w) => onRemoveWidget?.(w.id));
                         onDeleteMenuToggle(false);
                       }
@@ -104,8 +91,8 @@ export default function WidgetSection({
                   </button>
                   <button
                     onClick={() => {
-                      if (window.confirm('画像を全て削除しますか？この操作は取り消せません。')) {
-                        const imageWidgets = activeWidgets.filter((w) => w.type === 'image');
+                      if (window.confirm("画像を全て削除しますか？この操作は取り消せません。")) {
+                        const imageWidgets = activeWidgets.filter((w) => w.type === "image");
                         imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
                         onDeleteMenuToggle(false);
                       }
@@ -116,16 +103,8 @@ export default function WidgetSection({
                   </button>
                   <button
                     onClick={() => {
-                      if (window.confirm('ツールとメモを全て削除しますか？この操作は取り消せません。')) {
-                        // ツール（UNIQUE_WIDGETS）とメモ（付箋・画像）を全て削除
-                        const allRemovableWidgets = activeWidgets.filter(
-                          (w) =>
-                            w.type === 'sticky' ||
-                            w.type === 'image' ||
-                            w.type === 'timer' ||
-                            w.type === 'todo' ||
-                            w.type === 'streak'
-                        );
+                      if (window.confirm("ツールとメモを全て削除しますか？この操作は取り消せません。")) {
+                        const allRemovableWidgets = activeWidgets.filter((w) => w.type === "sticky" || w.type === "image" || w.type === "timer" || w.type === "todo" || w.type === "streak");
                         allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
                         onDeleteMenuToggle(false);
                       }
@@ -153,7 +132,7 @@ export default function WidgetSection({
           className="p-2 hover:bg-blue-100 hover:text-blue-600 rounded-lg transition-colors text-gray-600"
           onMouseEnter={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
-            onTooltip('インターバル設定', { x: rect.right + 20, y: rect.top + rect.height / 2 });
+            onTooltip("インターバル設定", { x: rect.right + 20, y: rect.top + rect.height / 2 });
           }}
           onMouseLeave={() => onTooltip(null)}
         >
@@ -169,14 +148,10 @@ export default function WidgetSection({
             <button
               key={widget.id}
               onClick={() => onUniqueWidgetClick(widget)}
-              className={`p-2 rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'text-gray-600 hover:bg-blue-100 hover:text-blue-600'
-              }`}
+              className={`p-2 rounded-lg transition-colors ${isActive ? "bg-blue-500 text-white hover:bg-blue-600" : "text-gray-600 hover:bg-blue-100 hover:text-blue-600"}`}
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                onTooltip(isActive ? `${widget.label}を削除` : widget.label, {
+                onTooltip(widget.label, {
                   x: rect.right + 20,
                   y: rect.top + rect.height / 2,
                 });
@@ -213,7 +188,7 @@ export default function WidgetSection({
             className="p-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors"
             onMouseEnter={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
-              onTooltip('削除メニュー', { x: rect.right + 20, y: rect.top + rect.height / 2 });
+              onTooltip("削除メニュー", { x: rect.right + 20, y: rect.top + rect.height / 2 });
             }}
             onMouseLeave={() => onTooltip(null)}
           >
@@ -223,7 +198,7 @@ export default function WidgetSection({
             <div className="absolute left-full ml-2 top-0 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-10">
               <button
                 onClick={() => {
-                  const stickyWidgets = activeWidgets.filter((w) => w.type === 'sticky');
+                  const stickyWidgets = activeWidgets.filter((w) => w.type === "sticky");
                   stickyWidgets.forEach((w) => onRemoveWidget?.(w.id));
                   onDeleteMenuToggle(false);
                 }}
@@ -233,7 +208,7 @@ export default function WidgetSection({
               </button>
               <button
                 onClick={() => {
-                  const imageWidgets = activeWidgets.filter((w) => w.type === 'image');
+                  const imageWidgets = activeWidgets.filter((w) => w.type === "image");
                   imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
                   onDeleteMenuToggle(false);
                 }}
@@ -243,7 +218,7 @@ export default function WidgetSection({
               </button>
               <button
                 onClick={() => {
-                  const allRemovableWidgets = activeWidgets.filter((w) => w.type === 'sticky' || w.type === 'image');
+                  const allRemovableWidgets = activeWidgets.filter((w) => w.type === "sticky" || w.type === "image");
                   allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
                   onDeleteMenuToggle(false);
                 }}
