@@ -31,7 +31,9 @@ export default function SidebarFooter({
             className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg transition-colors duration-200"
           >
             <Trophy className="w-5 h-5 flex-shrink-0" />
-            {isOpen && <span className="text-sm font-medium">アチーブメント</span>}
+            {isOpen && (
+              <span className="text-sm font-medium whitespace-nowrap opacity-0 animate-fade-in">アチーブメント</span>
+            )}
           </button>
           {/* 統計ボタン */}
           <button
@@ -46,7 +48,7 @@ export default function SidebarFooter({
             className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
           >
             <BarChart3 className="w-5 h-5 flex-shrink-0" />
-            {isOpen && <span className="text-sm font-medium">統計</span>}
+            {isOpen && <span className="text-sm font-medium whitespace-nowrap opacity-0 animate-fade-in">統計</span>}
           </button>
           <button
             onClick={onProfileClick}
@@ -60,7 +62,9 @@ export default function SidebarFooter({
             className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors duration-200"
           >
             <Settings className="w-5 h-5 flex-shrink-0" />
-            {isOpen && <span className="text-sm font-medium">プロフィール</span>}
+            {isOpen && (
+              <span className="text-sm font-medium whitespace-nowrap opacity-0 animate-fade-in">プロフィール</span>
+            )}
           </button>
           <button
             onClick={onLogout}
@@ -74,7 +78,9 @@ export default function SidebarFooter({
             className="w-full flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
           >
             <LogOut className="w-5 h-5 flex-shrink-0" />
-            {isOpen && <span className="text-sm font-medium">ログアウト</span>}
+            {isOpen && (
+              <span className="text-sm font-medium whitespace-nowrap opacity-0 animate-fade-in">ログアウト</span>
+            )}
           </button>
         </>
       ) : (
@@ -91,7 +97,7 @@ export default function SidebarFooter({
           className="w-full flex items-center gap-4 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
         >
           <LogIn className="w-5 h-5 flex-shrink-0" />
-          {isOpen && <span className="text-sm font-medium">ログイン</span>}
+          {isOpen && <span className="text-sm font-medium whitespace-nowrap opacity-0 animate-fade-in">ログイン</span>}
         </button>
       )}
     </div>
