@@ -218,7 +218,7 @@ export default function WidgetSection({
         <div className="relative">
           <button
             onClick={() => onDeleteMenuToggle(!showDeleteMenu)}
-            className="p-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors"
+            className="p-2 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
             onMouseEnter={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               onTooltip('削除メニュー', { x: rect.right + 20, y: rect.top + rect.height / 2 });
