@@ -66,6 +66,21 @@ export default function MobileBottomNav() {
     setPendingAction(null);
   };
 
+  // アチーブメントボタンクリック
+  const handleAchievementClick = () => {
+    if (isTimerRunning) {
+      setWarningActionType("achievement");
+      setPendingAction(() => () => {
+        setIsAchievementModalOpen(true);
+        setIsMenuOpen(false);
+      });
+      setWarningModalOpen(true);
+    } else {
+      setIsAchievementModalOpen(true);
+      setIsMenuOpen(false);
+    }
+  };
+
   const navItems = [
     { icon: Home, label: "ホーム", path: "/", active: isHomePage },
     { icon: Search, label: "検索", path: "/search", active: isSearchPage },
@@ -116,13 +131,7 @@ export default function MobileBottomNav() {
               {user ? (
                 <>
                   {/* アチーブメント */}
-                  <button
-                    onClick={() => {
-                      setIsAchievementModalOpen(true);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg transition-colors"
-                  >
+                  <button onClick={handleAchievementClick} className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg transition-colors">
                     <Trophy className="w-5 h-5" />
                     <span className="text-sm font-medium">アチーブメント</span>
                   </button>

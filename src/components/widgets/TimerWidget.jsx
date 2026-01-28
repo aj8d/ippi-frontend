@@ -242,18 +242,28 @@ function TimerWidget({ settings = {} }) {
             setCurrentCycle((prevCycle) => {
               const nextCycle = prevCycle + 1;
               if (nextCycle > currentTotalCycles) {
-                // 全サイクル完了
+                // 全サイクル完了 - タイマーを初期状態にリセット
                 setIsRunning(false);
+                setHasStarted(false);
                 // バックエンドに作業時間を送信
                 const finalWorkTime = totalWorkTimeRef.current;
                 showTimerCompletionNotification(finalWorkTime);
-                setTimeout(() => {
-                  saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
-                }, 0);
-                return prevCycle;
+                saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
+                // タイマー完了を記録
+                recordTimerCompletion();
+                // UI状態を初期状態にリセット
+                setCurrentSectionIndex(0);
+                setIsWorkPhase(true);
+                setElapsedTime(0);
+                setTotalTime(getTimeFromSection(currentSections[0], true));
+                phaseStartTimeRef.current = null;
+                pausedElapsedRef.current = 0;
+                return 1; // サイクルを1にリセット
               }
               return nextCycle;
             });
+            // 全サイクル完了の場合は以降の処理をスキップ
+            return prevSectionIndex;
           }
 
           setCurrentSectionIndex(nextIndex);
@@ -273,18 +283,29 @@ function TimerWidget({ settings = {} }) {
           setCurrentCycle((prevCycle) => {
             const nextCycle = prevCycle + 1;
             if (nextCycle > currentTotalCycles) {
-              // 全サイクル完了
+              // 全サイクル完了 - タイマーを初期状態にリセット
               setIsRunning(false);
+              setHasStarted(false);
               // バックエンドに作業時間を送信
               const finalWorkTime = totalWorkTimeRef.current;
               showTimerCompletionNotification(finalWorkTime);
-              setTimeout(() => {
-                saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
-              }, 0);
-              return prevCycle;
+              saveWorkTimeToBackend(finalWorkTime, currentSections.length * currentTotalCycles);
+              // タイマー完了を記録
+              recordTimerCompletion();
+              // UI状態を初期状態にリセット
+              setCurrentSectionIndex(0);
+              setIsWorkPhase(true);
+              isWorkPhaseRef.current = true;
+              setElapsedTime(0);
+              setTotalTime(getTimeFromSection(currentSections[0], true));
+              phaseStartTimeRef.current = null;
+              pausedElapsedRef.current = 0;
+              return 1; // サイクルを1にリセット
             }
             return nextCycle;
           });
+          // 全サイクル完了の場合は以降の処理をスキップ
+          return prevSectionIndex;
         }
 
         setIsWorkPhase(true);
