@@ -4,7 +4,7 @@ import { UNIQUE_WIDGETS, MULTIPLE_WIDGETS } from "./SidebarWidgets";
 /**
  * ウィジェットセクションコンポーネント
  */
-export default function WidgetSection({ isOpen, isHomePage, activeWidgets, showDeleteMenu, onTimerClick, onUniqueWidgetClick, onAddWidget, onRemoveWidget, onDeleteMenuToggle, onTooltip }) {
+export default function WidgetSection({ isOpen, isHomePage, activeWidgets, showDeleteMenu, onTimerClick, onUniqueWidgetClick, onAddWidget, onRemoveWidget, onDeleteMenuToggle, onTooltip, token }) {
   const isWidgetActive = (type) => {
     return activeWidgets.some((w) => w.type === type);
   };
@@ -52,7 +52,11 @@ export default function WidgetSection({ isOpen, isHomePage, activeWidgets, showD
 
             {/* 複数追加可能なウィジェット */}
             <h3 className="text-xs font-semibold text-gray-500 tracking-wider mb-3">メモ</h3>
-            {MULTIPLE_WIDGETS.map((widget) => (
+            {MULTIPLE_WIDGETS.filter((widget) => {
+              // 画像ウィジェットはログイン時のみ表示
+              if (widget.id === "image" && !token) return false;
+              return true;
+            }).map((widget) => (
               <button
                 key={widget.id}
                 onClick={() => onAddWidget?.(widget.id, widget.defaultSize)}
@@ -89,21 +93,25 @@ export default function WidgetSection({ isOpen, isHomePage, activeWidgets, showD
                   >
                     <span>付箋を全て削除</span>
                   </button>
-                  <button
-                    onClick={() => {
-                      if (window.confirm("画像を全て削除しますか？この操作は取り消せません。")) {
-                        const imageWidgets = activeWidgets.filter((w) => w.type === "image");
-                        imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
-                        onDeleteMenuToggle(false);
-                      }
-                    }}
-                    className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm"
-                  >
-                    <span>画像を全て削除</span>
-                  </button>
+                  {token && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm("画像を全て削除しますか？この操作は取り消せません。")) {
+                          const imageWidgets = activeWidgets.filter((w) => w.type === "image");
+                          imageWidgets.forEach((w) => onRemoveWidget?.(w.id));
+                          onDeleteMenuToggle(false);
+                        }
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 transition-colors text-sm"
+                    >
+                      <span>画像を全て削除</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       if (window.confirm("ツールとメモを全て削除しますか？この操作は取り消せません。")) {
+                        // ツール（UNIQUE_WIDGETS）とメモ（付箋・画像）を全て削除
                         const allRemovableWidgets = activeWidgets.filter((w) => w.type === "sticky" || w.type === "image" || w.type === "timer" || w.type === "todo" || w.type === "streak");
                         allRemovableWidgets.forEach((w) => onRemoveWidget?.(w.id));
                         onDeleteMenuToggle(false);
@@ -165,7 +173,11 @@ export default function WidgetSection({ isOpen, isHomePage, activeWidgets, showD
         {/* 区切り線 */}
         <div className="w-8 border-t border-gray-200 my-1" />
         {/* 複数追加可能なウィジェット */}
-        {MULTIPLE_WIDGETS.map((widget) => (
+        {MULTIPLE_WIDGETS.filter((widget) => {
+          // 画像ウィジェットはログイン時のみ表示
+          if (widget.id === "image" && !token) return false;
+          return true;
+        }).map((widget) => (
           <button
             key={widget.id}
             onClick={() => onAddWidget?.(widget.id, widget.defaultSize)}

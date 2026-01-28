@@ -1,17 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeftFromLine, ArrowRightFromLine } from 'lucide-react';
-import { useAuth } from '../auth/AuthContext';
-import { useTimer } from '../contexts/TimerContext';
-import StatsModal from './StatsModal';
-import AchievementModal from './AchievementModal';
-import TimerWarningModal from './TimerWarningModal';
-import SidebarNavigation from './sidebar/SidebarNavigation';
-import WidgetSection from './sidebar/WidgetSection';
-import CustomElementButtons from './sidebar/CustomElementButtons';
-import SidebarFooter from './sidebar/SidebarFooter';
-import TimerSettingsModal from './sidebar/TimerSettingsModal';
+import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ArrowLeftFromLine, ArrowRightFromLine } from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
+import { useTimer } from "../contexts/TimerContext";
+import StatsModal from "./StatsModal";
+import AchievementModal from "./AchievementModal";
+import TimerWarningModal from "./TimerWarningModal";
+import SidebarNavigation from "./sidebar/SidebarNavigation";
+import WidgetSection from "./sidebar/WidgetSection";
+import CustomElementButtons from "./sidebar/CustomElementButtons";
+import SidebarFooter from "./sidebar/SidebarFooter";
+import TimerSettingsModal from "./sidebar/TimerSettingsModal";
 
 /**
  * Sidebar コンポーネント
@@ -22,24 +22,15 @@ import TimerSettingsModal from './sidebar/TimerSettingsModal';
  * @param {boolean} isOwnProfile - 自分のプロフィールかどうか
  * @param {Function} addRowFunction - カスタム要素追加関数
  */
-function Sidebar({
-  isOpen,
-  setIsOpen,
-  onTimerSettingsChange,
-  onAddWidget,
-  onRemoveWidget,
-  activeWidgets = [],
-  isOwnProfile = false,
-  addRowFunction = null,
-}) {
-  const { logout, user } = useAuth();
+function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemoveWidget, activeWidgets = [], isOwnProfile = false, addRowFunction = null }) {
+  const { logout, user, token } = useAuth();
   const { isTimerRunning, stopTimer } = useTimer();
   const location = useLocation();
   const navigate = useNavigate();
 
   // 警告モーダルの状態
   const [warningModalOpen, setWarningModalOpen] = useState(false);
-  const [warningActionType, setWarningActionType] = useState('navigate');
+  const [warningActionType, setWarningActionType] = useState("navigate");
   const [pendingAction, setPendingAction] = useState(null);
 
   // カスタムツールチップの状態
@@ -51,14 +42,14 @@ function Sidebar({
 
   // サイドバーの開閉状態をlocalStorageに保存
   useEffect(() => {
-    localStorage.setItem('sidebarOpen', JSON.stringify(isOpen));
+    localStorage.setItem("sidebarOpen", JSON.stringify(isOpen));
   }, [isOpen]);
 
   // 現在のページを判定
-  const isHomePage = location.pathname === '/' || location.pathname === '/home';
-  const isSearchPage = location.pathname === '/search';
-  const isFeedPage = location.pathname === '/feed';
-  const isProfilePage = location.pathname.includes('/@') || (user && location.pathname === `/${user.customId}`);
+  const isHomePage = location.pathname === "/" || location.pathname === "/home";
+  const isSearchPage = location.pathname === "/search";
+  const isFeedPage = location.pathname === "/feed";
+  const isProfilePage = location.pathname.includes("/@") || (user && location.pathname === `/${user.customId}`);
 
   /**
    * 一意ウィジェットが追加済みかチェック
@@ -87,7 +78,7 @@ function Sidebar({
   // localStorageからタイマー設定を読み込む
   const loadTimerSettings = () => {
     try {
-      const saved = localStorage.getItem('timerSettings');
+      const saved = localStorage.getItem("timerSettings");
       if (saved) {
         const settings = JSON.parse(saved);
         return {
@@ -99,7 +90,7 @@ function Sidebar({
         };
       }
     } catch (error) {
-      console.error('タイマー設定の読み込みエラー:', error);
+      console.error("タイマー設定の読み込みエラー:", error);
     }
     return {
       displayMode: 'countdown',
@@ -144,7 +135,7 @@ function Sidebar({
   // セクション追加
   const handleAddSection = () => {
     const newId = Math.max(...pomodoroSections.map((s) => s.id), 0) + 1;
-    setPomodoroSections([...pomodoroSections, { id: newId, workMinutes: '25', breakMinutes: '5' }]);
+    setPomodoroSections([...pomodoroSections, { id: newId, workMinutes: "25", breakMinutes: "5" }]);
   };
 
   // セクション削除
@@ -215,7 +206,7 @@ function Sidebar({
 
   // タイマー設定ボタンクリック
   const handleTimerSettingsClick = () => {
-    showTimerWarning('settings', () => setIsTimerModalOpen(true));
+    showTimerWarning("settings", () => setIsTimerModalOpen(true));
   };
 
   // タイマー設定ボタンクリック（エイリアス）
@@ -223,33 +214,33 @@ function Sidebar({
 
   // 統計ボタンクリック
   const handleStatsClick = () => {
-    showTimerWarning('stats', () => setIsStatsModalOpen(true));
+    showTimerWarning("stats", () => setIsStatsModalOpen(true));
   };
 
   // プロフィールクリック（ページ遷移）
   const handleProfileClick = () => {
     if (user?.customId) {
-      showTimerWarning('navigate', () => navigate(`/${user.customId}`));
+      showTimerWarning("navigate", () => navigate(`/${user.customId}`));
     }
   };
 
   // ホームクリック（ページ遷移）
   const handleHomeClick = () => {
-    showTimerWarning('navigate', () => navigate('/'));
+    showTimerWarning("navigate", () => navigate("/"));
   };
 
   // 検索クリック（ページ遷移）
   const handleSearchClick = () => {
-    showTimerWarning('navigate', () => navigate('/search'));
+    showTimerWarning("navigate", () => navigate("/search"));
   };
 
   // フィードクリック（ページ遷移）
   const handleFeedClick = () => {
-    showTimerWarning('navigate', () => navigate('/feed'));
+    showTimerWarning("navigate", () => navigate("/feed"));
   };
 
   const handleLogout = () => {
-    showTimerWarning('navigate', () => logout());
+    showTimerWarning("navigate", () => logout());
   };
 
   // ブラウザを閉じる/リロード時の警告
@@ -258,14 +249,14 @@ function Sidebar({
       if (isTimerRunning) {
         e.preventDefault();
         // Chrome requires returnValue to be set
-        e.returnValue = 'タイマーが動作中です。ページを離れると作業時間が保存されます。';
+        e.returnValue = "タイマーが動作中です。ページを離れると作業時間が保存されます。";
         return e.returnValue;
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [isTimerRunning]);
 
@@ -275,11 +266,7 @@ function Sidebar({
   };
 
   return (
-    <div
-      className={`${
-        isOpen ? 'w-64' : 'w-20'
-      } bg-white shadow-lg transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-50`}
-    >
+    <div className={`${isOpen ? "w-64" : "w-20"} bg-white shadow-lg transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-50`}>
       {/* ヘッダー */}
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
         {isOpen && <h1 className="text-2xl font-bold text-gray-800">iPPi</h1>}
@@ -295,7 +282,7 @@ function Sidebar({
               className="w-5 h-5 text-gray-600"
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                handleTooltip('折りたたむ', { x: rect.right + 20, y: rect.top + rect.height / 2 });
+                handleTooltip("折りたたむ", { x: rect.right + 20, y: rect.top + rect.height / 2 });
               }}
               onMouseLeave={() => handleTooltip(null)}
             />
@@ -304,7 +291,7 @@ function Sidebar({
               className="w-5 h-5 text-gray-600"
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
-                handleTooltip('展開', { x: rect.right + 20, y: rect.top + rect.height / 2 });
+                handleTooltip("展開", { x: rect.right + 20, y: rect.top + rect.height / 2 });
               }}
               onMouseLeave={() => handleTooltip(null)}
             />
@@ -338,13 +325,12 @@ function Sidebar({
           onRemoveWidget={onRemoveWidget}
           onDeleteMenuToggle={setShowDeleteMenu}
           onTooltip={handleTooltip}
+          token={token}
         />
       )}
 
       {/* カスタム要素追加ボタン（プロフィールページ） */}
-      {isProfilePage && isOwnProfile && (
-        <CustomElementButtons isOpen={isOpen} addRowFunction={addRowFunction} onTooltip={handleTooltip} />
-      )}
+      {isProfilePage && isOwnProfile && <CustomElementButtons isOpen={isOpen} addRowFunction={addRowFunction} onTooltip={handleTooltip} />}
 
       {/* 空のスペーサー */}
       <div className="flex-1"></div>
@@ -356,7 +342,7 @@ function Sidebar({
         onStatsClick={handleStatsClick}
         onProfileClick={handleProfileClick}
         onLogout={handleLogout}
-        onLoginClick={() => navigate('/login')}
+        onLoginClick={() => navigate("/login")}
         onAchievementClick={() => setIsAchievementModalOpen(true)}
       />
 
@@ -403,7 +389,7 @@ function Sidebar({
             style={{
               left: `${tooltipPos.x}px`,
               top: `${tooltipPos.y}px`,
-              transform: 'translate(0, -50%)',
+              transform: "translate(0, -50%)",
             }}
           >
             {tooltip}
@@ -411,9 +397,9 @@ function Sidebar({
             <div
               className="absolute w-0 h-0 border-t-4 border-b-4 border-r-4 border-t-transparent border-b-transparent border-r-gray-800"
               style={{
-                left: '-4px',
-                top: '50%',
-                transform: 'translateY(-50%)',
+                left: "-4px",
+                top: "50%",
+                transform: "translateY(-50%)",
               }}
             />
           </div>,
