@@ -95,6 +95,7 @@ function Sidebar({
           totalCycles: settings.totalCycles || '3',
           pomodoroSections: settings.pomodoroSections || [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
           countdownMinutes: settings.countdownMinutes || '25',
+          alarmVolume: settings.alarmVolume !== undefined ? settings.alarmVolume : 0.5,
         };
       }
     } catch (error) {
@@ -105,6 +106,7 @@ function Sidebar({
       totalCycles: '3',
       pomodoroSections: [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
       countdownMinutes: '25',
+      alarmVolume: 0.5,
     };
   };
 
@@ -115,6 +117,7 @@ function Sidebar({
   const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false); // アチーブメントモーダル
   const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles); // サイクル数（デフォルト3サイクル）
   const [countdownMinutes, setCountdownMinutes] = useState(initialSettings.countdownMinutes); // カウントダウン時間（分）
+  const [alarmVolume, setAlarmVolume] = useState(initialSettings.alarmVolume); // アラーム音量（0〜1）
 
   // ポモドーロセクション管理
   // 各セクションは { id, workMinutes, breakMinutes } を持つ
@@ -127,9 +130,10 @@ function Sidebar({
       totalCycles,
       pomodoroSections,
       countdownMinutes,
+      alarmVolume,
     };
     localStorage.setItem('timerSettings', JSON.stringify(settings));
-  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes]);
+  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes, alarmVolume]);
 
   // 初回マウント時に保存された設定をTimerWidgetへ通知
   useEffect(() => {
@@ -161,12 +165,14 @@ function Sidebar({
     mode = displayMode,
     cycles = totalCycles,
     cdMinutes = countdownMinutes,
+    volume = alarmVolume
   ) => {
     onTimerSettingsChange?.({
       displayMode: mode,
       sections: sections,
       totalCycles: parseInt(cycles) || 1,
       countdownMinutes: parseInt(cdMinutes) || 25,
+      alarmVolume: volume,
     });
   };
 
@@ -366,6 +372,7 @@ function Sidebar({
         totalCycles={totalCycles}
         countdownMinutes={countdownMinutes}
         pomodoroSections={pomodoroSections}
+        alarmVolume={alarmVolume}
         onClose={handleCloseModal}
         onDisplayModeChange={handleDisplayModeChange}
         onTotalCyclesChange={setTotalCycles}
@@ -373,6 +380,7 @@ function Sidebar({
         onSectionChange={handleSectionChange}
         onAddSection={handleAddSection}
         onRemoveSection={handleRemoveSection}
+        onAlarmVolumeChange={setAlarmVolume}
       />
 
       {/* 統計モーダル */}

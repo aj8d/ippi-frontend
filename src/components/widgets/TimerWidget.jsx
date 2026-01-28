@@ -13,7 +13,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { useTimer } from "../../contexts/TimerContext";
 import { useTimerCompletionNotification } from "../../hooks/useTimerCompletionNotification";
 import { API_ENDPOINTS } from "../../config";
-import { DEFAULT_SECTIONS, getTimeFromSection, formatTime } from "./timerUtils";
+import { DEFAULT_SECTIONS, getTimeFromSection, formatTime, playAlarmSound } from "./timerUtils";
 import TimerWarningModal from "../TimerWarningModal";
 
 function TimerWidget({ settings = {} }) {
@@ -26,6 +26,7 @@ function TimerWidget({ settings = {} }) {
   const sections = settings.sections || DEFAULT_SECTIONS;
   const totalCycles = settings.totalCycles || 3; // デフォルト3サイクル
   const countdownMinutes = settings.countdownMinutes || 25; // デフォルト25分
+  const alarmVolume = settings.alarmVolume !== undefined ? settings.alarmVolume : 0.5; // アラーム音量
 
   // モードの判定
   const isIntervalMode = displayMode === "interval";
@@ -64,6 +65,12 @@ function TimerWidget({ settings = {} }) {
 
   // 現在のフェーズで経過した作業時間（秒）をトラッキング
   const currentPhaseWorkTimeRef = useRef(0);
+
+  // アラーム音量のrefを追跡
+  const alarmVolumeRef = useRef(alarmVolume);
+  useEffect(() => {
+    alarmVolumeRef.current = alarmVolume;
+  }, [alarmVolume]);
 
   // refs を最新の値で更新
   useEffect(() => {
@@ -176,9 +183,15 @@ function TimerWidget({ settings = {} }) {
   /**
    * 次のフェーズに進む
    * @param actualElapsedTime スキップ時に渡される実際の経過時間（秒）
+   * @param playSound アラーム音を鳴らすかどうか（デフォルト: true）
    */
   const goToNextPhase = useCallback(
-    (actualElapsedTime = null) => {
+    (actualElapsedTime = null, playSound = true) => {
+      // フェーズ切り替え時にアラーム音を鳴らす
+      if (playSound) {
+        playAlarmSound(alarmVolumeRef.current);
+      }
+
       const currentSections = sectionsRef.current;
       const currentTotalCycles = totalCyclesRef.current;
       const prevIsWorkPhase = isWorkPhaseRef.current; // refから取得
@@ -323,6 +336,8 @@ function TimerWidget({ settings = {} }) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
           setIsRunning(false);
+          // アラーム音を鳴らす
+          playAlarmSound(alarmVolumeRef.current);
           // 作業時間を保存
           const workTime = Math.floor(elapsed);
           if (workTime >= 60) {
@@ -344,6 +359,9 @@ function TimerWidget({ settings = {} }) {
           hasCompletedRef.current = true;
           clearInterval(intervalRef.current);
           intervalRef.current = null;
+
+          // アラーム音を鳴らす
+          playAlarmSound(alarmVolumeRef.current);
 
           // 今回の作業時間を保存
           // タイマー完了を記録
