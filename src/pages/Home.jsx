@@ -49,6 +49,7 @@ function Home() {
           totalCycles: settings.totalCycles || "3",
           pomodoroSections: settings.pomodoroSections || [{ id: 1, workMinutes: "25", breakMinutes: "5" }],
           countdownMinutes: settings.countdownMinutes || "25",
+          alarmVolume: settings.alarmVolume !== undefined ? settings.alarmVolume : 0.5,
         };
       }
     } catch (error) {
@@ -59,6 +60,7 @@ function Home() {
       totalCycles: "3",
       pomodoroSections: [{ id: 1, workMinutes: "25", breakMinutes: "5" }],
       countdownMinutes: "25",
+      alarmVolume: 0.5,
     };
   };
 
@@ -69,6 +71,7 @@ function Home() {
     displayMode: initialSettings.displayMode,
     inputMinutes: "1",
     inputSeconds: "0",
+    alarmVolume: initialSettings.alarmVolume,
   });
 
   // モバイル用タイマー設定ステート
@@ -76,6 +79,7 @@ function Home() {
   const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles);
   const [countdownMinutes, setCountdownMinutes] = useState(initialSettings.countdownMinutes);
   const [pomodoroSections, setPomodoroSections] = useState(initialSettings.pomodoroSections);
+  const [alarmVolume, setAlarmVolume] = useState(initialSettings.alarmVolume);
 
   /**
    * useWidgets カスタムフック
@@ -100,6 +104,7 @@ function Home() {
       totalCycles,
       pomodoroSections,
       countdownMinutes,
+      alarmVolume,
     };
     localStorage.setItem("timerSettings", JSON.stringify(settings));
 
@@ -109,8 +114,9 @@ function Home() {
       sections: pomodoroSections,
       totalCycles: parseInt(totalCycles) || 1,
       countdownMinutes: parseInt(countdownMinutes) || 25,
+      alarmVolume,
     });
-  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes]);
+  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes, alarmVolume]);
 
   // セクション追加
   const handleAddSection = () => {
@@ -257,6 +263,7 @@ function Home() {
         totalCycles={totalCycles}
         countdownMinutes={countdownMinutes}
         pomodoroSections={pomodoroSections}
+        alarmVolume={alarmVolume}
         onClose={handleCloseMobileTimerModal}
         onDisplayModeChange={setDisplayMode}
         onTotalCyclesChange={setTotalCycles}
@@ -264,6 +271,7 @@ function Home() {
         onSectionChange={handleSectionChange}
         onAddSection={handleAddSection}
         onRemoveSection={handleRemoveSection}
+        onAlarmVolumeChange={setAlarmVolume}
       />
 
       {/* モバイル用ボトムナビゲーション */}

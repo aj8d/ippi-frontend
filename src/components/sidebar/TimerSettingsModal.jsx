@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
-import { Timer, X, Plus, Trash2, MoveDown, MoveRight } from 'lucide-react';
+import { Timer, X, Plus, Trash2, MoveDown, MoveRight, Volume2, VolumeX } from 'lucide-react';
+import { playAlarmSound } from '../widgets/timerUtils';
 
 /**
  * タイマー設定モーダルコンポーネント
@@ -10,6 +11,7 @@ export default function TimerSettingsModal({
   totalCycles,
   countdownMinutes,
   pomodoroSections,
+  alarmVolume = 0.5,
   onClose,
   onDisplayModeChange,
   onTotalCyclesChange,
@@ -17,8 +19,14 @@ export default function TimerSettingsModal({
   onSectionChange,
   onAddSection,
   onRemoveSection,
+  onAlarmVolumeChange,
 }) {
   if (!isOpen) return null;
+
+  // テスト再生
+  const handleTestSound = () => {
+    playAlarmSound(alarmVolume);
+  };
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] animate-fadeIn" onClick={onClose}>
@@ -266,6 +274,35 @@ export default function TimerSettingsModal({
               </button>
             </div>
           )}
+
+          {/* アラーム音量設定 */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-gray-700">🔔 アラーム音量</label>
+              <button
+                onClick={handleTestSound}
+                className="text-xs px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors"
+              >
+                テスト再生
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <VolumeX className="w-4 h-4 text-gray-400" />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={alarmVolume}
+                onChange={(e) => onAlarmVolumeChange?.(parseFloat(e.target.value))}
+                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              />
+              <Volume2 className="w-4 h-4 text-gray-600" />
+              <span className="text-sm text-gray-600 w-12 text-right">
+                {alarmVolume === 0 ? 'OFF' : `${Math.round(alarmVolume * 100)}%`}
+              </span>
+            </div>
+          </div>
 
           {/* 閉じるボタン */}
           <button
