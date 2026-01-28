@@ -12,15 +12,16 @@
  * - handleAddWidget: 新しいウィジェットを追加する関数
  */
 
-import { useState, useCallback } from 'react';
-import Sidebar from '../components/Sidebar';
-import FreeCanvas from '../components/FreeCanvas';
-import MobileBottomNav from '../components/mobile/MobileBottomNav';
-import MobileListCanvas from '../components/mobile/MobileListCanvas';
-import FloatingAddButton from '../components/mobile/FloatingAddButton';
-import { useWidgets } from '../hooks/useWidgets'; // カスタムフック
-import { useAchievementChecker } from '../hooks/useAchievementChecker';
-import { useAuth } from '../auth/AuthContext';
+import { useState, useCallback } from "react";
+import Sidebar from "../components/Sidebar";
+import FreeCanvas from "../components/FreeCanvas";
+import MobileBottomNav from "../components/mobile/MobileBottomNav";
+import MobileListCanvas from "../components/mobile/MobileListCanvas";
+import FloatingAddButton from "../components/mobile/FloatingAddButton";
+import TimerSettingsModal from "../components/sidebar/TimerSettingsModal";
+import { useWidgets } from "../hooks/useWidgets"; // カスタムフック
+import { useAchievementChecker } from "../hooks/useAchievementChecker";
+import { useAuth } from "../auth/AuthContext";
 
 function Home() {
   const { token } = useAuth();
@@ -30,16 +31,55 @@ function Home() {
 
   // サイドバーの開閉状態（localStorageから読み込む）
   const [sidebarOpen, setSidebarOpen] = useState(() => {
-    const saved = localStorage.getItem('sidebarOpen');
+    const saved = localStorage.getItem("sidebarOpen");
     return saved !== null ? JSON.parse(saved) : true;
   });
 
+  // モバイル用タイマー設定モーダルの開閉状態
+  const [isMobileTimerModalOpen, setIsMobileTimerModalOpen] = useState(false);
+
+  // タイマー設定をlocalStorageから読み込む
+  const loadTimerSettings = () => {
+    try {
+      const saved = localStorage.getItem("timerSettings");
+      if (saved) {
+        const settings = JSON.parse(saved);
+        return {
+          displayMode: settings.displayMode || "countdown",
+          totalCycles: settings.totalCycles || "3",
+          pomodoroSections: settings.pomodoroSections || [{ id: 1, workMinutes: "25", breakMinutes: "5" }],
+          countdownMinutes: settings.countdownMinutes || "25",
+          alarmVolume: settings.alarmVolume !== undefined ? settings.alarmVolume : 0.5,
+        };
+      }
+    } catch (error) {
+      console.error("タイマー設定の読み込みエラー:", error);
+    }
+    return {
+      displayMode: "countdown",
+      totalCycles: "3",
+      pomodoroSections: [{ id: 1, workMinutes: "25", breakMinutes: "5" }],
+      countdownMinutes: "25",
+      alarmVolume: 0.5,
+    };
+  };
+
+  const initialSettings = loadTimerSettings();
+
   // タイマーの設定（サイドバーのアコーディオンで変更）
   const [timerSettings, setTimerSettings] = useState({
-    displayMode: 'countdown',
-    inputMinutes: '1',
-    inputSeconds: '0',
+    displayMode: initialSettings.displayMode,
+    inputMinutes: "1",
+    inputSeconds: "0",
+    alarmVolume: initialSettings.alarmVolume,
   });
+
+  // モバイル用タイマー設定ステート
+  const [displayMode, setDisplayMode] = useState(initialSettings.displayMode);
+  const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles);
+  const [countdownMinutes, setCountdownMinutes] = useState(initialSettings.countdownMinutes);
+  const [pomodoroSections, setPomodoroSections] = useState(initialSettings.pomodoroSections);
+  const [alarmVolume, setAlarmVolume] = useState(initialSettings.alarmVolume);
 
   /**
    * useWidgets カスタムフック
@@ -57,6 +97,51 @@ function Home() {
     setTimerSettings(settings);
   };
 
+  // モバイル用: タイマー設定をlocalStorageに保存
+  const saveMobileTimerSettings = useCallback(() => {
+    const settings = {
+      displayMode,
+      totalCycles,
+      pomodoroSections,
+      countdownMinutes,
+      alarmVolume,
+    };
+    localStorage.setItem("timerSettings", JSON.stringify(settings));
+
+    // TimerWidgetに設定を反映
+    setTimerSettings({
+      displayMode,
+      sections: pomodoroSections,
+      totalCycles: parseInt(totalCycles) || 1,
+      countdownMinutes: parseInt(countdownMinutes) || 25,
+      alarmVolume,
+    });
+  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes, alarmVolume]);
+
+  // セクション追加
+  const handleAddSection = () => {
+    const newId = Math.max(...pomodoroSections.map((s) => s.id), 0) + 1;
+    setPomodoroSections([...pomodoroSections, { id: newId, workMinutes: "25", breakMinutes: "5" }]);
+  };
+
+  // セクション削除
+  const handleRemoveSection = (id) => {
+    if (pomodoroSections.length > 1) {
+      setPomodoroSections(pomodoroSections.filter((s) => s.id !== id));
+    }
+  };
+
+  // セクションの値更新
+  const handleSectionChange = (id, field, value) => {
+    setPomodoroSections(pomodoroSections.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  };
+
+  // モバイル用モーダルを閉じる時に設定を保存
+  const handleCloseMobileTimerModal = () => {
+    saveMobileTimerSettings();
+    setIsMobileTimerModalOpen(false);
+  };
+
   /**
    * 新しいウィジェットを追加する関数
    *
@@ -71,9 +156,9 @@ function Home() {
       // ウィジェットタイプごとのデフォルトデータを設定
       const getDefaultData = (widgetType) => {
         switch (widgetType) {
-          case 'sticky':
-            return { text: '', color: 'yellow', emoji: '' };
-          case 'image':
+          case "sticky":
+            return { text: "", color: "yellow", emoji: "" };
+          case "image":
             return { imageUrl: null, publicId: null }; // 画像ウィジェット用
           default:
             return {};
@@ -104,7 +189,7 @@ function Home() {
         return [...prev, newWidget];
       });
     },
-    [setWidgets]
+    [setWidgets],
   );
 
   /**
@@ -129,13 +214,13 @@ function Home() {
         }
       });
     },
-    [setWidgets]
+    [setWidgets],
   );
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* デスクトップ用サイドバー */}
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Sidebar
           isOpen={sidebarOpen}
           setIsOpen={setSidebarOpen}
@@ -147,7 +232,7 @@ function Home() {
       </div>
 
       {/* メインコンテンツ */}
-      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
+      <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? "lg:ml-64" : "lg:ml-20"}`}>
         {/* ローディング中の表示 */}
         {loading ? (
           <div className="flex items-center justify-center h-screen">
@@ -156,20 +241,38 @@ function Home() {
         ) : (
           <>
             {/* デスクトップ：自由配置キャンバス */}
-            <div className="hidden md:block h-screen">
+            <div className="hidden lg:block h-screen">
               <FreeCanvas widgets={widgets} setWidgets={setWidgets} timerSettings={timerSettings} />
             </div>
 
-            {/* モバイル：リストキャンバス */}
-            <div className="md:hidden">
-              <MobileListCanvas widgets={widgets} setWidgets={setWidgets} timerSettings={timerSettings} />
+            {/* モバイル・タブレット：タイマーキャンバス */}
+            <div className="lg:hidden">
+              <MobileListCanvas timerSettings={timerSettings} />
             </div>
           </>
         )}
       </div>
 
-      {/* モバイル用フローティング追加ボタン */}
-      <FloatingAddButton activeWidgets={widgets} onAddWidget={handleAddWidget} onRemoveWidget={handleRemoveWidget} />
+      {/* モバイル用フローティングタイマー設定ボタン */}
+      <FloatingAddButton onOpenTimerSettings={() => setIsMobileTimerModalOpen(true)} />
+
+      {/* モバイル用タイマー設定モーダル */}
+      <TimerSettingsModal
+        isOpen={isMobileTimerModalOpen}
+        displayMode={displayMode}
+        totalCycles={totalCycles}
+        countdownMinutes={countdownMinutes}
+        pomodoroSections={pomodoroSections}
+        alarmVolume={alarmVolume}
+        onClose={handleCloseMobileTimerModal}
+        onDisplayModeChange={setDisplayMode}
+        onTotalCyclesChange={setTotalCycles}
+        onCountdownMinutesChange={setCountdownMinutes}
+        onSectionChange={handleSectionChange}
+        onAddSection={handleAddSection}
+        onRemoveSection={handleRemoveSection}
+        onAlarmVolumeChange={setAlarmVolume}
+      />
 
       {/* モバイル用ボトムナビゲーション */}
       <MobileBottomNav />

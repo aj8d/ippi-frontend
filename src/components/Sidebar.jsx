@@ -82,20 +82,22 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
       if (saved) {
         const settings = JSON.parse(saved);
         return {
-          displayMode: settings.displayMode || "countdown",
-          totalCycles: settings.totalCycles || "3",
-          pomodoroSections: settings.pomodoroSections || [{ id: 1, workMinutes: "25", breakMinutes: "5" }],
-          countdownMinutes: settings.countdownMinutes || "25",
+          displayMode: settings.displayMode || 'countdown',
+          totalCycles: settings.totalCycles || '3',
+          pomodoroSections: settings.pomodoroSections || [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
+          countdownMinutes: settings.countdownMinutes || '25',
+          alarmVolume: settings.alarmVolume !== undefined ? settings.alarmVolume : 0.5,
         };
       }
     } catch (error) {
       console.error("タイマー設定の読み込みエラー:", error);
     }
     return {
-      displayMode: "countdown",
-      totalCycles: "3",
-      pomodoroSections: [{ id: 1, workMinutes: "25", breakMinutes: "5" }],
-      countdownMinutes: "25",
+      displayMode: 'countdown',
+      totalCycles: '3',
+      pomodoroSections: [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
+      countdownMinutes: '25',
+      alarmVolume: 0.5,
     };
   };
 
@@ -106,6 +108,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
   const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false); // アチーブメントモーダル
   const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles); // サイクル数（デフォルト3サイクル）
   const [countdownMinutes, setCountdownMinutes] = useState(initialSettings.countdownMinutes); // カウントダウン時間（分）
+  const [alarmVolume, setAlarmVolume] = useState(initialSettings.alarmVolume); // アラーム音量（0〜1）
 
   // ポモドーロセクション管理
   // 各セクションは { id, workMinutes, breakMinutes } を持つ
@@ -118,9 +121,10 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
       totalCycles,
       pomodoroSections,
       countdownMinutes,
+      alarmVolume,
     };
-    localStorage.setItem("timerSettings", JSON.stringify(settings));
-  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes]);
+    localStorage.setItem('timerSettings', JSON.stringify(settings));
+  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes, alarmVolume]);
 
   // 初回マウント時に保存された設定をTimerWidgetへ通知
   useEffect(() => {
@@ -147,12 +151,19 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
   };
 
   // 設定変更時にTimerWidgetへ通知
-  const notifyTimerSettings = (sections = pomodoroSections, mode = displayMode, cycles = totalCycles, cdMinutes = countdownMinutes) => {
+  const notifyTimerSettings = (
+    sections = pomodoroSections,
+    mode = displayMode,
+    cycles = totalCycles,
+    cdMinutes = countdownMinutes,
+    volume = alarmVolume
+  ) => {
     onTimerSettingsChange?.({
       displayMode: mode,
       sections: sections,
       totalCycles: parseInt(cycles) || 1,
       countdownMinutes: parseInt(cdMinutes) || 25,
+      alarmVolume: volume,
     });
   };
 
@@ -342,6 +353,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
         totalCycles={totalCycles}
         countdownMinutes={countdownMinutes}
         pomodoroSections={pomodoroSections}
+        alarmVolume={alarmVolume}
         onClose={handleCloseModal}
         onDisplayModeChange={handleDisplayModeChange}
         onTotalCyclesChange={setTotalCycles}
@@ -349,6 +361,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
         onSectionChange={handleSectionChange}
         onAddSection={handleAddSection}
         onRemoveSection={handleRemoveSection}
+        onAlarmVolumeChange={setAlarmVolume}
       />
 
       {/* 統計モーダル */}
