@@ -22,8 +22,17 @@ import TimerSettingsModal from "./sidebar/TimerSettingsModal";
  * @param {boolean} isOwnProfile - 自分のプロフィールかどうか
  * @param {Function} addRowFunction - カスタム要素追加関数
  */
-function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemoveWidget, activeWidgets = [], isOwnProfile = false, addRowFunction = null }) {
-  const { logout, user } = useAuth();
+function Sidebar({
+  isOpen,
+  setIsOpen,
+  onTimerSettingsChange,
+  onAddWidget,
+  onRemoveWidget,
+  activeWidgets = [],
+  isOwnProfile = false,
+  addRowFunction = null,
+}) {
+  const { logout, user, token } = useAuth();
   const { isTimerRunning, stopTimer } = useTimer();
   const location = useLocation();
   const navigate = useNavigate();
@@ -82,20 +91,22 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
       if (saved) {
         const settings = JSON.parse(saved);
         return {
-          displayMode: settings.displayMode || "countdown",
-          totalCycles: settings.totalCycles || "3",
-          pomodoroSections: settings.pomodoroSections || [{ id: 1, workMinutes: "25", breakMinutes: "5" }],
-          countdownMinutes: settings.countdownMinutes || "25",
+          displayMode: settings.displayMode || 'countdown',
+          totalCycles: settings.totalCycles || '3',
+          pomodoroSections: settings.pomodoroSections || [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
+          countdownMinutes: settings.countdownMinutes || '25',
+          alarmVolume: settings.alarmVolume !== undefined ? settings.alarmVolume : 0.5,
         };
       }
     } catch (error) {
       console.error("タイマー設定の読み込みエラー:", error);
     }
     return {
-      displayMode: "countdown",
-      totalCycles: "3",
-      pomodoroSections: [{ id: 1, workMinutes: "25", breakMinutes: "5" }],
-      countdownMinutes: "25",
+      displayMode: 'countdown',
+      totalCycles: '3',
+      pomodoroSections: [{ id: 1, workMinutes: '25', breakMinutes: '5' }],
+      countdownMinutes: '25',
+      alarmVolume: 0.5,
     };
   };
 
@@ -106,6 +117,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
   const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false); // アチーブメントモーダル
   const [totalCycles, setTotalCycles] = useState(initialSettings.totalCycles); // サイクル数（デフォルト3サイクル）
   const [countdownMinutes, setCountdownMinutes] = useState(initialSettings.countdownMinutes); // カウントダウン時間（分）
+  const [alarmVolume, setAlarmVolume] = useState(initialSettings.alarmVolume); // アラーム音量（0〜1）
 
   // ポモドーロセクション管理
   // 各セクションは { id, workMinutes, breakMinutes } を持つ
@@ -118,9 +130,10 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
       totalCycles,
       pomodoroSections,
       countdownMinutes,
+      alarmVolume,
     };
-    localStorage.setItem("timerSettings", JSON.stringify(settings));
-  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes]);
+    localStorage.setItem('timerSettings', JSON.stringify(settings));
+  }, [displayMode, totalCycles, pomodoroSections, countdownMinutes, alarmVolume]);
 
   // 初回マウント時に保存された設定をTimerWidgetへ通知
   useEffect(() => {
@@ -147,12 +160,19 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
   };
 
   // 設定変更時にTimerWidgetへ通知
-  const notifyTimerSettings = (sections = pomodoroSections, mode = displayMode, cycles = totalCycles, cdMinutes = countdownMinutes) => {
+  const notifyTimerSettings = (
+    sections = pomodoroSections,
+    mode = displayMode,
+    cycles = totalCycles,
+    cdMinutes = countdownMinutes,
+    volume = alarmVolume
+  ) => {
     onTimerSettingsChange?.({
       displayMode: mode,
       sections: sections,
       totalCycles: parseInt(cycles) || 1,
       countdownMinutes: parseInt(cdMinutes) || 25,
+      alarmVolume: volume,
     });
   };
 
@@ -178,7 +198,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
         action();
       }
     },
-    [isTimerRunning]
+    [isTimerRunning],
   );
 
   // 警告モーダルで確認後にアクション実行
@@ -260,10 +280,17 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
   };
 
   return (
-    <div className={`${isOpen ? "w-64" : "w-20"} bg-white shadow-lg transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-50`}>
+    <div
+      className={`${isOpen ? 'w-64' : 'w-20'} bg-white shadow-lg transition-all duration-300 flex flex-col fixed h-screen left-0 top-0 z-50`}
+    >
       {/* ヘッダー */}
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-        {isOpen && <h1 className="text-2xl font-bold text-gray-800">iPPi</h1>}
+        {isOpen && (
+          <button onClick={() => handleHomeClick()} className="flex items-baseline gap-1">
+            <img src="/../../alarm-clock-microsoft.webp" alt="logo" className="w-8 h-8" />
+            <span className="text-gray-800 relative bottom-[6px]">ippi</span>
+          </button>
+        )}
         <button
           onClick={() => {
             setTooltip(null);
@@ -319,6 +346,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
           onRemoveWidget={onRemoveWidget}
           onDeleteMenuToggle={setShowDeleteMenu}
           onTooltip={handleTooltip}
+          token={token}
         />
       )}
 
@@ -335,8 +363,9 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
         onStatsClick={handleStatsClick}
         onProfileClick={handleProfileClick}
         onLogout={handleLogout}
-        onLoginClick={() => navigate("/login")}
-        onAchievementClick={handleAchievementClick}
+        onLoginClick={() => navigate('/login')}
+        onAchievementClick={() => setIsAchievementModalOpen(true)}
+        onTooltip={handleTooltip}
       />
 
       {/* タイマー設定モーダル */}
@@ -346,6 +375,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
         totalCycles={totalCycles}
         countdownMinutes={countdownMinutes}
         pomodoroSections={pomodoroSections}
+        alarmVolume={alarmVolume}
         onClose={handleCloseModal}
         onDisplayModeChange={handleDisplayModeChange}
         onTotalCyclesChange={setTotalCycles}
@@ -353,6 +383,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
         onSectionChange={handleSectionChange}
         onAddSection={handleAddSection}
         onRemoveSection={handleRemoveSection}
+        onAlarmVolumeChange={setAlarmVolume}
       />
 
       {/* 統計モーダル */}
@@ -394,7 +425,7 @@ function Sidebar({ isOpen, setIsOpen, onTimerSettingsChange, onAddWidget, onRemo
               }}
             />
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );

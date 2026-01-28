@@ -13,7 +13,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { useTimer } from "../../contexts/TimerContext";
 import { useTimerCompletionNotification } from "../../hooks/useTimerCompletionNotification";
 import { API_ENDPOINTS } from "../../config";
-import { DEFAULT_SECTIONS, getTimeFromSection, formatTime } from "./timerUtils";
+import { DEFAULT_SECTIONS, getTimeFromSection, formatTime, playAlarmSound } from "./timerUtils";
 import TimerWarningModal from "../TimerWarningModal";
 
 function TimerWidget({ settings = {} }) {
@@ -26,6 +26,7 @@ function TimerWidget({ settings = {} }) {
   const sections = settings.sections || DEFAULT_SECTIONS;
   const totalCycles = settings.totalCycles || 3; // デフォルト3サイクル
   const countdownMinutes = settings.countdownMinutes || 25; // デフォルト25分
+  const alarmVolume = settings.alarmVolume !== undefined ? settings.alarmVolume : 0.5; // アラーム音量
 
   // モードの判定
   const isIntervalMode = displayMode === "interval";
@@ -64,6 +65,12 @@ function TimerWidget({ settings = {} }) {
 
   // 現在のフェーズで経過した作業時間（秒）をトラッキング
   const currentPhaseWorkTimeRef = useRef(0);
+
+  // アラーム音量のrefを追跡
+  const alarmVolumeRef = useRef(alarmVolume);
+  useEffect(() => {
+    alarmVolumeRef.current = alarmVolume;
+  }, [alarmVolume]);
 
   // refs を最新の値で更新
   useEffect(() => {
@@ -137,7 +144,7 @@ function TimerWidget({ settings = {} }) {
         console.error("作業時間の保存エラー:", error);
       }
     },
-    [token]
+    [token],
   );
 
   /**
@@ -176,9 +183,15 @@ function TimerWidget({ settings = {} }) {
   /**
    * 次のフェーズに進む
    * @param actualElapsedTime スキップ時に渡される実際の経過時間（秒）
+   * @param playSound アラーム音を鳴らすかどうか（デフォルト: true）
    */
   const goToNextPhase = useCallback(
-    (actualElapsedTime = null) => {
+    (actualElapsedTime = null, playSound = true) => {
+      // フェーズ切り替え時にアラーム音を鳴らす
+      if (playSound) {
+        playAlarmSound(alarmVolumeRef.current);
+      }
+
       const currentSections = sectionsRef.current;
       const currentTotalCycles = totalCyclesRef.current;
       const prevIsWorkPhase = isWorkPhaseRef.current; // refから取得
@@ -306,7 +319,7 @@ function TimerWidget({ settings = {} }) {
         pausedElapsedRef.current = 0;
       }
     },
-    [saveWorkTimeToBackend, recordTimerCompletion, showTimerCompletionNotification]
+    [saveWorkTimeToBackend, recordTimerCompletion, showTimerCompletionNotification],
   );
 
   /**
@@ -344,6 +357,8 @@ function TimerWidget({ settings = {} }) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
           setIsRunning(false);
+          // アラーム音を鳴らす
+          playAlarmSound(alarmVolumeRef.current);
           // 作業時間を保存
           const workTime = Math.floor(elapsed);
           if (workTime >= 60) {
@@ -365,6 +380,9 @@ function TimerWidget({ settings = {} }) {
           hasCompletedRef.current = true;
           clearInterval(intervalRef.current);
           intervalRef.current = null;
+
+          // アラーム音を鳴らす
+          playAlarmSound(alarmVolumeRef.current);
 
           // 今回の作業時間を保存
           // タイマー完了を記録
@@ -719,17 +737,8 @@ function TimerWidget({ settings = {} }) {
       return { className: "bg-gray-100 text-gray-600", label: "⏸️ 停止中" };
     }
 
-    // インターバルモードのみ作業/休憩を区別
-    if (isIntervalMode) {
-      if (isWorkPhase) {
-        return { className: "bg-orange-100 text-orange-600", label: "🟠 作業中" };
-      } else {
-        return { className: "bg-green-100 text-green-600", label: "🟢 休憩中" };
-      }
-    }
-
-    // フローモドーロモードも作業/休憩を区別
-    if (isFlowmodoroMode) {
+    // ポモドーロモードとフローモドーロモードで作業/休憩を区別
+    if (isIntervalMode || isFlowmodoroMode) {
       if (isWorkPhase) {
         return { className: "bg-orange-100 text-orange-600", label: "🟠 作業中" };
       } else {
@@ -748,7 +757,7 @@ function TimerWidget({ settings = {} }) {
       {/* フェーズ表示 */}
       <div className="mb-2 text-center">
         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeStyle.className}`}>{badgeStyle.label}</span>
-        {/* インターバルモードのみサイクル・セクション情報を表示 */}
+        {/* ポモドーロモードのみサイクル・セクション情報を表示 */}
         {isIntervalMode && (
           <div className="text-xs text-gray-500 mt-1">
             サイクル {currentCycle} / {totalCycles} | セクション {currentSectionIndex + 1} / {sections.length}
@@ -793,31 +802,23 @@ function TimerWidget({ settings = {} }) {
         ) : (
           // 実行中・一時停止中：コントロールボタン
           <>
-            <button onClick={handleStopClick} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all" title="停止">
+            <button onClick={handleStopClick} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
               <Square size={16} />
             </button>
             <button onClick={togglePlayPause} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
               {isRunning ? <Pause size={16} /> : <Play size={16} />}
             </button>
 
-            {/* スキップボタンはインターバルモードのみ */}
+            {/* スキップボタンはポモドーロモードのみ */}
             {isIntervalMode && (
-              <button
-                onClick={handleSkip}
-                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-                title="次のフェーズへスキップ"
-              >
+              <button onClick={handleSkip} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
                 <SkipForward size={16} />
               </button>
             )}
 
             {/* フローモドーロの作業完了ボタン */}
             {isFlowmodoroMode && isWorkPhase && (
-              <button
-                onClick={handleFlowmodoroWorkComplete}
-                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-                title="作業を完了して休憩を開始"
-              >
+              <button onClick={handleFlowmodoroWorkComplete} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
                 <Check size={16} />
               </button>
             )}
