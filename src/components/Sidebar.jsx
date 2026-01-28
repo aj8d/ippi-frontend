@@ -282,7 +282,7 @@ function Sidebar({
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
         {isOpen && (
           <button onClick={() => handleHomeClick()} className="flex items-baseline gap-1">
-            <img src="/alarm-clock-microsoft.webp" alt="logo" className="w-8 h-8" />
+            <img src="/images/alarm-clock-microsoft.webp" alt="logo" className="w-8 h-8" />
             <span className="text-gray-800 relative bottom-[6px]">ippi</span>
           </button>
         )}
