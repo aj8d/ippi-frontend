@@ -1,10 +1,3 @@
-/**
- * タイマー状態の共有コンテキスト
- *
- * - タイマーの実行状態をアプリ全体で共有
- * - ページ遷移や設定変更時の警告表示に使用
- */
-
 import { createContext, useContext, useState, useCallback } from 'react';
 
 const TimerContext = createContext(null);

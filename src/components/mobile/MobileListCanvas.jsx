@@ -1,17 +1,7 @@
-/**
- * モバイル用タイマーキャンバス
- *
- * - タイマーウィジェットのみを表示
- * - モバイル環境ではタイマー機能のみ利用可能
- */
+import { memo } from 'react';
+import { Timer } from 'lucide-react';
+import TimerWidget from '../widgets/TimerWidget';
 
-import { memo } from "react";
-import { Timer } from "lucide-react";
-import TimerWidget from "../widgets/TimerWidget";
-
-/**
- * モバイル用タイマーキャンバス
- */
 function MobileListCanvas({ timerSettings }) {
   return (
     <div className="min-h-screen bg-gray-100 pb-32">

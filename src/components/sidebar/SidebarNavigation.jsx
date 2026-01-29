@@ -1,8 +1,5 @@
 import { Home, Search, MessageSquareHeart } from 'lucide-react';
 
-/**
- * ナビゲーションボタンコンポーネント
- */
 export default function SidebarNavigation({
   isOpen,
   user,

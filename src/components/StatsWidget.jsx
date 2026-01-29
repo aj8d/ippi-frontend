@@ -1,17 +1,7 @@
-/**
- * ユーザー統計表示ウィジェット
- *
- * - ユーザーの作業統計を表示
- * - ストリーク、累計時間、完了Todo数など
- */
-
 import { useState, useEffect } from 'react';
 import { Flame, Clock, CheckCircle, Calendar, Trophy, Timer } from 'lucide-react';
 import { API_ENDPOINTS } from '../config';
 
-/**
- * 秒数を読みやすい形式に変換
- */
 function formatDuration(seconds) {
   if (!seconds || seconds === 0) return '0分';
 
@@ -24,13 +14,6 @@ function formatDuration(seconds) {
   return `${minutes}分`;
 }
 
-/**
- * ユーザー統計ウィジェット
- * @param {Object} props
- * @param {string} props.customId - ユーザーのcustomId
- * @param {string} props.token - 認証トークン（オプション）
- * @param {boolean} props.compact - コンパクト表示モード
- */
 export default function StatsWidget({ customId, token, compact = false }) {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
