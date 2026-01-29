@@ -11,6 +11,10 @@
   
 ippi:いっぴ、一臂  
 意:片肘、片腕、少しの助力  
+<br>
+ログイン機能を試すためにテストアカウントを用意しています。
+mail: test@example.com
+password: password123
 <br><br>
 
 ## 機能
