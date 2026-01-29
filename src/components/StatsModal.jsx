@@ -1,23 +1,9 @@
-/**
- * 統計情報モーダルコンポーネント
- *
- * - 作業時間の統計をグラフで表示
- * - 日別、週別、月別の作業時間を可視化
- * - 総作業時間などのサマリーを表示
- */
-
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, BarChart3, Clock, Calendar, TrendingUp } from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
 
-/**
- * StatsModal - 統計表示モーダル
- *
- * @param {boolean} isOpen - モーダルの表示状態
- * @param {function} onClose - モーダルを閉じる関数
- */
 function StatsModal({ isOpen, onClose }) {
   const { token } = useAuth();
   const [stats, setStats] = useState([]);
@@ -273,7 +259,7 @@ function StatsModal({ isOpen, onClose }) {
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 

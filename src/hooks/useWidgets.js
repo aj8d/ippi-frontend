@@ -1,19 +1,7 @@
-/**
- * ウィジェット管理カスタムフック
- *
- * - ログイン時: バックエンドからウィジェットを読み込む
- * - 非ログイン時: ローカルストレージからウィジェットを読み込む
- * - ウィジェットの変更を自動保存する（デバウンス付き）
- * - ウィジェットの追加・削除・更新を管理
- */
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
 
-/**
- * デバウンス用タイマーID
- */
 let saveTimeoutId = null;
 
 const LOCAL_STORAGE_KEY = 'guestWidgets';
@@ -29,9 +17,6 @@ export function useWidgets() {
   // 初回読み込みが完了したかどうか
   const initialLoadDone = useRef(false);
 
-  /**
-   * ローカルストレージからウィジェットを読み込む（非ログイン時）
-   */
   const loadFromLocalStorage = useCallback(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -50,9 +35,6 @@ export function useWidgets() {
     }
   }, []);
 
-  /**
-   * バックエンドからウィジェットを読み込む（ログイン時）
-   */
   const loadWidgets = useCallback(async () => {
     if (!token) {
       // 非ログイン時はローカルストレージから読み込む
@@ -84,13 +66,6 @@ export function useWidgets() {
     }
   }, [token, loadFromLocalStorage]);
 
-  /**
-   * ウィジェットを保存
-   * ログイン時: バックエンドに保存
-   * 非ログイン時: ローカルストレージに保存
-   *
-   * デバウンス付き: 1秒間変更がなければ保存
-   */
   const saveWidgets = useCallback(
     async (widgetsToSave) => {
       if (!initialLoadDone.current) return;
@@ -133,18 +108,12 @@ export function useWidgets() {
         }
       }, 1000);
     },
-    [token]
+    [token],
   );
 
-  /**
-   * ウィジェットを更新して自動保存
-   *
-   * この関数を setWidgets の代わりに使う
-   */
   const updateWidgets = useCallback(
     (updater) => {
       setWidgets((prev) => {
-        // updater が関数なら実行、そうでなければそのまま使う
         const newWidgets = typeof updater === 'function' ? updater(prev) : updater;
 
         // 自動保存
@@ -153,12 +122,9 @@ export function useWidgets() {
         return newWidgets;
       });
     },
-    [saveWidgets]
+    [saveWidgets],
   );
 
-  /**
-   * 初回マウント時にウィジェットを読み込む
-   */
   useEffect(() => {
     loadWidgets();
   }, [loadWidgets]);

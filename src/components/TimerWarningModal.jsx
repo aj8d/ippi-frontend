@@ -1,18 +1,9 @@
-/**
- * タイマー動作中の警告モーダル
- *
- * - タイマー動作中に操作を行おうとしたときに警告を表示
- * - 「続行」を選択するとタイマーを停止して操作を実行
- * - 「キャンセル」を選択すると操作をキャンセル
- */
-
 import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 
 function TimerWarningModal({ isOpen, onClose, onConfirm, actionType = 'navigate' }) {
   if (!isOpen) return null;
 
-  // 操作タイプに応じたメッセージを取得
   const getMessage = () => {
     switch (actionType) {
       case 'navigate':

@@ -1,20 +1,11 @@
-/**
- * ポモドーロタイマーウィジェット
- *
- * - 円形プログレスバーでタイマーを表示
- * - カウントダウン/進行度の切り替え対応
- * - ポモドーロサイクル（作業→休憩→作業...）の繰り返し
- * - 複数セクションのサイクル対応
- */
-
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Play, Pause, Square, SkipForward, Check } from "lucide-react";
-import { useAuth } from "../../auth/AuthContext";
-import { useTimer } from "../../contexts/TimerContext";
-import { useTimerCompletionNotification } from "../../hooks/useTimerCompletionNotification";
-import { API_ENDPOINTS } from "../../config";
-import { DEFAULT_SECTIONS, getTimeFromSection, formatTime, playAlarmSound } from "./timerUtils";
-import TimerWarningModal from "../TimerWarningModal";
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Play, Pause, Square, SkipForward, Check } from 'lucide-react';
+import { useAuth } from '../../auth/AuthContext';
+import { useTimer } from '../../contexts/TimerContext';
+import { useTimerCompletionNotification } from '../../hooks/useTimerCompletionNotification';
+import { API_ENDPOINTS } from '../../config';
+import { DEFAULT_SECTIONS, getTimeFromSection, formatTime, playAlarmSound } from './timerUtils';
+import TimerWarningModal from '../TimerWarningModal';
 
 function TimerWidget({ settings = {} }) {
   const { token } = useAuth();
@@ -22,17 +13,17 @@ function TimerWidget({ settings = {} }) {
   const { showTimerCompletionNotification } = useTimerCompletionNotification();
 
   // props から設定を取得
-  const displayMode = settings.displayMode || "interval";
+  const displayMode = settings.displayMode || 'interval';
   const sections = settings.sections || DEFAULT_SECTIONS;
   const totalCycles = settings.totalCycles || 3; // デフォルト3サイクル
   const countdownMinutes = settings.countdownMinutes || 25; // デフォルト25分
   const alarmVolume = settings.alarmVolume !== undefined ? settings.alarmVolume : 0.5; // アラーム音量
 
   // モードの判定
-  const isIntervalMode = displayMode === "interval";
-  const isCountupMode = displayMode === "countup";
-  const isCountdownMode = displayMode === "countdown";
-  const isFlowmodoroMode = displayMode === "flowmodoro";
+  const isIntervalMode = displayMode === 'interval';
+  const isCountupMode = displayMode === 'countup';
+  const isCountdownMode = displayMode === 'countdown';
+  const isFlowmodoroMode = displayMode === 'flowmodoro';
 
   // タイマーの状態管理
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0); // 現在のセクション
@@ -121,12 +112,12 @@ function TimerWidget({ settings = {} }) {
 
       try {
         // 今日の日付を取得（YYYY-MM-DD形式）
-        const today = new Date().toISOString().split("T")[0];
+        const today = new Date().toISOString().split('T')[0];
 
         const response = await fetch(API_ENDPOINTS.TEXT_DATA.WORK_SESSION, {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
@@ -136,12 +127,12 @@ function TimerWidget({ settings = {} }) {
         });
 
         if (!response.ok) {
-          throw new Error("作業時間の保存に失敗しました");
+          throw new Error('作業時間の保存に失敗しました');
         }
 
         console.log(`✅ 作業時間を保存: ${workMinutes}分 (${truncatedSeconds}秒, ${sessionsCount}セッション)`);
       } catch (error) {
-        console.error("作業時間の保存エラー:", error);
+        console.error('作業時間の保存エラー:', error);
       }
     },
     [token],
@@ -156,9 +147,9 @@ function TimerWidget({ settings = {} }) {
 
     try {
       const response = await fetch(API_ENDPOINTS.TEXT_DATA.TIMER_COMPLETION, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
       });
@@ -167,10 +158,10 @@ function TimerWidget({ settings = {} }) {
         const data = await response.json();
         console.log(`🔥 タイマー完了を記録: 今日の完了数 ${data.dailyTimerCompletions}`);
         // StreakWidgetに更新を通知
-        window.dispatchEvent(new CustomEvent("timerCompleted"));
+        window.dispatchEvent(new CustomEvent('timerCompleted'));
       }
     } catch (error) {
-      console.error("タイマー完了の記録エラー:", error);
+      console.error('タイマー完了の記録エラー:', error);
     }
   }, [token]);
 
@@ -603,7 +594,9 @@ function TimerWidget({ settings = {} }) {
 
     // 1分以上の作業時間があれば保存し、完了通知を表示
     if (finalWorkTime >= 60) {
-      const sessionsCount = isIntervalMode ? completedWorkSessions + (elapsedTime > 0 && elapsedTime < totalTime ? 1 : 0) : 1;
+      const sessionsCount = isIntervalMode
+        ? completedWorkSessions + (elapsedTime > 0 && elapsedTime < totalTime ? 1 : 0)
+        : 1;
       saveWorkTimeToBackend(finalWorkTime, sessionsCount);
       // 1分以上の作業記録がある場合は完了通知を表示
       showTimerCompletionNotification(finalWorkTime);
@@ -631,7 +624,15 @@ function TimerWidget({ settings = {} }) {
     setFlowmodoroWorkTime(0);
     // 停止確認モーダルを閉じる
     setShowStopConfirmModal(false);
-  }, [isIntervalMode, isWorkPhase, elapsedTime, totalTime, completedWorkSessions, saveWorkTimeToBackend, showTimerCompletionNotification]);
+  }, [
+    isIntervalMode,
+    isWorkPhase,
+    elapsedTime,
+    totalTime,
+    completedWorkSessions,
+    saveWorkTimeToBackend,
+    showTimerCompletionNotification,
+  ]);
 
   // 停止関数をコンテキストに登録
   useEffect(() => {
@@ -689,40 +690,40 @@ function TimerWidget({ settings = {} }) {
     if (!hasStarted || !isRunning) {
       // 停止中（未開始または一時停止）
       return {
-        progress: "#9ca3af", // gray-400
-        bg: "rgba(156, 163, 175, 0.1)",
+        progress: '#9ca3af', // gray-400
+        bg: 'rgba(156, 163, 175, 0.1)',
       };
     } else if (isIntervalMode) {
       // インターバルモードのみ作業/休憩で色分け
       if (isWorkPhase) {
         return {
-          progress: "#f97316", // orange-500
-          bg: "rgba(249, 115, 22, 0.1)",
+          progress: '#f97316', // orange-500
+          bg: 'rgba(249, 115, 22, 0.1)',
         };
       } else {
         return {
-          progress: "#22c55e", // green-500
-          bg: "rgba(34, 197, 94, 0.1)",
+          progress: '#22c55e', // green-500
+          bg: 'rgba(34, 197, 94, 0.1)',
         };
       }
     } else if (isFlowmodoroMode) {
       // フローモドーロモードも作業/休憩で色分け
       if (isWorkPhase) {
         return {
-          progress: "#f97316", // orange-500
-          bg: "rgba(249, 115, 22, 0.1)",
+          progress: '#f97316', // orange-500
+          bg: 'rgba(249, 115, 22, 0.1)',
         };
       } else {
         return {
-          progress: "#22c55e", // green-500
-          bg: "rgba(34, 197, 94, 0.1)",
+          progress: '#22c55e', // green-500
+          bg: 'rgba(34, 197, 94, 0.1)',
         };
       }
     } else {
       // その他のモード（カウント系）は常にオレンジ
       return {
-        progress: "#f97316", // orange-500
-        bg: "rgba(249, 115, 22, 0.1)",
+        progress: '#f97316', // orange-500
+        bg: 'rgba(249, 115, 22, 0.1)',
       };
     }
   };
@@ -734,20 +735,20 @@ function TimerWidget({ settings = {} }) {
   // フェーズバッジのスタイル
   const getBadgeStyle = () => {
     if (!hasStarted || !isRunning) {
-      return { className: "bg-gray-100 text-gray-600", label: "⏸️ 停止中" };
+      return { className: 'bg-gray-100 text-gray-600', label: '⏸️ 停止中' };
     }
 
     // ポモドーロモードとフローモドーロモードで作業/休憩を区別
     if (isIntervalMode || isFlowmodoroMode) {
       if (isWorkPhase) {
-        return { className: "bg-orange-100 text-orange-600", label: "🟠 作業中" };
+        return { className: 'bg-orange-100 text-orange-600', label: '🟠 作業中' };
       } else {
-        return { className: "bg-green-100 text-green-600", label: "🟢 休憩中" };
+        return { className: 'bg-green-100 text-green-600', label: '🟢 休憩中' };
       }
     }
 
     // その他のモードは常にオレンジ（計測中）
-    return { className: "bg-orange-100 text-orange-600", label: "🟠 計測中" };
+    return { className: 'bg-orange-100 text-orange-600', label: '🟠 計測中' };
   };
 
   const badgeStyle = getBadgeStyle();
@@ -756,7 +757,9 @@ function TimerWidget({ settings = {} }) {
     <div className="flex flex-col items-center justify-center h-full p-4 min-h-[200px] @container">
       {/* フェーズ表示 */}
       <div className="mb-2 text-center">
-        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeStyle.className}`}>{badgeStyle.label}</span>
+        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeStyle.className}`}>
+          {badgeStyle.label}
+        </span>
         {/* ポモドーロモードのみサイクル・セクション情報を表示 */}
         {isIntervalMode && (
           <div className="text-xs text-gray-500 mt-1">
@@ -786,7 +789,10 @@ function TimerWidget({ settings = {} }) {
 
         {/* 中央のタイム表示 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center px-2">
-          <div className="font-mono font-bold leading-none @[150px]:text-2xl @[200px]:text-3xl @[300px]:text-5xl @[400px]:text-6xl @[500px]:text-7xl text-xl" style={{ color: progressColor }}>
+          <div
+            className="font-mono font-bold leading-none @[150px]:text-2xl @[200px]:text-3xl @[300px]:text-5xl @[400px]:text-6xl @[500px]:text-7xl text-xl"
+            style={{ color: progressColor }}
+          >
             {getDisplayValue()}
           </div>
         </div>
@@ -796,29 +802,44 @@ function TimerWidget({ settings = {} }) {
       <div className="flex gap-2 justify-center flex-shrink-0">
         {!hasStarted ? (
           // 開始前：スタートボタン
-          <button onClick={handleStart} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
+          <button
+            onClick={handleStart}
+            className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
+          >
             <Play size={16} />
           </button>
         ) : (
           // 実行中・一時停止中：コントロールボタン
           <>
-            <button onClick={handleStopClick} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
+            <button
+              onClick={handleStopClick}
+              className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
+            >
               <Square size={16} />
             </button>
-            <button onClick={togglePlayPause} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
+            <button
+              onClick={togglePlayPause}
+              className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
+            >
               {isRunning ? <Pause size={16} /> : <Play size={16} />}
             </button>
 
             {/* スキップボタンはポモドーロモードのみ */}
             {isIntervalMode && (
-              <button onClick={handleSkip} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
+              <button
+                onClick={handleSkip}
+                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
+              >
                 <SkipForward size={16} />
               </button>
             )}
 
             {/* フローモドーロの作業完了ボタン */}
             {isFlowmodoroMode && isWorkPhase && (
-              <button onClick={handleFlowmodoroWorkComplete} className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all">
+              <button
+                onClick={handleFlowmodoroWorkComplete}
+                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
+              >
                 <Check size={16} />
               </button>
             )}
@@ -827,7 +848,12 @@ function TimerWidget({ settings = {} }) {
       </div>
 
       {/* 停止確認モーダル */}
-      <TimerWarningModal isOpen={showStopConfirmModal} onClose={() => setShowStopConfirmModal(false)} onConfirm={handleStopConfirmed} actionType="stop" />
+      <TimerWarningModal
+        isOpen={showStopConfirmModal}
+        onClose={() => setShowStopConfirmModal(false)}
+        onConfirm={handleStopConfirmed}
+        actionType="stop"
+      />
     </div>
   );
 }

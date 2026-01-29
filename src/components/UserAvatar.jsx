@@ -1,9 +1,3 @@
-/**
- * ユーザーアバターコンポーネント
- *
- * ストリークが1以上の場合、右下に炎マークを表示します。
- */
-
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Flame } from 'lucide-react';
@@ -164,7 +158,7 @@ function UserAvatar({
               }}
             />
           </div>,
-          document.body
+          document.body,
         )}
     </div>
   );

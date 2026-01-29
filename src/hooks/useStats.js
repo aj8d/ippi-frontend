@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { API_ENDPOINTS } from '../config';
 
-/**
- * ユーザー統計を管理するカスタムフック
- */
 export function useStats(userCustomId) {
   const [stats, setStats] = useState(null);
 

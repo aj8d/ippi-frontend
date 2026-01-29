@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
 
-/**
- * プロフィールページ用のフォロー機能フック
- */
 export function useProfileFollow(profileUserId, token) {
   const navigate = useNavigate();
   const [followStats, setFollowStats] = useState({ followersCount: 0, followingCount: 0, isFollowing: false });

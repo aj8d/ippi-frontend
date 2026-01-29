@@ -10,9 +10,6 @@ export const WIDGET_TYPES = {
   IMAGE: 'image',
 };
 
-/**
- * 秒数を読みやすい形式に変換
- */
 export function formatDuration(seconds) {
   if (!seconds || seconds === 0) return '0分';
 

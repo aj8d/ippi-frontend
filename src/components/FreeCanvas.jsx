@@ -1,7 +1,3 @@
-/**
- * 自由配置キャンバスコンポーネント
- */
-
 import { memo, useCallback } from 'react';
 import { Rnd } from 'react-rnd';
 import { X } from 'lucide-react';
@@ -11,20 +7,7 @@ import StreakWidget from './widgets/StreakWidget';
 import StickyNote from './widgets/StickyNote';
 import ImageWidget from './widgets/ImageWidget';
 
-/**
- * メインキャンバスコンポーネント
- *
- * @param {Array} widgets - ウィジェットの配列 [{id, type, x, y, width, height, data}, ...]
- * @param {Function} setWidgets - ウィジェット配列を更新する関数
- * @param {Object} timerSettings - タイマーの設定（displayMode, inputMinutes, inputSeconds）
- */
 function FreeCanvas({ widgets, setWidgets, timerSettings }) {
-  /**
-   * ウィジェットの位置を更新
-   *
-   * ドラッグが終わった時に呼ばれる
-   * d.x, d.y = ドラッグ後の新しい座標
-   */
   const handleDragStop = useCallback(
     (id, d) => {
       setWidgets((prev) =>
@@ -32,20 +15,13 @@ function FreeCanvas({ widgets, setWidgets, timerSettings }) {
           (widget) =>
             widget.id === id
               ? { ...widget, x: d.x, y: d.y } // 該当ウィジェットの座標を更新
-              : widget // その他はそのまま
-        )
+              : widget, // その他はそのまま
+        ),
       );
     },
-    [setWidgets]
+    [setWidgets],
   );
 
-  /**
-   * ウィジェットのサイズを更新する関数
-   *
-   * リサイズが終わった時に呼ばれる
-   * ref.offsetWidth, ref.offsetHeight = 新しいサイズ
-   * position.x, position.y = リサイズ後の位置
-   */
   const handleResizeStop = useCallback(
     (id, ref, position) => {
       setWidgets((prev) =>
@@ -58,46 +34,29 @@ function FreeCanvas({ widgets, setWidgets, timerSettings }) {
                 x: position.x,
                 y: position.y,
               }
-            : widget
-        )
+            : widget,
+        ),
       );
     },
-    [setWidgets]
+    [setWidgets],
   );
 
-  /**
-   * ウィジェットを削除する関数
-   *
-   * ×ボタンをクリックした時に呼ばれる
-   * filter で該当IDを除外した新しい配列を作成
-   */
   const handleDelete = useCallback(
     (id) => {
       setWidgets((prev) => prev.filter((widget) => widget.id !== id));
     },
-    [setWidgets]
+    [setWidgets],
   );
 
-  /**
-   * ウィジェットのデータを更新する関数
-   *
-   * 付箋のテキストや色を変更した時などに使う
-   */
   const handleUpdateData = useCallback(
     (id, newData) => {
       setWidgets((prev) =>
-        prev.map((widget) => (widget.id === id ? { ...widget, data: { ...widget.data, ...newData } } : widget))
+        prev.map((widget) => (widget.id === id ? { ...widget, data: { ...widget.data, ...newData } } : widget)),
       );
     },
-    [setWidgets]
+    [setWidgets],
   );
 
-  /**
-   * ウィジェットを前面に移動する関数
-   *
-   * 配列の順序を変えるのではなく、zIndexを更新する方法に変更
-   * これによりドラッグ中の再レンダリング問題を回避
-   */
   const bringToFront = useCallback(
     (id) => {
       setWidgets((prev) => {
@@ -107,14 +66,9 @@ function FreeCanvas({ widgets, setWidgets, timerSettings }) {
         return prev.map((widget) => (widget.id === id ? { ...widget, zIndex: maxZ + 1 } : widget));
       });
     },
-    [setWidgets]
+    [setWidgets],
   );
 
-  /**
-   * ウィジェットの種類に応じてコンポーネントを返す関数
-   *
-   * type によって表示するコンポーネントを切り替える
-   */
   const renderWidget = (widget) => {
     switch (widget.type) {
       case 'timer':
@@ -133,9 +87,6 @@ function FreeCanvas({ widgets, setWidgets, timerSettings }) {
   };
 
   return (
-    // キャンバス全体のコンテナ
-    // relative: 子要素の absolute 配置の基準になる
-    // overflow-auto: コンテンツがはみ出たらスクロール
     <div className="relative w-full h-screen bg-gray-100 overflow-auto">
       {/* ウィジェットがない時のガイド表示 */}
       {widgets.length === 0 && (
@@ -149,16 +100,6 @@ function FreeCanvas({ widgets, setWidgets, timerSettings }) {
 
       {/* ウィジェットをループで表示 */}
       {widgets.map((widget) => (
-        /**
-         * Rnd コンポーネント - react-rnd のメイン機能
-         *
-         * position: 現在の位置 {x, y}
-         * size: 現在のサイズ {width, height}
-         * onDragStop: ドラッグ終了時のコールバック
-         * onResizeStop: リサイズ終了時のコールバック
-         * bounds: 移動範囲の制限（"parent" = 親要素内）
-         * minWidth/minHeight: 最小サイズ
-         */
         <Rnd
           key={widget.id}
           position={{ x: widget.x, y: widget.y }}

@@ -1,9 +1,6 @@
 import { Settings2, Trash2 } from 'lucide-react';
 import { UNIQUE_WIDGETS, MULTIPLE_WIDGETS } from './SidebarWidgets';
 
-/**
- * ウィジェットセクションコンポーネント
- */
 export default function WidgetSection({
   isOpen,
   isHomePage,
@@ -195,7 +192,7 @@ export default function WidgetSection({
         <div className="w-8 border-t border-gray-200 my-1" />
         {/* 複数追加可能なウィジェット */}
         {MULTIPLE_WIDGETS.filter((widget) => {
-          // 画像ウィジェットはログイン時のみ表示
+          // 画像ウィジェットはログイン時のみ
           if (widget.id === 'image' && !token) return false;
           return true;
         }).map((widget) => (

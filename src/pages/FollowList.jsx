@@ -1,11 +1,3 @@
-/**
- * フォロワー/フォロー中一覧ページ
- *
- * - フォロワー一覧を表示
- * - フォロー中一覧を表示
- * - フォロー/アンフォロー機能
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -30,10 +22,8 @@ function FollowList({ type }) {
   const [profileUserId, setProfileUserId] = useState(null);
   const [profileUserName, setProfileUserName] = useState('');
 
-  // カスタムフックでフォロー機能を管理
   const { fetchFollowingIds, isFollowing, currentUserId } = useFollow();
 
-  // プロフィールユーザーのIDを取得
   useEffect(() => {
     const fetchProfileUser = async () => {
       try {
@@ -53,14 +43,12 @@ function FollowList({ type }) {
     }
   }, [id]);
 
-  // 自分がフォローしているユーザーIDを取得
   useEffect(() => {
     if (token) {
       fetchFollowingIds();
     }
   }, [token, fetchFollowingIds]);
 
-  // フォロワー/フォロー中一覧を取得
   const fetchUsers = useCallback(async () => {
     if (!profileUserId) return;
 
@@ -79,7 +67,6 @@ function FollowList({ type }) {
 
       if (response.ok) {
         const data = await response.json();
-        // APIレスポンスをUserCard用に変換
         const formattedUsers = data.map((user) => ({
           userId: user.id,
           customId: user.customId,
@@ -100,12 +87,9 @@ function FollowList({ type }) {
     fetchUsers();
   }, [fetchUsers]);
 
-  // フォロートグルコールバック
   const handleFollowToggle = async (userId, isNowFollowing) => {
     console.log(`User ${userId} is now ${isNowFollowing ? 'followed' : 'unfollowed'}`);
-    // フォロー中リストを再取得して最新状態に同期
     await fetchFollowingIds();
-    // ユーザー一覧も再取得
     await fetchUsers();
   };
 

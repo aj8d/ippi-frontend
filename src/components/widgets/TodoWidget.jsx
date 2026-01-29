@@ -1,11 +1,3 @@
-/**
- * キャンバス用TODOウィジェット
- *
- * - タスクの追加・完了・削除
- * - ログイン時: バックエンドと同期
- * - 非ログイン時: ローカルストレージで動作
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
@@ -82,16 +74,10 @@ function TodoWidget() {
     }
   }, [token, loadFromLocalStorage]);
 
-  /**
-   * コンポーネントマウント時にTODOを取得
-   */
   useEffect(() => {
     fetchTodos();
   }, [fetchTodos]);
 
-  /**
-   * TODOを追加（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
-   */
   const addTodo = async () => {
     if (!inputValue.trim()) return;
 
@@ -138,9 +124,6 @@ function TodoWidget() {
     }
   };
 
-  /**
-   * TODOを削除（完了）（ログイン時: バックエンド、非ログイン時: ローカルストレージ）
-   */
   const completeTodo = async (id) => {
     if (!token) {
       // 非ログイン時: ローカルストレージから削除
@@ -171,9 +154,6 @@ function TodoWidget() {
     }
   };
 
-  /**
-   * Enterキーで追加
-   */
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       addTodo();

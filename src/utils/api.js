@@ -63,7 +63,7 @@ export async function apiPost(endpoint, data, token = null) {
       method: 'POST',
       body: JSON.stringify(data),
     },
-    token
+    token,
   );
 
   if (!response.ok) {
@@ -87,7 +87,7 @@ export async function apiPut(endpoint, data, token = null) {
       method: 'PUT',
       body: JSON.stringify(data),
     },
-    token
+    token,
   );
 
   if (!response.ok) {
@@ -127,7 +127,6 @@ export async function apiUpload(endpoint, formData, token) {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
-      // Content-Typeは設定しない（ブラウザが自動設定）
     },
     body: formData,
   });

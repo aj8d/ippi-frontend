@@ -1,27 +1,9 @@
-/**
- * ユーザーカードコンポーネント
- *
- * - ユーザー情報（アバター、名前、ID、説明）を表示
- * - フォローボタンのオプション表示
- * - 検索結果、フォロワー一覧など複数の場所で再利用
- */
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, UserMinus } from 'lucide-react';
 import { API_ENDPOINTS } from '../config';
 import UserAvatar from './UserAvatar';
 
-/**
- * ユーザーカードコンポーネント
- * @param {Object} props
- * @param {Object} props.user - ユーザー情報 { userId, customId, userName, profileImageUrl, description }
- * @param {boolean} props.showFollowButton - フォローボタンを表示するか
- * @param {boolean} props.isFollowing - フォロー中かどうか
- * @param {Function} props.onFollowToggle - フォロートグル時のコールバック
- * @param {boolean} props.isCurrentUser - 自分自身かどうか
- * @param {string} props.token - 認証トークン
- */
 export default function UserCard({
   user,
   showFollowButton = false,

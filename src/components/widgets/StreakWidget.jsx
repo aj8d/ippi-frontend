@@ -1,10 +1,3 @@
-/**
- * キャンバス用ストリークウィジェット
- *
- * - 今日のタイマー完了回数を表示
- * - ポモドーロ/フローモドーロの作業セッション完了時にカウント
- */
-
 import { useState, useEffect, useRef } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';

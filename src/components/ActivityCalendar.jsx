@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 export default function ActivityCalendar({ stats }) {
-  // すべてのHooksを最初に宣言
+  // Hooks
   const [tooltip, setTooltip] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 

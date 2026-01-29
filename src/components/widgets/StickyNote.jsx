@@ -1,11 +1,3 @@
-/**
- * 付箋ウィジェット
- *
- * - テキストを自由に入力できる付箋
- * - 背景色を変更可能（カラーパレット）
- * - 絵文字/アイコンを追加可能
- */
-
 import { useState } from 'react';
 
 // 使用可能な背景色
@@ -21,12 +13,6 @@ const COLORS = [
 // 使用可能な絵文字
 const EMOJIS = ['💡', '⭐', '❤️', '🔥', '✨', '📌', '🎯', '💪', '🚀', '✅'];
 
-/**
- * 付箋コンポーネント
- *
- * @param {Object} data - 付箋のデータ { text, color, emoji }
- * @param {Function} onUpdate - データ更新時のコールバック
- */
 function StickyNote({ data = {}, onUpdate }) {
   // デフォルト値を設定
   const { text = '', color = 'yellow', emoji = '' } = data;
@@ -35,32 +21,17 @@ function StickyNote({ data = {}, onUpdate }) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  /**
-   * 現在の色設定を取得
-   *
-   * find でCOLORS配列から該当する色を探す
-   * || で見つからない場合はデフォルト（黄色）
-   */
   const currentColor = COLORS.find((c) => c.name === color) || COLORS[0];
 
-  /**
-   * テキスト変更ハンドラー
-   */
   const handleTextChange = (e) => {
     onUpdate?.({ text: e.target.value });
   };
 
-  /**
-   * 色変更ハンドラー
-   */
   const handleColorChange = (colorName) => {
     onUpdate?.({ color: colorName });
     setShowColorPicker(false);
   };
 
-  /**
-   * 絵文字変更ハンドラー
-   */
   const handleEmojiChange = (selectedEmoji) => {
     // 同じ絵文字をクリックしたら解除
     onUpdate?.({ emoji: emoji === selectedEmoji ? '' : selectedEmoji });
