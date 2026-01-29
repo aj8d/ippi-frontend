@@ -6,13 +6,13 @@
  * - フッター部分はアコーディオン型メニュー
  */
 
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Search, Rss, User, Menu, X, Settings, LogOut, LogIn, BarChart3 } from "lucide-react";
-import { useAuth } from "../../auth/AuthContext";
-import { useTimer } from "../../contexts/TimerContext";
-import StatsModal from "../StatsModal";
-import TimerWarningModal from "../TimerWarningModal";
+import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Home, Search, Rss, User, Menu, X, Settings, LogOut, LogIn, BarChart3 } from 'lucide-react';
+import { useAuth } from '../../auth/AuthContext';
+import { useTimer } from '../../contexts/TimerContext';
+import StatsModal from '../StatsModal';
+import TimerWarningModal from '../TimerWarningModal';
 
 export default function MobileBottomNav() {
   const navigate = useNavigate();
@@ -24,30 +24,30 @@ export default function MobileBottomNav() {
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [warningModalOpen, setWarningModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
-  const [warningActionType, setWarningActionType] = useState("navigate");
+  const [warningActionType, setWarningActionType] = useState('navigate');
 
   // 現在のページを判定
-  const isHomePage = location.pathname === "/" || location.pathname === "/home";
-  const isSearchPage = location.pathname === "/search";
-  const isFeedPage = location.pathname === "/feed";
+  const isHomePage = location.pathname === '/' || location.pathname === '/home';
+  const isSearchPage = location.pathname === '/search';
+  const isFeedPage = location.pathname === '/feed';
 
   // ナビゲーションハンドラー（タイマー実行中の警告対応）
-  const handleNavigation = (path, actionType = "navigate") => {
+  const handleNavigation = (path, actionType = 'navigate') => {
     if (isTimerRunning && location.pathname !== path) {
       setWarningActionType(actionType);
       setPendingAction(() => () => {
-        if (actionType === "logout") {
+        if (actionType === 'logout') {
           logout();
-          navigate("/login");
+          navigate('/login');
         } else {
           navigate(path);
         }
       });
       setWarningModalOpen(true);
     } else {
-      if (actionType === "logout") {
+      if (actionType === 'logout') {
         logout();
-        navigate("/login");
+        navigate('/login');
       } else {
         navigate(path);
       }
@@ -65,9 +65,9 @@ export default function MobileBottomNav() {
   };
 
   const navItems = [
-    { icon: Home, label: "ホーム", path: "/", active: isHomePage },
-    { icon: Search, label: "検索", path: "/search", active: isSearchPage },
-    { icon: Rss, label: "フィード", path: "/feed", active: isFeedPage, requireAuth: true },
+    { icon: Home, label: 'ホーム', path: '/', active: isHomePage },
+    { icon: Search, label: '検索', path: '/search', active: isSearchPage },
+    { icon: Rss, label: 'フィード', path: '/feed', active: isFeedPage, requireAuth: true },
   ];
 
   return (
@@ -83,7 +83,7 @@ export default function MobileBottomNav() {
               <button
                 key={item.path}
                 onClick={() => handleNavigation(item.path)}
-                className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${item.active ? "text-orange-500" : "text-gray-500 hover:text-gray-700"}`}
+                className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${item.active ? 'text-orange-500' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 <Icon className="w-6 h-6" />
                 <span className="text-xs mt-1">{item.label}</span>
@@ -94,7 +94,7 @@ export default function MobileBottomNav() {
           {/* メニューボタン */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${isMenuOpen ? "text-orange-500" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${isMenuOpen ? 'text-orange-500' : 'text-gray-500 hover:text-gray-700'}`}
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             <span className="text-xs mt-1">メニュー</span>
@@ -135,13 +135,19 @@ export default function MobileBottomNav() {
                   </button>
 
                   {/* ログアウト */}
-                  <button onClick={() => handleNavigation("/login", "logout")} className="w-full flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <button
+                    onClick={() => handleNavigation('/login', 'logout')}
+                    className="w-full flex items-center gap-4 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
                     <LogOut className="w-5 h-5" />
                     <span className="text-sm font-medium">ログアウト</span>
                   </button>
                 </>
               ) : (
-                <button onClick={() => handleNavigation("/login")} className="w-full flex items-center gap-4 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                <button
+                  onClick={() => handleNavigation('/login')}
+                  className="w-full flex items-center gap-4 px-4 py-3 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                >
                   <LogIn className="w-5 h-5" />
                   <span className="text-sm font-medium">ログイン</span>
                 </button>

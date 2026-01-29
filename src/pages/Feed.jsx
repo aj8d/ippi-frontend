@@ -71,7 +71,7 @@ function Feed() {
         setIsLoadingMore(false);
       }
     },
-    [token]
+    [token],
   );
 
   // 初回読み込み
@@ -116,8 +116,8 @@ function Feed() {
                   isLiked: !isLiked,
                   likeCount: isLiked ? (item.likeCount || 1) - 1 : (item.likeCount || 0) + 1,
                 }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } catch (error) {
@@ -153,8 +153,8 @@ function Feed() {
                   comments: [...(item.comments || []), newComment],
                   commentCount: (item.commentCount || 0) + 1,
                 }
-              : item
-          )
+              : item,
+          ),
         );
         // 入力欄をクリア
         setCommentTexts((prev) => ({ ...prev, [feedId]: '' }));
@@ -188,8 +188,8 @@ function Feed() {
                   comments: (item.comments || []).filter((c) => c.id !== commentId),
                   commentCount: Math.max((item.commentCount || 1) - 1, 0),
                 }
-              : item
-          )
+              : item,
+          ),
         );
       }
     } catch (error) {

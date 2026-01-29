@@ -17,38 +17,38 @@ function App() {
       <AuthProvider>
         <TimerProvider>
           <TimerCompletionNotificationProvider>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/search" element={<Search />} />
-                <Route
-                  path="/feed"
-                  element={
-                    <ProtectedRoute>
-                      <Feed />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/:id/followers"
-                  element={
-                    <ProtectedRoute>
-                      <FollowList type="followers" />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/:id/following"
-                  element={
-                    <ProtectedRoute>
-                      <FollowList type="following" />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/:id" element={<Profile />} />
-                <Route path="/" element={<Home />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/search" element={<Search />} />
+              <Route
+                path="/feed"
+                element={
+                  <ProtectedRoute>
+                    <Feed />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/:id/followers"
+                element={
+                  <ProtectedRoute>
+                    <FollowList type="followers" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/:id/following"
+                element={
+                  <ProtectedRoute>
+                    <FollowList type="following" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/:id" element={<Profile />} />
+              <Route path="/" element={<Home />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </TimerCompletionNotificationProvider>
         </TimerProvider>
       </AuthProvider>
