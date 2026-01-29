@@ -1,8 +1,5 @@
 import { Square, PanelLeft, PanelRight, Columns3 } from 'lucide-react';
 
-/**
- * プロフィールページ用のカスタム要素追加ボタン
- */
 export default function CustomElementButtons({ isOpen, addRowFunction, onTooltip }) {
   if (!addRowFunction) return null;
 

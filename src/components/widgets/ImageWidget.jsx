@@ -1,16 +1,3 @@
-/**
- * 画像ウィジェット
- *
- * - ローカルから画像を選択
- * - Cloudinaryにアップロード
- * - キャンバス上に画像を表示
- *
- * 1. ユーザーが画像を選択
- * 2. バックエンドAPI経由でCloudinaryにアップロード
- * 3. 返ってきたURLを data.imageUrl に保存
- * 4. 画像を表示
- */
-
 import { useState, useRef } from 'react';
 import { Upload, Image as ImageIcon, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
@@ -29,22 +16,10 @@ function ImageWidget({ data = {}, onUpdate }) {
   // data から画像情報を取得
   const { imageUrl, publicId } = data;
 
-  /**
-   * ファイル選択ダイアログを開く
-   *
-   * ボタンクリック時に隠しinput要素をクリックする
-   */
   const handleSelectClick = () => {
     fileInputRef.current?.click();
   };
 
-  /**
-   * ファイル選択時の処理
-   *
-   * 1. ファイルを取得
-   * 2. FormDataに詰めてAPIに送信
-   * 3. 返ってきたURLをdataに保存
-   */
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;

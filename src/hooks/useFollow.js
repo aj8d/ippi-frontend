@@ -1,20 +1,8 @@
-/**
- * フォロー機能用カスタムフック
- *
- * - フォロー/アンフォロー処理の共通化
- * - フォロー中のユーザーID管理
- * - フォロー統計の取得
- */
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
 
-/**
- * フォロー機能を提供するカスタムフック
- * @returns {Object} フォロー関連の状態と関数
- */
 export function useFollow() {
   const navigate = useNavigate();
   const { token, user: currentUser } = useAuth();
@@ -22,9 +10,6 @@ export function useFollow() {
   const [followingIds, setFollowingIds] = useState(new Set());
   const [followingLoading, setFollowingLoading] = useState({});
 
-  /**
-   * 自分がフォローしているユーザーIDリストを取得
-   */
   const fetchFollowingIds = useCallback(async () => {
     if (!token || !currentUser?.userId) return;
 
@@ -46,12 +31,6 @@ export function useFollow() {
     }
   }, [token, currentUser?.userId]);
 
-  /**
-   * フォロー/アンフォローを切り替える
-   * @param {Event} e - イベントオブジェクト（オプション、クリックイベントの伝播防止用）
-   * @param {number} userId - 対象ユーザーID
-   * @returns {Promise<boolean>} 成功時true
-   */
   const toggleFollow = useCallback(
     async (e, userId) => {
       if (e) e.stopPropagation();
@@ -98,31 +77,21 @@ export function useFollow() {
         setFollowingLoading((prev) => ({ ...prev, [userId]: false }));
       }
     },
-    [token, followingIds, navigate]
+    [token, followingIds, navigate],
   );
 
-  /**
-   * ユーザーをフォローしているかチェック
-   * @param {number} userId - 対象ユーザーID
-   * @returns {boolean}
-   */
   const isFollowing = useCallback(
     (userId) => {
       return followingIds.has(userId);
     },
-    [followingIds]
+    [followingIds],
   );
 
-  /**
-   * フォロー中のローディング状態を取得
-   * @param {number} userId - 対象ユーザーID
-   * @returns {boolean}
-   */
   const isLoading = useCallback(
     (userId) => {
       return !!followingLoading[userId];
     },
-    [followingLoading]
+    [followingLoading],
   );
 
   return {
@@ -135,10 +104,6 @@ export function useFollow() {
   };
 }
 
-/**
- * 特定ユーザーのフォロー統計を取得するフック
- * @param {number} userId - 対象ユーザーID
- */
 export function useFollowStats(userId) {
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -150,9 +115,6 @@ export function useFollowStats(userId) {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  /**
-   * フォロー統計を取得
-   */
   const fetchStats = useCallback(async () => {
     if (!userId) return;
 
@@ -175,9 +137,6 @@ export function useFollowStats(userId) {
     }
   }, [userId, token]);
 
-  /**
-   * フォロー/アンフォローを切り替え、統計を更新
-   */
   const toggleFollow = useCallback(async () => {
     if (!token) {
       navigate('/login');

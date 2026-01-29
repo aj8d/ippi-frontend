@@ -1,8 +1,5 @@
 import { Settings, LogOut, LogIn, BarChart3 } from 'lucide-react';
 
-/**
- * サイドバーフッターコンポーネント
- */
 export default function SidebarFooter({
   isOpen,
   user,
@@ -17,7 +14,6 @@ export default function SidebarFooter({
       {user ? (
         // ログイン時：統計、プロフィール、ログアウトを表示
         <>
-          {/* 統計ボタン */}
           <button
             onClick={onStatsClick}
             onMouseEnter={(e) => {

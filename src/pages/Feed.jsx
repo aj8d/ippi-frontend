@@ -1,9 +1,3 @@
-/**
- * フィードページ
- *
- * - フォローしているユーザーのアクティビティを表示
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, Clock, Flame, Heart, RefreshCw, MessageCircle, Send, Trash2 } from 'lucide-react';
@@ -74,25 +68,21 @@ function Feed() {
     [token],
   );
 
-  // 初回読み込み
   useEffect(() => {
     fetchFeed(0, false);
   }, [fetchFeed]);
 
-  // もっと読み込む
   const loadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
     fetchFeed(nextPage, true);
   };
 
-  // リフレッシュ
   const handleRefresh = () => {
     setPage(0);
     fetchFeed(0, false);
   };
 
-  // いいねをトグル
   const handleLike = async (feedId, isLiked) => {
     if (!token) return;
 

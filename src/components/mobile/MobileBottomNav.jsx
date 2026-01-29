@@ -1,14 +1,6 @@
-/**
- * モバイル用ボトムナビゲーション
- *
- * - 768px以下で表示
- * - ヘッダー部分のナビゲーションをそのまま表示
- * - フッター部分はアコーディオン型メニュー
- */
-
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Search, Rss, User, Menu, X, Settings, LogOut, LogIn, BarChart3 } from 'lucide-react';
+import { Home, Search, Rss, User, Menu, X, LogOut, LogIn, BarChart3 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useTimer } from '../../contexts/TimerContext';
 import StatsModal from '../StatsModal';
@@ -26,12 +18,10 @@ export default function MobileBottomNav() {
   const [pendingAction, setPendingAction] = useState(null);
   const [warningActionType, setWarningActionType] = useState('navigate');
 
-  // 現在のページを判定
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
   const isSearchPage = location.pathname === '/search';
   const isFeedPage = location.pathname === '/feed';
 
-  // ナビゲーションハンドラー（タイマー実行中の警告対応）
   const handleNavigation = (path, actionType = 'navigate') => {
     if (isTimerRunning && location.pathname !== path) {
       setWarningActionType(actionType);

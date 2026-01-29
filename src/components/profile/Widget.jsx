@@ -1,13 +1,19 @@
-import { X, Upload, Link, ExternalLink } from "lucide-react";
-import { WIDGET_TYPES } from "./widgetUtils";
-import { WIDGET_INFO } from "./widgetConfig";
-import { formatDuration } from "./widgetUtils";
-import { API_ENDPOINTS } from "../../config";
+import { X, Upload, Link, ExternalLink } from 'lucide-react';
+import { WIDGET_TYPES } from './widgetUtils';
+import { WIDGET_INFO } from './widgetConfig';
+import { formatDuration } from './widgetUtils';
+import { API_ENDPOINTS } from '../../config';
 
-/**
- * ウィジェットコンポーネント
- */
-export default function Widget({ widget, stats, onTypeChange, onTextChange, onDelete, isOwnProfile, onImageChange, onLinkChange }) {
+export default function Widget({
+  widget,
+  stats,
+  onTypeChange,
+  onTextChange,
+  onDelete,
+  isOwnProfile,
+  onImageChange,
+  onLinkChange,
+}) {
   const info = WIDGET_INFO[widget.type];
   const Icon = info?.icon;
 
@@ -15,7 +21,9 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
   if (widget.type === WIDGET_TYPES.EMPTY) {
     // 他ユーザーの場合は何も表示しない
     if (!isOwnProfile) {
-      return <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-auto min-h-[130px] flex items-center justify-center"></div>;
+      return (
+        <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-auto min-h-[130px] flex items-center justify-center"></div>
+      );
     }
 
     // 自分のプロフィールの場合はドロップダウンを表示
@@ -38,7 +46,10 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
             return null;
           })}
         </select>
-        <button onClick={() => onDelete(widget.id)} className="absolute top-2 right-2 p-1 rounded-lg bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => onDelete(widget.id)}
+          className="absolute top-2 right-2 p-1 rounded-lg bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+        >
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -48,7 +59,9 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
   // テキストウィジェット
   if (widget.type === WIDGET_TYPES.TEXT) {
     return (
-      <div className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}>
+      <div
+        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
+      >
         {isOwnProfile && (
           <div className="flex items-center gap-2 mb-2">
             {Icon && <Icon className={`w-5 h-5 ${info.textColor}`} />}
@@ -67,17 +80,22 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
         )}
         {isOwnProfile ? (
           <textarea
-            value={widget.customText || ""}
+            value={widget.customText || ''}
             onChange={(e) => onTextChange(widget.id, e.target.value)}
             placeholder="テキストを入力..."
             className="w-full bg-white dark:bg-gray-800 rounded-lg px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-200 dark:border-gray-700 resize-none"
             rows={3}
           />
         ) : (
-          <div className="text-base whitespace-pre-wrap break-words text-gray-700 dark:text-gray-300">{widget.customText || ""}</div>
+          <div className="text-base whitespace-pre-wrap break-words text-gray-700 dark:text-gray-300">
+            {widget.customText || ''}
+          </div>
         )}
         {isOwnProfile && (
-          <button onClick={() => onDelete(widget.id)} className="absolute top-2 right-2 p-1 rounded-lg bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => onDelete(widget.id)}
+            className="absolute top-2 right-2 p-1 rounded-lg bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
             <X className="w-4 h-4" />
           </button>
         )}
@@ -94,32 +112,32 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
       try {
         // Cloudinaryにアップロード
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append('file', file);
 
         const response = await fetch(API_ENDPOINTS.IMAGES.UPLOAD, {
-          method: "POST",
+          method: 'POST',
           body: formData,
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
 
         if (!response.ok) {
-          throw new Error("画像アップロード失敗");
+          throw new Error('画像アップロード失敗');
         }
 
         const data = await response.json();
         onImageChange(widget.id, data.url);
       } catch (error) {
-        console.error("画像アップロードエラー:", error);
-        alert("画像のアップロードに失敗しました");
+        console.error('画像アップロードエラー:', error);
+        alert('画像のアップロードに失敗しました');
       }
     };
 
     // 画像クリック時のリンク処理（他ユーザーのみ）
     const handleImageClick = () => {
       if (!isOwnProfile && widget.linkUrl) {
-        window.open(widget.linkUrl, "_blank", "noopener,noreferrer");
+        window.open(widget.linkUrl, '_blank', 'noopener,noreferrer');
       }
     };
 
@@ -129,8 +147,8 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
         <img
           src={widget.imageUrl}
           alt="ウィジェット画像"
-          className={`w-full h-full object-cover ${!isOwnProfile && widget.linkUrl ? "cursor-pointer hover:opacity-90 transition-opacity" : ""}`}
-          style={{ aspectRatio: "16 / 9" }}
+          className={`w-full h-full object-cover ${!isOwnProfile && widget.linkUrl ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+          style={{ aspectRatio: '16 / 9' }}
           onClick={handleImageClick}
         />
         {/* 他ユーザー向け：リンクがある場合はインジケーターを表示 */}
@@ -185,7 +203,7 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
               <Link className="w-4 h-4 text-gray-500 flex-shrink-0" />
               <input
                 type="url"
-                value={widget.linkUrl || ""}
+                value={widget.linkUrl || ''}
                 onChange={(e) => onLinkChange?.(widget.id, e.target.value)}
                 placeholder="リンクURLを入力..."
                 className="flex-1 text-xs bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 min-w-0"
@@ -207,45 +225,45 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
   }
 
   // 統計ウィジェット
-  let value = "0";
-  let unit = "";
-  let subtitle = "";
+  let value = '0';
+  let unit = '';
+  let subtitle = '';
 
   switch (widget.type) {
     case WIDGET_TYPES.STREAK:
       value = stats?.currentStreak || 0;
-      unit = "日";
+      unit = '日';
       subtitle = `最長: ${stats?.longestStreak || 0}日`;
       break;
     case WIDGET_TYPES.TOTAL_TIME:
       value = Math.floor((stats?.totalWorkHours || 0) * 10) / 10;
-      unit = "時間";
+      unit = '時間';
       subtitle = formatDuration(stats?.totalWorkSeconds || 0);
       break;
     case WIDGET_TYPES.COMPLETED_TODOS:
       value = stats?.completedTodos || 0;
-      unit = "件";
+      unit = '件';
       break;
     case WIDGET_TYPES.WORK_DAYS:
       value = stats?.totalWorkDays || 0;
-      unit = "日";
+      unit = '日';
       break;
     case WIDGET_TYPES.WEEKLY_TIME:
       value = Math.floor((stats?.weeklyWorkHours || 0) * 10) / 10;
-      unit = "時間";
+      unit = '時間';
       subtitle = formatDuration(stats?.weeklyWorkSeconds || 0);
       break;
   }
 
   return (
     <div
-      className={`bg-gradient-to-br ${info.color} dark:from-${info.color.split("-")[1]}-900/20 dark:to-${
-        info.color.split("-")[1]
+      className={`bg-gradient-to-br ${info.color} dark:from-${info.color.split('-')[1]}-900/20 dark:to-${
+        info.color.split('-')[1]
       }-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
     >
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2">
-          {Icon && <Icon className={`w-5 h-5 ${info.textColor.split(" ")[0]}`} />}
+          {Icon && <Icon className={`w-5 h-5 ${info.textColor.split(' ')[0]}`} />}
           {isOwnProfile ? (
             <select
               value={widget.type}
@@ -263,7 +281,10 @@ export default function Widget({ widget, stats, onTypeChange, onTextChange, onDe
           )}
         </div>
         {isOwnProfile && (
-          <button onClick={() => onDelete(widget.id)} className="p-1 rounded-lg bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => onDelete(widget.id)}
+            className="p-1 rounded-lg bg-red-500 text-white hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
             <X className="w-4 h-4" />
           </button>
         )}

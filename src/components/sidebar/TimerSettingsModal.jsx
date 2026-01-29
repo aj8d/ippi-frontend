@@ -1,10 +1,7 @@
 import { createPortal } from 'react-dom';
-import { Timer, X, Plus, Trash2, MoveDown, MoveRight, Volume2, VolumeX } from 'lucide-react';
+import { Timer, X, Plus, Trash2, MoveRight, Volume2, VolumeX } from 'lucide-react';
 import { playAlarmSound } from '../widgets/timerUtils';
 
-/**
- * タイマー設定モーダルコンポーネント
- */
 export default function TimerSettingsModal({
   isOpen,
   displayMode,
@@ -107,10 +104,6 @@ export default function TimerSettingsModal({
                     ✅時間管理/没頭重視/シンプル
                     <br />
                     ✅ノンプレッシャー
-                    <br />
-                    ❌時間管理が必要
-                    <br />
-                    ❌休憩管理がない
                   </>
                 )}
 
@@ -124,8 +117,6 @@ export default function TimerSettingsModal({
                     ✅時間管理/締切重視/シンプル
                     <br />
                     ✅短時間集中
-                    <br />
-                    ❌休憩管理がない
                   </>
                 )}
                 {displayMode === 'interval' && (
@@ -138,8 +129,6 @@ export default function TimerSettingsModal({
                     ✅習慣化/継続重視/リズム
                     <br />
                     ✅長時間作業に最適
-                    <br />
-                    ❌固定化されたサイクル
                   </>
                 )}
                 {displayMode === 'flowmodoro' && (
@@ -152,9 +141,6 @@ export default function TimerSettingsModal({
                     ✅創造/没頭重視/フロー
                     <br />
                     ✅ポモドーロをもっと柔軟に
-                    <br />
-                    ❌時間管理が必要
-                    <br />
                   </>
                 )}
               </p>
@@ -228,7 +214,6 @@ export default function TimerSettingsModal({
                       )}
                     </div>
 
-                    {/* 作業時間・休憩時間（同じ行） */}
                     <div className="flex items-center justify-between">
                       {/* 作業時間 */}
                       <div className="flex-1 flex items-center gap-2">
@@ -314,6 +299,6 @@ export default function TimerSettingsModal({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

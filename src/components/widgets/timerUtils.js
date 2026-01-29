@@ -1,16 +1,8 @@
-/**
- * タイマーに関するユーティリティ関数
- */
-
-// デフォルトのポモドーロセクション
 export const DEFAULT_SECTIONS = [{ id: 1, workMinutes: '25', workSeconds: '0', breakMinutes: '5', breakSeconds: '0' }];
 
 // AudioContextのシングルトンインスタンス
 let audioContext = null;
 
-/**
- * AudioContextを取得（シングルトン）
- */
 function getAudioContext() {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -22,10 +14,6 @@ function getAudioContext() {
   return audioContext;
 }
 
-/**
- * 「ぴぴっ」というアラーム音を再生
- * @param {number} volume - 音量（0〜1）
- */
 export function playAlarmSound(volume = 0.5) {
   if (volume <= 0) return; // 音量0なら再生しない
 
@@ -67,12 +55,6 @@ export function playAlarmSound(volume = 0.5) {
   }
 }
 
-/**
- * セクションから時間（秒）を計算
- * @param {Object} section - セクション設定
- * @param {boolean} isWork - true: 作業時間, false: 休憩時間
- * @returns {number} 秒数
- */
 export function getTimeFromSection(section, isWork) {
   if (isWork) {
     const mins = parseInt(section.workMinutes) || 0;
@@ -83,35 +65,17 @@ export function getTimeFromSection(section, isWork) {
   }
 }
 
-/**
- * 時間（秒）を「MM:SS」形式にフォーマット
- * @param {number} seconds - 秒数
- * @returns {string} MM:SS形式の文字列
- */
 export function formatTime(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-/**
- * 進捗率（0〜1）を計算
- * @param {number} elapsed - 経過時間（秒）
- * @param {number} total - 合計時間（秒）
- * @returns {number} 進捗率（0〜1）
- */
 export function calculateProgress(elapsed, total) {
   if (total === 0) return 0;
   return Math.min(elapsed / total, 1);
 }
 
-/**
- * SVGの円弧パスを計算
- * @param {number} progress - 進捗率（0〜1）
- * @param {number} size - SVGのサイズ
- * @param {number} strokeWidth - ストロークの幅
- * @returns {string} SVGパス文字列
- */
 export function calculateArcPath(progress, size, strokeWidth) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;

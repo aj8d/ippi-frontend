@@ -1,12 +1,3 @@
-/**
- * ユーザー検索ページ
- *
- * - ユーザー名またはIDで検索
- * - 検索結果をリスト表示
- * - クリックでプロフィールページへ遷移
- * - フォロー/アンフォロー機能
- */
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, User, ArrowLeft, AtSign } from 'lucide-react';
@@ -31,17 +22,14 @@ function SearchPage() {
     return saved !== null ? JSON.parse(saved) : true;
   });
 
-  // カスタムフックでフォロー機能を管理
   const { fetchFollowingIds, isFollowing, currentUserId } = useFollow();
 
-  // 初回読み込み時にフォロー中リストを取得
   useEffect(() => {
     if (token) {
       fetchFollowingIds();
     }
   }, [token, fetchFollowingIds]);
 
-  // 検索実行
   const performSearch = useCallback(async (searchQuery) => {
     if (!searchQuery.trim()) {
       setResults([]);
@@ -56,7 +44,6 @@ function SearchPage() {
       const response = await fetch(`${API_ENDPOINTS.USERS.SEARCH}?query=${encodeURIComponent(searchQuery.trim())}`);
       if (response.ok) {
         const data = await response.json();
-        // APIレスポンスをUserCard用に変換
         const formattedResults = data.map((user) => ({
           userId: user.id,
           customId: user.customId,
@@ -77,7 +64,6 @@ function SearchPage() {
     }
   }, []);
 
-  // URLパラメータから検索を実行
   useEffect(() => {
     const q = searchParams.get('q');
     if (q) {
@@ -86,7 +72,6 @@ function SearchPage() {
     }
   }, [searchParams, performSearch]);
 
-  // 検索フォーム送信
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) {
@@ -95,10 +80,8 @@ function SearchPage() {
     }
   };
 
-  // フォロートグルコールバック
   const handleFollowToggle = async (userId, isNowFollowing) => {
     console.log(`User ${userId} is now ${isNowFollowing ? 'followed' : 'unfollowed'}`);
-    // フォロー中リストを再取得して最新状態に同期
     await fetchFollowingIds();
   };
 

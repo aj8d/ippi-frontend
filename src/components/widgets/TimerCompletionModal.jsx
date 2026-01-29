@@ -1,9 +1,4 @@
-/**
- * タイマー完了モーダル
- */
-
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
 
 export default function TimerCompletionModal({ show, workTime, onClose }) {
   if (!show) return null;
@@ -47,6 +42,6 @@ export default function TimerCompletionModal({ show, workTime, onClose }) {
         </button>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

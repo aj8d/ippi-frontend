@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
 
-/**
- * プロフィール情報を管理するカスタムフック
- */
 export function useProfile(id, user) {
   const navigate = useNavigate();
   const [profileImageUrl, setProfileImageUrl] = useState(null);
