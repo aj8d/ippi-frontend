@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthContext';
 import { TimerProvider } from './contexts/TimerContext';
-import { AchievementNotificationProvider } from './providers/AchievementNotificationProvider';
 import { TimerCompletionNotificationProvider } from './providers/TimerCompletionNotificationProvider';
 import ProtectedRoute from './auth/ProtectedRoute';
 import Login from './auth/Login';
@@ -17,8 +16,7 @@ function App() {
     <Router>
       <AuthProvider>
         <TimerProvider>
-          <AchievementNotificationProvider>
-            <TimerCompletionNotificationProvider>
+          <TimerCompletionNotificationProvider>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
@@ -51,8 +49,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </TimerCompletionNotificationProvider>
-          </AchievementNotificationProvider>
+          </TimerCompletionNotificationProvider>
         </TimerProvider>
       </AuthProvider>
     </Router>

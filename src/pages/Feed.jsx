@@ -6,20 +6,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Clock, Flame, Trophy, Heart, RefreshCw, MessageCircle, Send, Trash2 } from 'lucide-react';
+import { ArrowLeft, Users, Clock, Flame, Heart, RefreshCw, MessageCircle, Send, Trash2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import UserAvatar from '../components/UserAvatar';
 import { useAuth } from '../auth/AuthContext';
 import { API_ENDPOINTS } from '../config';
-import { useAchievementChecker } from '../hooks/useAchievementChecker';
 
 function Feed() {
   const navigate = useNavigate();
   const { token } = useAuth();
-
-  // アチーブメント通知チェック
-  useAchievementChecker(token);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     const saved = localStorage.getItem('sidebarOpen');
@@ -216,8 +212,6 @@ function Feed() {
         return <Clock className="w-5 h-5 text-blue-500" />;
       case 'streak':
         return <Flame className="w-5 h-5 text-orange-500" />;
-      case 'achievement':
-        return <Trophy className="w-5 h-5 text-yellow-500" />;
       case 'follow':
         return <Heart className="w-5 h-5 text-pink-500" />;
       default:
@@ -268,13 +262,6 @@ function Feed() {
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
             <Flame className="w-3 h-3" />
             {data.streakDays}日連続
-          </span>
-        );
-      case 'achievement':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-            <Trophy className="w-3 h-3" />
-            達成！
           </span>
         );
       default:

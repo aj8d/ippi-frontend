@@ -21,8 +21,6 @@ function TimerWarningModal({ isOpen, onClose, onConfirm, actionType = "navigate"
         return "タイマー設定を開こうとしています。";
       case "stats":
         return "統計を開こうとしています。";
-      case "achievement":
-        return "アチーブメントを開こうとしています。";
       case "close":
         return "ページを閉じようとしています。";
       case "stop":

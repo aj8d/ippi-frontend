@@ -20,14 +20,10 @@ import MobileListCanvas from "../components/mobile/MobileListCanvas";
 import FloatingAddButton from "../components/mobile/FloatingAddButton";
 import TimerSettingsModal from "../components/sidebar/TimerSettingsModal";
 import { useWidgets } from "../hooks/useWidgets"; // カスタムフック
-import { useAchievementChecker } from "../hooks/useAchievementChecker";
 import { useAuth } from "../auth/AuthContext";
 
 function Home() {
   const { token } = useAuth();
-
-  // アチーブメント通知チェック
-  useAchievementChecker(token);
 
   // サイドバーの開閉状態（localStorageから読み込む）
   const [sidebarOpen, setSidebarOpen] = useState(() => {

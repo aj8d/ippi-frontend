@@ -8,11 +8,10 @@
 
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, Search, Rss, User, Menu, X, Settings, LogOut, LogIn, BarChart3, Trophy } from "lucide-react";
+import { Home, Search, Rss, User, Menu, X, Settings, LogOut, LogIn, BarChart3 } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { useTimer } from "../../contexts/TimerContext";
 import StatsModal from "../StatsModal";
-import AchievementModal from "../AchievementModal";
 import TimerWarningModal from "../TimerWarningModal";
 
 export default function MobileBottomNav() {
@@ -23,7 +22,6 @@ export default function MobileBottomNav() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
-  const [isAchievementModalOpen, setIsAchievementModalOpen] = useState(false);
   const [warningModalOpen, setWarningModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [warningActionType, setWarningActionType] = useState("navigate");
@@ -64,21 +62,6 @@ export default function MobileBottomNav() {
     }
     setWarningModalOpen(false);
     setPendingAction(null);
-  };
-
-  // アチーブメントボタンクリック
-  const handleAchievementClick = () => {
-    if (isTimerRunning) {
-      setWarningActionType("achievement");
-      setPendingAction(() => () => {
-        setIsAchievementModalOpen(true);
-        setIsMenuOpen(false);
-      });
-      setWarningModalOpen(true);
-    } else {
-      setIsAchievementModalOpen(true);
-      setIsMenuOpen(false);
-    }
   };
 
   const navItems = [
@@ -130,12 +113,6 @@ export default function MobileBottomNav() {
             <div className="p-4 space-y-2">
               {user ? (
                 <>
-                  {/* アチーブメント */}
-                  <button onClick={handleAchievementClick} className="w-full flex items-center gap-4 px-4 py-3 text-gray-700 hover:bg-yellow-50 hover:text-yellow-600 rounded-lg transition-colors">
-                    <Trophy className="w-5 h-5" />
-                    <span className="text-sm font-medium">アチーブメント</span>
-                  </button>
-
                   {/* 統計 */}
                   <button
                     onClick={() => {
@@ -176,7 +153,6 @@ export default function MobileBottomNav() {
 
       {/* モーダル */}
       <StatsModal isOpen={isStatsModalOpen} onClose={() => setIsStatsModalOpen(false)} />
-      <AchievementModal isOpen={isAchievementModalOpen} onClose={() => setIsAchievementModalOpen(false)} />
       <TimerWarningModal
         isOpen={warningModalOpen}
         onClose={() => {
