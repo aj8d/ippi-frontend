@@ -68,8 +68,9 @@ export default function Login() {
       } else {
         setError(data.message || 'Google ログインに失敗しました');
       }
-    } catch (err) {
-      setError('エラーが発生しました: ' + err.message);
+    } catch {
+      console.error('Google login error');
+      setError('Google ログイン中にエラーが発生しました');
     } finally {
       setLoading(false);
     }

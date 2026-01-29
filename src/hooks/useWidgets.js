@@ -58,9 +58,9 @@ export function useWidgets() {
       setWidgets(data);
       setError(null);
       initialLoadDone.current = true;
-    } catch (err) {
-      console.error('Load widgets error:', err);
-      setError(err.message);
+    } catch {
+      console.error('Load widgets error');
+      setError('ウィジェットの読み込みに失敗しました');
     } finally {
       setLoading(false);
     }

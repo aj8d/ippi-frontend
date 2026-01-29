@@ -59,9 +59,9 @@ function ImageWidget({ data = {}, onUpdate }) {
         imageUrl: result.url,
         publicId: result.publicId,
       });
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError(err.message || 'アップロードに失敗しました');
+    } catch {
+      console.error('Upload error');
+      setError('アップロードに失敗しました');
     } finally {
       setUploading(false);
       // inputをリセット（同じファイルを再選択できるように）
