@@ -71,8 +71,8 @@ export function AuthProvider({ children }) {
         return { success: false, message: data };
       }
     } catch (error) {
-      console.error('Registration failed:', error);
-      return { success: false, message: error.message };
+      console.error('Registration failed');
+      return { success: false, message: '登録中にエラーが発生しました' };
     }
   };
 
@@ -97,8 +97,8 @@ export function AuthProvider({ children }) {
         return { success: false, message: data };
       }
     } catch (error) {
-      console.error('Login failed:', error);
-      return { success: false, message: error.message };
+      console.error('Login failed');
+      return { success: false, message: 'ログイン中にエラーが発生しました' };
     }
   };
 

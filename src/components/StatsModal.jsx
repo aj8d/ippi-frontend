@@ -31,9 +31,9 @@ function StatsModal({ isOpen, onClose }) {
 
         const data = await response.json();
         setStats(data.stats || []);
-      } catch (err) {
-        console.error('Stats fetch error:', err);
-        setError(err.message);
+      } catch {
+        console.error('Stats fetch error');
+        setError('統計データの取得に失敗しました');
       } finally {
         setLoading(false);
       }

@@ -119,13 +119,12 @@ export default function Profile() {
         setProfileImageUrl(data.profileImageUrl);
         await fetchLatestProfile();
       } else {
-        const errorText = await response.text();
-        console.error('Upload error response:', errorText);
-        setUploadError(`アップロード失敗: ${response.status} - ${errorText}`);
+        console.error('Upload error');
+        setUploadError('画像のアップロードに失敗しました');
       }
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      setUploadError(`エラー: ${error.message}`);
+    } catch {
+      console.error('Error uploading image');
+      setUploadError('画像のアップロード中にエラーが発生しました');
     } finally {
       setUploading(false);
     }
