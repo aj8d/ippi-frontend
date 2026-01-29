@@ -70,7 +70,7 @@ export function AuthProvider({ children }) {
       } else {
         return { success: false, message: data };
       }
-    } catch (error) {
+    } catch {
       console.error('Registration failed');
       return { success: false, message: '登録中にエラーが発生しました' };
     }
@@ -96,7 +96,7 @@ export function AuthProvider({ children }) {
       } else {
         return { success: false, message: data };
       }
-    } catch (error) {
+    } catch {
       console.error('Login failed');
       return { success: false, message: 'ログイン中にエラーが発生しました' };
     }
