@@ -84,7 +84,7 @@ password: password123
 **デプロイ**
 
 - Vercel
-- Railway
+- Render(2/15にRailwayから移行しました)
 
 **外部API**
 - google oauth (認証)
