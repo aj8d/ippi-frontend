@@ -91,8 +91,9 @@ export default function Register() {
           const data = await response.json();
           setError(data.message || data || 'プロフィールの更新に失敗しました');
         }
-      } catch (err) {
-        setError('エラーが発生しました: ' + err.message);
+      } catch {
+        console.error('Profile update error');
+        setError('プロフィールの更新中にエラーが発生しました');
       } finally {
         setLoading(false);
       }
@@ -138,8 +139,9 @@ export default function Register() {
       } else {
         setError(data.message || 'Google登録に失敗しました');
       }
-    } catch (err) {
-      setError('エラーが発生しました: ' + err.message);
+    } catch {
+      console.error('Google registration error');
+      setError('Google登録中にエラーが発生しました');
     } finally {
       setLoading(false);
     }
