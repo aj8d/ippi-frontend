@@ -126,6 +126,19 @@ ippiのプロフィール機能を活用して、
 - google oauth (認証)
 - Cloudinary (画像処理)
 
+## 品質チェック
+
+### フロントエンド (ippi-frontend)
+
+- lint: npm run lint
+- format: npm run format
+- format check: npm run format:check
+
+### バックエンド (ippi-backend)
+
+- build: mvn -DskipTests package
+- test: mvn test
+
 ## 対応環境
 
 - PC (1024px以上)
