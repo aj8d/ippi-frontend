@@ -6,6 +6,8 @@ import { WIDGET_TYPES } from './profile/widgetUtils';
 import { WIDGET_INFO } from './profile/widgetConfig';
 import Widget from './profile/Widget';
 
+let saveTimeoutId = null;
+
 export function WidgetAddButton({ onAddRow }) {
   const [showAddMenu, setShowAddMenu] = useState(false);
 
@@ -68,37 +70,42 @@ export function WidgetAddButton({ onAddRow }) {
 
 export default function ProfileWidgetManager({ customId, token, isOwnProfile, onAddRowCallback }) {
   const STORAGE_KEY = `profile_widgets_v2_${customId}`;
-
-  // ローカルストレージから初期データを読み込み
-  const [rows, setRows] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) return [];
-
-      const data = JSON.parse(saved);
-
-      // データがフラット配列かチェック
-      if (Array.isArray(data)) {
-        // 各アイテムがwidgetプロパティを持つ（フラット構造）かチェック
-        const isFlat = data.every((item) => item && typeof item === 'object' && 'id' in item && 'type' in item);
-
-        if (isFlat) {
-          return data;
-        }
-      }
-
-      // 古いデータ構造の場合は空配列を返す
-      console.warn('古いデータ構造を検出しました。新しい構造に移行してください。');
-      return [];
-    } catch (e) {
-      console.error('ウィジェット読み込みエラー:', e);
-      return [];
-    }
-  });
+  const [rows, setRows] = useState([]);
 
   const [stats, setStats] = useState(null);
   const swapyRef = useRef(null);
   const containerRef = useRef(null);
+  const initialLoadDoneRef = useRef(false);
+
+  const isValidWidgetArray = useCallback((data) => {
+    return (
+      Array.isArray(data) && data.every((item) => item && typeof item === 'object' && 'id' in item && 'type' in item)
+    );
+  }, []);
+
+  const loadFromLocalStorage = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) {
+        setRows([]);
+        initialLoadDoneRef.current = true;
+        return;
+      }
+
+      const data = JSON.parse(saved);
+      if (isValidWidgetArray(data)) {
+        setRows(data);
+      } else {
+        console.warn('古いデータ構造を検出しました。新しい構造に移行してください。');
+        setRows([]);
+      }
+    } catch (e) {
+      console.error('ウィジェット読み込みエラー:', e);
+      setRows([]);
+    } finally {
+      initialLoadDoneRef.current = true;
+    }
+  }, [STORAGE_KEY, isValidWidgetArray]);
 
   // 統計データを取得
   useEffect(() => {
@@ -124,12 +131,94 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
     fetchStats();
   }, [customId, token]);
 
-  // ウィジェットをローカルストレージに保存
   useEffect(() => {
-    if (rows.length > 0) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+    if (!customId) {
+      setRows([]);
+      initialLoadDoneRef.current = true;
+      return;
     }
-  }, [rows, STORAGE_KEY]);
+
+    initialLoadDoneRef.current = false;
+
+    const fetchProfileWidgets = async () => {
+      try {
+        const headers = token
+          ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+          : { 'Content-Type': 'application/json' };
+
+        const response = await fetch(API_ENDPOINTS.PROFILE_WIDGETS.BY_CUSTOM_ID(customId), { headers });
+        if (!response.ok) {
+          if (isOwnProfile && !token) {
+            loadFromLocalStorage();
+          } else {
+            setRows([]);
+            initialLoadDoneRef.current = true;
+          }
+          return;
+        }
+
+        const data = await response.json();
+        setRows(isValidWidgetArray(data) ? data : []);
+      } catch (error) {
+        console.error('プロフィールウィジェット取得エラー:', error);
+        if (isOwnProfile && !token) {
+          loadFromLocalStorage();
+          return;
+        }
+        setRows([]);
+      } finally {
+        initialLoadDoneRef.current = true;
+      }
+    };
+
+    fetchProfileWidgets();
+  }, [customId, token, isOwnProfile, loadFromLocalStorage, isValidWidgetArray]);
+
+  useEffect(() => {
+    if (!isOwnProfile || !initialLoadDoneRef.current) return;
+
+    if (saveTimeoutId) {
+      clearTimeout(saveTimeoutId);
+    }
+
+    saveTimeoutId = setTimeout(async () => {
+      if (!token) {
+        try {
+          if (rows.length === 0) {
+            localStorage.removeItem(STORAGE_KEY);
+          } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+          }
+        } catch (error) {
+          console.error('プロフィールウィジェットのローカル保存エラー:', error);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(API_ENDPOINTS.PROFILE_WIDGETS.BASE, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(rows),
+        });
+
+        if (!response.ok) {
+          throw new Error('プロフィールウィジェットの保存に失敗しました');
+        }
+      } catch (error) {
+        console.error('プロフィールウィジェット保存エラー:', error);
+      }
+    }, 500);
+
+    return () => {
+      if (saveTimeoutId) {
+        clearTimeout(saveTimeoutId);
+      }
+    };
+  }, [rows, STORAGE_KEY, token, isOwnProfile]);
 
   // Swapyのonswapイベントハンドラ
   const handleSwap = useCallback((event) => {
@@ -242,27 +331,29 @@ export default function ProfileWidgetManager({ customId, token, isOwnProfile, on
 
   // ウィジェットタイプを変更
   const handleTypeChange = (widgetId, newType) => {
-    setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, type: newType } : widget)));
+    setRows((prevRows) => prevRows.map((widget) => (widget.id === widgetId ? { ...widget, type: newType } : widget)));
   };
 
   // カスタムテキストを変更
   const handleTextChange = (widgetId, text) => {
-    setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, customText: text } : widget)));
+    setRows((prevRows) =>
+      prevRows.map((widget) => (widget.id === widgetId ? { ...widget, customText: text } : widget)),
+    );
   };
 
   // 画像URLを変更
   const handleImageChange = (widgetId, imageUrl) => {
-    setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, imageUrl } : widget)));
+    setRows((prevRows) => prevRows.map((widget) => (widget.id === widgetId ? { ...widget, imageUrl } : widget)));
   };
 
   // 画像のリンクURLを変更
   const handleLinkChange = (widgetId, linkUrl) => {
-    setRows(rows.map((widget) => (widget.id === widgetId ? { ...widget, linkUrl } : widget)));
+    setRows((prevRows) => prevRows.map((widget) => (widget.id === widgetId ? { ...widget, linkUrl } : widget)));
   };
 
   // ウィジェットを削除
   const handleDelete = (widgetId) => {
-    setRows(rows.filter((widget) => widget.id !== widgetId));
+    setRows((prevRows) => prevRows.filter((widget) => widget.id !== widgetId));
   };
 
   // ウィジェットがない場合は何も表示しない
