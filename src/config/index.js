@@ -57,6 +57,11 @@ export const API_ENDPOINTS = {
     BY_ID: (id) => `${API_BASE_URL}/widgets/${id}`,
   },
 
+  PROFILE_WIDGETS: {
+    BASE: `${API_BASE_URL}/profile-widgets`,
+    BY_CUSTOM_ID: (customId) => `${API_BASE_URL}/profile-widgets/user/${customId}`,
+  },
+
   IMAGES: {
     UPLOAD: `${API_BASE_URL}/images/upload`,
     DELETE: (publicId) => `${API_BASE_URL}/images/delete?publicId=${encodeURIComponent(publicId)}`,
