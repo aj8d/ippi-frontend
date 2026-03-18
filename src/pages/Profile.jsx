@@ -8,6 +8,11 @@ import ProfileWidgetManager from '../components/ProfileWidgetManager';
 import UserAvatar from '../components/UserAvatar';
 import { UserPlus, UserMinus, MoreVertical, Edit, Upload, AtSign } from 'lucide-react';
 import { API_ENDPOINTS } from '../config';
+import {
+  DEFAULT_PROFILE_THEME,
+  normalizeProfileTheme,
+  toThemeCssBackground,
+} from '../components/profile/profileThemes';
 import { useProfile } from '../hooks/useProfile';
 import { useProfileFollow } from '../hooks/useProfileFollow';
 import { useStats } from '../hooks/useStats';
@@ -25,6 +30,8 @@ export default function Profile() {
     setUserName,
     userCustomId,
     setUserCustomId,
+    profileTheme,
+    setProfileTheme,
     profileUserId,
     isOwnProfile,
     loading,
@@ -46,6 +53,7 @@ export default function Profile() {
   const [customIdError, setCustomIdError] = useState('');
   const [editingCustomId, setEditingCustomId] = useState('');
   const [editingName, setEditingName] = useState('');
+  const [editingTheme, setEditingTheme] = useState(DEFAULT_PROFILE_THEME);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [addRowFunction, setAddRowFunction] = useState(null);
 
@@ -66,18 +74,22 @@ export default function Profile() {
         body: JSON.stringify({
           name: editingName,
           customId: editingCustomId,
+          profileTheme: normalizeProfileTheme(editingTheme),
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
+        const savedTheme = normalizeProfileTheme(data.profileTheme || data.profileThemePreset || editingTheme);
         setIsEditing(false);
         setUserName(data.name || '');
         setUserCustomId(data.customId || '');
+        setProfileTheme(savedTheme);
         setEditingCustomId('');
         setEditingName('');
+        setEditingTheme(savedTheme);
         setCustomIdError('');
-        await fetchLatestProfile();
+        await fetchLatestProfile(token);
       } else {
         const errorText = await response.text();
         console.error('Update error:', errorText);
@@ -117,7 +129,7 @@ export default function Profile() {
       if (response.ok) {
         const data = await response.json();
         setProfileImageUrl(data.profileImageUrl);
-        await fetchLatestProfile();
+        await fetchLatestProfile(token);
       } else {
         console.error('Upload error');
         setUploadError('画像のアップロードに失敗しました');
@@ -205,6 +217,7 @@ export default function Profile() {
                             setIsEditing(true);
                             setEditingCustomId(userCustomId);
                             setEditingName(userName);
+                            setEditingTheme(normalizeProfileTheme(profileTheme));
                             setShowOptionsMenu(false);
                           }}
                           className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
@@ -279,7 +292,7 @@ export default function Profile() {
           <hr className="my-5" />
 
           {/* GitHub-style アクティビティカレンダーを追加 */}
-          <ActivityCalendar stats={stats || []} />
+          <ActivityCalendar stats={stats || []} profileTheme={profileTheme} />
 
           {/* 動的ウィジェットマネージャー（Swapy対応） */}
           <ProfileWidgetManager
@@ -302,6 +315,7 @@ export default function Profile() {
             setIsEditing(false);
             setEditingCustomId('');
             setEditingName('');
+            setEditingTheme(normalizeProfileTheme(profileTheme));
             setCustomIdError('');
           }}
         >
@@ -337,12 +351,88 @@ export default function Profile() {
               <p className="text-xs text-gray-500 mt-1">30文字以内で入力してください</p>
             </div>
 
+            <div className="mb-5">
+              <label className="block mb-2 font-bold">テーマ</label>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingTheme((prev) => ({ ...prev, mode: 'solid' }))}
+                    className={`px-3 py-2 rounded text-sm border ${editingTheme.mode === 'solid' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                  >
+                    単色
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingTheme((prev) => ({ ...prev, mode: 'gradient' }))}
+                    className={`px-3 py-2 rounded text-sm border ${editingTheme.mode === 'gradient' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                  >
+                    グラデーション
+                  </button>
+                </div>
+
+                {editingTheme.mode === 'solid' ? (
+                  <div>
+                    <label className="block text-xs mb-1 text-gray-600">ベース色</label>
+                    <input
+                      type="color"
+                      value={editingTheme.solidColor}
+                      onChange={(e) => setEditingTheme((prev) => ({ ...prev, solidColor: e.target.value }))}
+                      className="w-full h-10 rounded border border-gray-300 bg-white"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs mb-1 text-gray-600">開始色</label>
+                        <input
+                          type="color"
+                          value={editingTheme.gradientFrom}
+                          onChange={(e) => setEditingTheme((prev) => ({ ...prev, gradientFrom: e.target.value }))}
+                          className="w-full h-10 rounded border border-gray-300 bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs mb-1 text-gray-600">終了色</label>
+                        <input
+                          type="color"
+                          value={editingTheme.gradientTo}
+                          onChange={(e) => setEditingTheme((prev) => ({ ...prev, gradientTo: e.target.value }))}
+                          className="w-full h-10 rounded border border-gray-300 bg-white"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs mb-1 text-gray-600">角度: {editingTheme.gradientAngle}°</label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="360"
+                        value={editingTheme.gradientAngle}
+                        onChange={(e) =>
+                          setEditingTheme((prev) => ({ ...prev, gradientAngle: Number(e.target.value) }))
+                        }
+                        className="w-full"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div
+                  className="h-14 rounded border border-gray-300"
+                  style={{ background: toThemeCssBackground(editingTheme) }}
+                />
+              </div>
+            </div>
+
             <div className="flex gap-2.5 justify-end">
               <button
                 onClick={() => {
                   setIsEditing(false);
                   setEditingCustomId('');
                   setEditingName('');
+                  setEditingTheme(normalizeProfileTheme(profileTheme));
                   setCustomIdError('');
                 }}
                 className="px-5 py-2.5 bg-gray-600 text-white rounded cursor-pointer text-sm hover:bg-gray-700"
@@ -352,7 +442,7 @@ export default function Profile() {
               <button
                 onClick={handleSaveProfile}
                 disabled={isSaving}
-                className={`px-5 py-2.5 bg-green-500 text-white rounded text-sm font-bold hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed`}
+                className="px-5 py-2.5 bg-green-500 text-white rounded text-sm font-bold hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSaving ? '保存中...' : '保存'}
               </button>

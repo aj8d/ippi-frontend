@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { buildCalendarTheme } from './profile/profileThemes';
 
-export default function ActivityCalendar({ stats }) {
+export default function ActivityCalendar({ stats, profileTheme }) {
   // Hooks
   const [tooltip, setTooltip] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const theme = buildCalendarTheme(profileTheme);
 
   // 利用可能な年のリストを取得
   const getAvailableYears = () => {
@@ -53,11 +55,11 @@ export default function ActivityCalendar({ stats }) {
 
   // カラースケール関数（分数に基づいて色を決定）
   const getColor = (minutes) => {
-    if (minutes === 0) return '#ebedf0';
-    if (minutes < 30) return '#c6e48b';
-    if (minutes < 60) return '#7bc96f';
-    if (minutes < 120) return '#239a3b';
-    return '#196127';
+    if (minutes === 0) return theme.calendarEmpty;
+    if (minutes < 30) return theme.calendarLevels[0];
+    if (minutes < 60) return theme.calendarLevels[1];
+    if (minutes < 120) return theme.calendarLevels[2];
+    return theme.calendarLevels[3];
   };
 
   // ツールチップテキスト
@@ -203,7 +205,7 @@ export default function ActivityCalendar({ stats }) {
                         day ? 'cursor-pointer' : 'cursor-default'
                       }`}
                       style={{
-                        backgroundColor: day ? getColor(day.minutes) : '#f0f0f0',
+                        backgroundColor: day ? getColor(day.minutes) : theme.calendarEmpty,
                       }}
                       onMouseEnter={(e) => {
                         if (day) {
@@ -256,11 +258,13 @@ export default function ActivityCalendar({ stats }) {
       <div className="mt-3.75 flex items-center gap-2.5 text-xs">
         <span>Less</span>
         <div className="flex gap-0.5">
-          <div className="w-2.5 h-2.5 bg-gray-200 border border-gray-300 rounded-sm" />
-          <div className="w-2.5 h-2.5 bg-green-300 border border-gray-300 rounded-sm" />
-          <div className="w-2.5 h-2.5 bg-green-500 border border-gray-300 rounded-sm" />
-          <div className="w-2.5 h-2.5 bg-green-700 border border-gray-300 rounded-sm" />
-          <div className="w-2.5 h-2.5 bg-green-900 border border-gray-300 rounded-sm" />
+          {[theme.calendarEmpty, ...theme.calendarLevels].map((color) => (
+            <div
+              key={color}
+              className="w-2.5 h-2.5 border border-gray-300 rounded-sm"
+              style={{ backgroundColor: color }}
+            />
+          ))}
         </div>
         <span>More</span>
       </div>

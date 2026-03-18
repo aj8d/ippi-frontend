@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
+import { DEFAULT_PROFILE_THEME, normalizeProfileTheme } from '../components/profile/profileThemes';
 
 export function useProfile(id, user) {
   const navigate = useNavigate();
@@ -8,6 +9,7 @@ export function useProfile(id, user) {
   const [userName, setUserName] = useState('');
   const [userDescription, setUserDescription] = useState('');
   const [userCustomId, setUserCustomId] = useState('');
+  const [profileTheme, setProfileTheme] = useState(DEFAULT_PROFILE_THEME);
   const [profileUserId, setProfileUserId] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +46,9 @@ export function useProfile(id, user) {
           setUserName(data.name);
           setUserDescription(data.description || '');
           setUserCustomId(data.customId || '');
+          if (data.profileTheme || data.profileThemePreset) {
+            setProfileTheme(normalizeProfileTheme(data.profileTheme || data.profileThemePreset));
+          }
           setProfileUserId(data.userId);
         } else {
           console.error('Failed to fetch profile');
@@ -76,6 +81,9 @@ export function useProfile(id, user) {
         setUserName(data.name);
         setUserDescription(data.description || '');
         setUserCustomId(data.customId || '');
+        if (data.profileTheme || data.profileThemePreset) {
+          setProfileTheme(normalizeProfileTheme(data.profileTheme || data.profileThemePreset));
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -91,6 +99,8 @@ export function useProfile(id, user) {
     setUserDescription,
     userCustomId,
     setUserCustomId,
+    profileTheme,
+    setProfileTheme,
     profileUserId,
     isOwnProfile,
     loading,
