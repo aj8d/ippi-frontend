@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
     PROFILE_BY_ID: (id) => `${API_BASE_URL}/auth/${id}`,
     UPDATE_PROFILE: `${API_BASE_URL}/auth/update-profile`,
     UPLOAD_IMAGE: `${API_BASE_URL}/auth/upload-profile-image`,
+    UPLOAD_BACKGROUND: `${API_BASE_URL}/auth/upload-profile-background`,
     STATS: `${API_BASE_URL}/auth/stats`,
     GOOGLE: `${API_BASE_URL}/auth/google`,
     GOOGLE_LOGIN: `${API_BASE_URL}/auth/google-login`,

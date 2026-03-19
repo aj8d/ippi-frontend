@@ -1,97 +1,61 @@
-const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+export const DEFAULT_PROFILE_THEME_PRESET = 'paper';
 
-export const DEFAULT_PROFILE_THEME = {
-  mode: 'gradient',
-  solidColor: '#239a3b',
-  gradientFrom: '#7bc96f',
-  gradientTo: '#196127',
-  gradientAngle: 135,
+export const PROFILE_THEME_PRESETS = {
+  paper: {
+    label: 'Paper',
+    style: {
+      background: 'linear-gradient(135deg, #f6f7f2 0%, #edeadf 100%)',
+    },
+  },
+  mint: {
+    label: 'Mint',
+    style: {
+      background: 'linear-gradient(140deg, #e7fff4 0%, #c8f0df 45%, #a8ddcc 100%)',
+    },
+  },
+  ocean: {
+    label: 'Ocean',
+    style: {
+      background: 'linear-gradient(135deg, #e8f4ff 0%, #c6dcff 50%, #9db9f6 100%)',
+    },
+  },
+  dusk: {
+    label: 'Dusk',
+    style: {
+      background: 'linear-gradient(145deg, #f6efe8 0%, #e4d5c9 55%, #c8b19a 100%)',
+    },
+  },
 };
 
-function isValidHex(value) {
-  return typeof value === 'string' && HEX_COLOR_RE.test(value);
+export function normalizeProfileThemePreset(rawPreset) {
+  if (typeof rawPreset !== 'string') {
+    return DEFAULT_PROFILE_THEME_PRESET;
+  }
+  return PROFILE_THEME_PRESETS[rawPreset] ? rawPreset : DEFAULT_PROFILE_THEME_PRESET;
 }
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
+export function normalizeProfileBackgroundUrl(rawUrl) {
+  if (typeof rawUrl !== 'string') {
+    return null;
+  }
+  const trimmed = rawUrl.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
-function toRgb(hex) {
-  const parsed = hex.replace('#', '');
-  return {
-    r: parseInt(parsed.slice(0, 2), 16),
-    g: parseInt(parsed.slice(2, 4), 16),
-    b: parseInt(parsed.slice(4, 6), 16),
-  };
+export function getThemePreviewStyle(themePreset) {
+  const presetKey = normalizeProfileThemePreset(themePreset);
+  return PROFILE_THEME_PRESETS[presetKey].style;
 }
 
-function rgbToHex({ r, g, b }) {
-  const toHex = (v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0');
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-}
-
-function mix(hexA, hexB, ratio) {
-  const a = toRgb(hexA);
-  const b = toRgb(hexB);
-  return rgbToHex({
-    r: a.r + (b.r - a.r) * ratio,
-    g: a.g + (b.g - a.g) * ratio,
-    b: a.b + (b.b - a.b) * ratio,
-  });
-}
-
-export function normalizeProfileTheme(rawTheme) {
-  const source = rawTheme && typeof rawTheme === 'object' ? rawTheme : {};
-  const mode = source.mode === 'solid' ? 'solid' : 'gradient';
-  const solidColor = isValidHex(source.solidColor) ? source.solidColor : DEFAULT_PROFILE_THEME.solidColor;
-  const gradientFrom = isValidHex(source.gradientFrom) ? source.gradientFrom : DEFAULT_PROFILE_THEME.gradientFrom;
-  const gradientTo = isValidHex(source.gradientTo) ? source.gradientTo : DEFAULT_PROFILE_THEME.gradientTo;
-  const angleRaw = Number(source.gradientAngle);
-  const gradientAngle = Number.isFinite(angleRaw)
-    ? clamp(Math.round(angleRaw), 0, 360)
-    : DEFAULT_PROFILE_THEME.gradientAngle;
-
-  return {
-    mode,
-    solidColor,
-    gradientFrom,
-    gradientTo,
-    gradientAngle,
-  };
-}
-
-export function buildCalendarTheme(profileTheme) {
-  const theme = normalizeProfileTheme(profileTheme);
-  const darkBase = '#0b1220';
-  const lightBase = '#ebedf0';
-
-  if (theme.mode === 'solid') {
+export function getProfileBackgroundStyle(themePreset, backgroundImageUrl) {
+  const imageUrl = normalizeProfileBackgroundUrl(backgroundImageUrl);
+  if (imageUrl) {
     return {
-      calendarEmpty: mix(lightBase, theme.solidColor, 0.18),
-      calendarLevels: [
-        mix(lightBase, theme.solidColor, 0.35),
-        mix(lightBase, theme.solidColor, 0.55),
-        mix(lightBase, theme.solidColor, 0.72),
-        mix(darkBase, theme.solidColor, 0.8),
-      ],
+      backgroundImage: `url(${imageUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
     };
   }
-
-  return {
-    calendarEmpty: mix(lightBase, theme.gradientFrom, 0.15),
-    calendarLevels: [
-      mix(theme.gradientFrom, theme.gradientTo, 0.15),
-      mix(theme.gradientFrom, theme.gradientTo, 0.4),
-      mix(theme.gradientFrom, theme.gradientTo, 0.65),
-      mix(theme.gradientFrom, theme.gradientTo, 0.9),
-    ],
-  };
-}
-
-export function toThemeCssBackground(profileTheme) {
-  const theme = normalizeProfileTheme(profileTheme);
-  if (theme.mode === 'solid') {
-    return theme.solidColor;
-  }
-  return `linear-gradient(${theme.gradientAngle}deg, ${theme.gradientFrom}, ${theme.gradientTo})`;
+  return getThemePreviewStyle(themePreset);
 }

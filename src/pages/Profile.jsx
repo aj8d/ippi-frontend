@@ -9,9 +9,12 @@ import UserAvatar from '../components/UserAvatar';
 import { UserPlus, UserMinus, MoreVertical, Edit, Upload, AtSign } from 'lucide-react';
 import { API_ENDPOINTS } from '../config';
 import {
-  DEFAULT_PROFILE_THEME,
-  normalizeProfileTheme,
-  toThemeCssBackground,
+  DEFAULT_PROFILE_THEME_PRESET,
+  getProfileBackgroundStyle,
+  getThemePreviewStyle,
+  normalizeProfileBackgroundUrl,
+  normalizeProfileThemePreset,
+  PROFILE_THEME_PRESETS,
 } from '../components/profile/profileThemes';
 import { useProfile } from '../hooks/useProfile';
 import { useProfileFollow } from '../hooks/useProfileFollow';
@@ -30,8 +33,10 @@ export default function Profile() {
     setUserName,
     userCustomId,
     setUserCustomId,
-    profileTheme,
-    setProfileTheme,
+    profileThemePreset,
+    setProfileThemePreset,
+    profileBackgroundUrl,
+    setProfileBackgroundUrl,
     profileUserId,
     isOwnProfile,
     loading,
@@ -53,9 +58,16 @@ export default function Profile() {
   const [customIdError, setCustomIdError] = useState('');
   const [editingCustomId, setEditingCustomId] = useState('');
   const [editingName, setEditingName] = useState('');
-  const [editingTheme, setEditingTheme] = useState(DEFAULT_PROFILE_THEME);
+  const [editingThemePreset, setEditingThemePreset] = useState(DEFAULT_PROFILE_THEME_PRESET);
+  const [editingBackgroundMode, setEditingBackgroundMode] = useState('theme');
+  const [editingBackgroundUrl, setEditingBackgroundUrl] = useState(null);
+  const [backgroundUploading, setBackgroundUploading] = useState(false);
+  const [backgroundUploadError, setBackgroundUploadError] = useState(null);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [addRowFunction, setAddRowFunction] = useState(null);
+
+  const profileBackgroundStyle = getProfileBackgroundStyle(profileThemePreset, profileBackgroundUrl);
+  const themePresetEntries = Object.entries(PROFILE_THEME_PRESETS);
 
   const handleSaveProfile = async () => {
     if (editingCustomId && editingCustomId.length < 3) {
@@ -74,20 +86,28 @@ export default function Profile() {
         body: JSON.stringify({
           name: editingName,
           customId: editingCustomId,
-          profileTheme: normalizeProfileTheme(editingTheme),
+          profileThemePreset: normalizeProfileThemePreset(editingThemePreset),
+          profileBackgroundUrl:
+            editingBackgroundMode === 'image' ? normalizeProfileBackgroundUrl(editingBackgroundUrl) : null,
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        const savedTheme = normalizeProfileTheme(data.profileTheme || data.profileThemePreset || editingTheme);
+        const savedThemePreset = normalizeProfileThemePreset(data.profileThemePreset || editingThemePreset);
+        const savedBackgroundUrl = normalizeProfileBackgroundUrl(
+          data.profileBackgroundUrl || (editingBackgroundMode === 'image' ? editingBackgroundUrl : null)
+        );
         setIsEditing(false);
         setUserName(data.name || '');
         setUserCustomId(data.customId || '');
-        setProfileTheme(savedTheme);
+        setProfileThemePreset(savedThemePreset);
+        setProfileBackgroundUrl(savedBackgroundUrl);
         setEditingCustomId('');
         setEditingName('');
-        setEditingTheme(savedTheme);
+        setEditingThemePreset(savedThemePreset);
+        setEditingBackgroundMode(savedBackgroundUrl ? 'image' : 'theme');
+        setEditingBackgroundUrl(savedBackgroundUrl);
         setCustomIdError('');
         await fetchLatestProfile(token);
       } else {
@@ -104,6 +124,42 @@ export default function Profile() {
       alert('プロフィール更新中にエラーが発生しました');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleProfileBackgroundUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !token) return;
+
+    setBackgroundUploading(true);
+    setBackgroundUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(API_ENDPOINTS.AUTH.UPLOAD_BACKGROUND, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const uploadedUrl = normalizeProfileBackgroundUrl(data.profileBackgroundUrl);
+        setProfileBackgroundUrl(uploadedUrl);
+        setEditingBackgroundUrl(uploadedUrl);
+        setEditingBackgroundMode('image');
+        await fetchLatestProfile(token);
+      } else {
+        setBackgroundUploadError('背景画像のアップロードに失敗しました');
+      }
+    } catch {
+      setBackgroundUploadError('背景画像アップロード中にエラーが発生しました');
+    } finally {
+      setBackgroundUploading(false);
     }
   };
 
@@ -164,7 +220,10 @@ export default function Profile() {
       </div>
 
       {/* メインコンテンツ */}
-      <div className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
+      <div
+        className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}
+        style={profileBackgroundStyle}
+      >
         <div className="p-4 md:p-5 max-w-6xl mx-auto">
           {/* プロフィールセクション */}
           <div className="mb-8 relative">
@@ -217,7 +276,9 @@ export default function Profile() {
                             setIsEditing(true);
                             setEditingCustomId(userCustomId);
                             setEditingName(userName);
-                            setEditingTheme(normalizeProfileTheme(profileTheme));
+                            setEditingThemePreset(normalizeProfileThemePreset(profileThemePreset));
+                            setEditingBackgroundUrl(normalizeProfileBackgroundUrl(profileBackgroundUrl));
+                            setEditingBackgroundMode(profileBackgroundUrl ? 'image' : 'theme');
                             setShowOptionsMenu(false);
                           }}
                           className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
@@ -292,7 +353,7 @@ export default function Profile() {
           <hr className="my-5" />
 
           {/* GitHub-style アクティビティカレンダーを追加 */}
-          <ActivityCalendar stats={stats || []} profileTheme={profileTheme} />
+          <ActivityCalendar stats={stats || []} />
 
           {/* 動的ウィジェットマネージャー（Swapy対応） */}
           <ProfileWidgetManager
@@ -315,7 +376,9 @@ export default function Profile() {
             setIsEditing(false);
             setEditingCustomId('');
             setEditingName('');
-            setEditingTheme(normalizeProfileTheme(profileTheme));
+            setEditingThemePreset(normalizeProfileThemePreset(profileThemePreset));
+            setEditingBackgroundUrl(normalizeProfileBackgroundUrl(profileBackgroundUrl));
+            setEditingBackgroundMode(profileBackgroundUrl ? 'image' : 'theme');
             setCustomIdError('');
           }}
         >
@@ -357,71 +420,65 @@ export default function Profile() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setEditingTheme((prev) => ({ ...prev, mode: 'solid' }))}
-                    className={`px-3 py-2 rounded text-sm border ${editingTheme.mode === 'solid' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    onClick={() => setEditingBackgroundMode('theme')}
+                    className={`px-3 py-2 rounded text-sm border ${editingBackgroundMode === 'theme' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
                   >
-                    単色
+                    テーマを使う
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditingTheme((prev) => ({ ...prev, mode: 'gradient' }))}
-                    className={`px-3 py-2 rounded text-sm border ${editingTheme.mode === 'gradient' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    onClick={() => setEditingBackgroundMode('image')}
+                    className={`px-3 py-2 rounded text-sm border ${editingBackgroundMode === 'image' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
                   >
-                    グラデーション
+                    画像を使う
                   </button>
                 </div>
 
-                {editingTheme.mode === 'solid' ? (
-                  <div>
-                    <label className="block text-xs mb-1 text-gray-600">ベース色</label>
-                    <input
-                      type="color"
-                      value={editingTheme.solidColor}
-                      onChange={(e) => setEditingTheme((prev) => ({ ...prev, solidColor: e.target.value }))}
-                      className="w-full h-10 rounded border border-gray-300 bg-white"
-                    />
+                {editingBackgroundMode === 'theme' ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {themePresetEntries.map(([presetKey, preset]) => (
+                      <button
+                        key={presetKey}
+                        type="button"
+                        onClick={() => setEditingThemePreset(presetKey)}
+                        className={`rounded border p-2 text-left transition ${editingThemePreset === presetKey ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'}`}
+                      >
+                        <div className="h-12 rounded border border-white/60" style={getThemePreviewStyle(presetKey)} />
+                        <p className="mt-1 text-xs font-medium text-gray-700">{preset.label}</p>
+                      </button>
+                    ))}
                   </div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-xs mb-1 text-gray-600">開始色</label>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingBackgroundUrl('/images/alarm-clock-microsoft.webp');
+                          setEditingBackgroundMode('image');
+                        }}
+                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm bg-gray-50 hover:bg-gray-100"
+                      >
+                        サンプル画像を使う
+                      </button>
+                      <label className="w-full block px-3 py-2 rounded border border-gray-300 text-sm bg-white hover:bg-gray-50 cursor-pointer text-center">
+                        {backgroundUploading ? '背景画像をアップロード中...' : '画像を選択してアップロード'}
                         <input
-                          type="color"
-                          value={editingTheme.gradientFrom}
-                          onChange={(e) => setEditingTheme((prev) => ({ ...prev, gradientFrom: e.target.value }))}
-                          className="w-full h-10 rounded border border-gray-300 bg-white"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfileBackgroundUpload}
+                          className="hidden"
+                          disabled={backgroundUploading}
                         />
-                      </div>
-                      <div>
-                        <label className="block text-xs mb-1 text-gray-600">終了色</label>
-                        <input
-                          type="color"
-                          value={editingTheme.gradientTo}
-                          onChange={(e) => setEditingTheme((prev) => ({ ...prev, gradientTo: e.target.value }))}
-                          className="w-full h-10 rounded border border-gray-300 bg-white"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs mb-1 text-gray-600">角度: {editingTheme.gradientAngle}°</label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="360"
-                        value={editingTheme.gradientAngle}
-                        onChange={(e) =>
-                          setEditingTheme((prev) => ({ ...prev, gradientAngle: Number(e.target.value) }))
-                        }
-                        className="w-full"
-                      />
+                      </label>
+                      {backgroundUploadError && <p className="text-xs text-red-500">{backgroundUploadError}</p>}
                     </div>
                   </>
                 )}
 
                 <div
                   className="h-14 rounded border border-gray-300"
-                  style={{ background: toThemeCssBackground(editingTheme) }}
+                  style={getProfileBackgroundStyle(editingThemePreset, editingBackgroundMode === 'image' ? editingBackgroundUrl : null)}
                 />
               </div>
             </div>
@@ -432,7 +489,9 @@ export default function Profile() {
                   setIsEditing(false);
                   setEditingCustomId('');
                   setEditingName('');
-                  setEditingTheme(normalizeProfileTheme(profileTheme));
+                  setEditingThemePreset(normalizeProfileThemePreset(profileThemePreset));
+                  setEditingBackgroundUrl(normalizeProfileBackgroundUrl(profileBackgroundUrl));
+                  setEditingBackgroundMode(profileBackgroundUrl ? 'image' : 'theme');
                   setCustomIdError('');
                 }}
                 className="px-5 py-2.5 bg-gray-600 text-white rounded cursor-pointer text-sm hover:bg-gray-700"

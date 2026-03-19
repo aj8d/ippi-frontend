@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { buildCalendarTheme } from './profile/profileThemes';
 
-export default function ActivityCalendar({ stats, profileTheme }) {
+const CALENDAR_EMPTY = '#ebedf0';
+const CALENDAR_LEVELS = ['#9be9a8', '#40c463', '#30a14e', '#216e39'];
+
+export default function ActivityCalendar({ stats }) {
   // Hooks
   const [tooltip, setTooltip] = useState(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
-  const theme = buildCalendarTheme(profileTheme);
 
   // 利用可能な年のリストを取得
   const getAvailableYears = () => {
@@ -55,11 +56,11 @@ export default function ActivityCalendar({ stats, profileTheme }) {
 
   // カラースケール関数（分数に基づいて色を決定）
   const getColor = (minutes) => {
-    if (minutes === 0) return theme.calendarEmpty;
-    if (minutes < 30) return theme.calendarLevels[0];
-    if (minutes < 60) return theme.calendarLevels[1];
-    if (minutes < 120) return theme.calendarLevels[2];
-    return theme.calendarLevels[3];
+    if (minutes === 0) return CALENDAR_EMPTY;
+    if (minutes < 30) return CALENDAR_LEVELS[0];
+    if (minutes < 60) return CALENDAR_LEVELS[1];
+    if (minutes < 120) return CALENDAR_LEVELS[2];
+    return CALENDAR_LEVELS[3];
   };
 
   // ツールチップテキスト
@@ -205,7 +206,7 @@ export default function ActivityCalendar({ stats, profileTheme }) {
                         day ? 'cursor-pointer' : 'cursor-default'
                       }`}
                       style={{
-                        backgroundColor: day ? getColor(day.minutes) : theme.calendarEmpty,
+                        backgroundColor: day ? getColor(day.minutes) : CALENDAR_EMPTY,
                       }}
                       onMouseEnter={(e) => {
                         if (day) {
