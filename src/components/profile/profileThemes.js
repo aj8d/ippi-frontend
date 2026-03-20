@@ -22,7 +22,7 @@ export const PROFILE_THEME_PRESETS = {
   dusk: {
     label: 'Dusk',
     style: {
-      background: 'linear-gradient(145deg, #f6efe8 0%, #e4d5c9 55%, #c8b19a 100%)',
+      background: 'linear-gradient(145deg, #fff0e1 0%, #ffcc9c 55%, #ff9f5a 100%)',
     },
   },
 };
