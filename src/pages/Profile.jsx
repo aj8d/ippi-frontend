@@ -96,7 +96,7 @@ export default function Profile() {
         const data = await response.json();
         const savedThemePreset = normalizeProfileThemePreset(data.profileThemePreset || editingThemePreset);
         const savedBackgroundUrl = normalizeProfileBackgroundUrl(
-          data.profileBackgroundUrl || (editingBackgroundMode === 'image' ? editingBackgroundUrl : null)
+          data.profileBackgroundUrl || (editingBackgroundMode === 'image' ? editingBackgroundUrl : null),
         );
         setIsEditing(false);
         setUserName(data.name || '');
@@ -478,7 +478,10 @@ export default function Profile() {
 
                 <div
                   className="h-14 rounded border border-gray-300"
-                  style={getProfileBackgroundStyle(editingThemePreset, editingBackgroundMode === 'image' ? editingBackgroundUrl : null)}
+                  style={getProfileBackgroundStyle(
+                    editingThemePreset,
+                    editingBackgroundMode === 'image' ? editingBackgroundUrl : null,
+                  )}
                 />
               </div>
             </div>

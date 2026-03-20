@@ -259,7 +259,7 @@ export default function ActivityCalendar({ stats }) {
       <div className="mt-3.75 flex items-center gap-2.5 text-xs">
         <span>Less</span>
         <div className="flex gap-0.5">
-          {[theme.calendarEmpty, ...theme.calendarLevels].map((color) => (
+          {[CALENDAR_EMPTY, ...CALENDAR_LEVELS].map((color) => (
             <div
               key={color}
               className="w-2.5 h-2.5 border border-gray-300 rounded-sm"
