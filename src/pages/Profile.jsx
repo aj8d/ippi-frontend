@@ -6,8 +6,16 @@ import Sidebar from '../components/Sidebar';
 import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import ProfileWidgetManager from '../components/ProfileWidgetManager';
 import UserAvatar from '../components/UserAvatar';
-import { UserPlus, UserMinus, MoreVertical, Edit, Upload, AtSign } from 'lucide-react';
+import { UserPlus, UserMinus, Edit, Upload, AtSign } from 'lucide-react';
 import { API_ENDPOINTS } from '../config';
+import {
+  DEFAULT_PROFILE_THEME_PRESET,
+  getProfileBackgroundStyle,
+  getThemePreviewStyle,
+  normalizeProfileBackgroundUrl,
+  normalizeProfileThemePreset,
+  PROFILE_THEME_PRESETS,
+} from '../components/profile/profileThemes';
 import { useProfile } from '../hooks/useProfile';
 import { useProfileFollow } from '../hooks/useProfileFollow';
 import { useStats } from '../hooks/useStats';
@@ -25,6 +33,10 @@ export default function Profile() {
     setUserName,
     userCustomId,
     setUserCustomId,
+    profileThemePreset,
+    setProfileThemePreset,
+    profileBackgroundUrl,
+    setProfileBackgroundUrl,
     profileUserId,
     isOwnProfile,
     loading,
@@ -46,8 +58,16 @@ export default function Profile() {
   const [customIdError, setCustomIdError] = useState('');
   const [editingCustomId, setEditingCustomId] = useState('');
   const [editingName, setEditingName] = useState('');
+  const [editingThemePreset, setEditingThemePreset] = useState(DEFAULT_PROFILE_THEME_PRESET);
+  const [editingBackgroundMode, setEditingBackgroundMode] = useState('theme');
+  const [editingBackgroundUrl, setEditingBackgroundUrl] = useState(null);
+  const [backgroundUploading, setBackgroundUploading] = useState(false);
+  const [backgroundUploadError, setBackgroundUploadError] = useState(null);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [addRowFunction, setAddRowFunction] = useState(null);
+
+  const profileBackgroundStyle = getProfileBackgroundStyle(profileThemePreset, profileBackgroundUrl);
+  const themePresetEntries = Object.entries(PROFILE_THEME_PRESETS);
 
   const handleSaveProfile = async () => {
     if (editingCustomId && editingCustomId.length < 3) {
@@ -66,18 +86,30 @@ export default function Profile() {
         body: JSON.stringify({
           name: editingName,
           customId: editingCustomId,
+          profileThemePreset: normalizeProfileThemePreset(editingThemePreset),
+          profileBackgroundUrl:
+            editingBackgroundMode === 'image' ? normalizeProfileBackgroundUrl(editingBackgroundUrl) : null,
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
+        const savedThemePreset = normalizeProfileThemePreset(data.profileThemePreset || editingThemePreset);
+        const savedBackgroundUrl = normalizeProfileBackgroundUrl(
+          data.profileBackgroundUrl || (editingBackgroundMode === 'image' ? editingBackgroundUrl : null),
+        );
         setIsEditing(false);
         setUserName(data.name || '');
         setUserCustomId(data.customId || '');
+        setProfileThemePreset(savedThemePreset);
+        setProfileBackgroundUrl(savedBackgroundUrl);
         setEditingCustomId('');
         setEditingName('');
+        setEditingThemePreset(savedThemePreset);
+        setEditingBackgroundMode(savedBackgroundUrl ? 'image' : 'theme');
+        setEditingBackgroundUrl(savedBackgroundUrl);
         setCustomIdError('');
-        await fetchLatestProfile();
+        await fetchLatestProfile(token);
       } else {
         const errorText = await response.text();
         console.error('Update error:', errorText);
@@ -92,6 +124,42 @@ export default function Profile() {
       alert('プロフィール更新中にエラーが発生しました');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleProfileBackgroundUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !token) return;
+
+    setBackgroundUploading(true);
+    setBackgroundUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(API_ENDPOINTS.AUTH.UPLOAD_BACKGROUND, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const uploadedUrl = normalizeProfileBackgroundUrl(data.profileBackgroundUrl);
+        setProfileBackgroundUrl(uploadedUrl);
+        setEditingBackgroundUrl(uploadedUrl);
+        setEditingBackgroundMode('image');
+        await fetchLatestProfile(token);
+      } else {
+        setBackgroundUploadError('背景画像のアップロードに失敗しました');
+      }
+    } catch {
+      setBackgroundUploadError('背景画像アップロード中にエラーが発生しました');
+    } finally {
+      setBackgroundUploading(false);
     }
   };
 
@@ -117,7 +185,7 @@ export default function Profile() {
       if (response.ok) {
         const data = await response.json();
         setProfileImageUrl(data.profileImageUrl);
-        await fetchLatestProfile();
+        await fetchLatestProfile(token);
       } else {
         console.error('Upload error');
         setUploadError('画像のアップロードに失敗しました');
@@ -152,7 +220,10 @@ export default function Profile() {
       </div>
 
       {/* メインコンテンツ */}
-      <div className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}>
+      <div
+        className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}
+        style={profileBackgroundStyle}
+      >
         <div className="p-4 md:p-5 max-w-6xl mx-auto">
           {/* プロフィールセクション */}
           <div className="mb-8 relative">
@@ -190,10 +261,9 @@ export default function Profile() {
                 <div className="relative">
                   <button
                     onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    className="flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
-                    <MoreVertical className="w-5 h-5" />
-                    <span>オプション</span>
+                    <span>プロフィールを編集</span>
                   </button>
 
                   {showOptionsMenu && (
@@ -205,6 +275,9 @@ export default function Profile() {
                             setIsEditing(true);
                             setEditingCustomId(userCustomId);
                             setEditingName(userName);
+                            setEditingThemePreset(normalizeProfileThemePreset(profileThemePreset));
+                            setEditingBackgroundUrl(normalizeProfileBackgroundUrl(profileBackgroundUrl));
+                            setEditingBackgroundMode(profileBackgroundUrl ? 'image' : 'theme');
                             setShowOptionsMenu(false);
                           }}
                           className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
@@ -302,6 +375,9 @@ export default function Profile() {
             setIsEditing(false);
             setEditingCustomId('');
             setEditingName('');
+            setEditingThemePreset(normalizeProfileThemePreset(profileThemePreset));
+            setEditingBackgroundUrl(normalizeProfileBackgroundUrl(profileBackgroundUrl));
+            setEditingBackgroundMode(profileBackgroundUrl ? 'image' : 'theme');
             setCustomIdError('');
           }}
         >
@@ -337,12 +413,87 @@ export default function Profile() {
               <p className="text-xs text-gray-500 mt-1">30文字以内で入力してください</p>
             </div>
 
+            <div className="mb-5">
+              <label className="block mb-2 font-bold">テーマ</label>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingBackgroundMode('theme')}
+                    className={`px-3 py-2 rounded text-sm border ${editingBackgroundMode === 'theme' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                  >
+                    テーマを使う
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingBackgroundMode('image')}
+                    className={`px-3 py-2 rounded text-sm border ${editingBackgroundMode === 'image' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                  >
+                    画像を使う
+                  </button>
+                </div>
+
+                {editingBackgroundMode === 'theme' ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {themePresetEntries.map(([presetKey, preset]) => (
+                      <button
+                        key={presetKey}
+                        type="button"
+                        onClick={() => setEditingThemePreset(presetKey)}
+                        className={`rounded border p-2 text-left transition ${editingThemePreset === presetKey ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'}`}
+                      >
+                        <div className="h-12 rounded border border-white/60" style={getThemePreviewStyle(presetKey)} />
+                        <p className="mt-1 text-xs font-medium text-gray-700">{preset.label}</p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingBackgroundUrl('/images/alarm-clock-microsoft.webp');
+                          setEditingBackgroundMode('image');
+                        }}
+                        className="w-full px-3 py-2 rounded border border-gray-300 text-sm bg-gray-50 hover:bg-gray-100"
+                      >
+                        サンプル画像を使う
+                      </button>
+                      <label className="w-full block px-3 py-2 rounded border border-gray-300 text-sm bg-white hover:bg-gray-50 cursor-pointer text-center">
+                        {backgroundUploading ? '背景画像をアップロード中...' : '画像を選択してアップロード'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfileBackgroundUpload}
+                          className="hidden"
+                          disabled={backgroundUploading}
+                        />
+                      </label>
+                      {backgroundUploadError && <p className="text-xs text-red-500">{backgroundUploadError}</p>}
+                    </div>
+                  </>
+                )}
+
+                <div
+                  className="h-14 rounded border border-gray-300"
+                  style={getProfileBackgroundStyle(
+                    editingThemePreset,
+                    editingBackgroundMode === 'image' ? editingBackgroundUrl : null,
+                  )}
+                />
+              </div>
+            </div>
+
             <div className="flex gap-2.5 justify-end">
               <button
                 onClick={() => {
                   setIsEditing(false);
                   setEditingCustomId('');
                   setEditingName('');
+                  setEditingThemePreset(normalizeProfileThemePreset(profileThemePreset));
+                  setEditingBackgroundUrl(normalizeProfileBackgroundUrl(profileBackgroundUrl));
+                  setEditingBackgroundMode(profileBackgroundUrl ? 'image' : 'theme');
                   setCustomIdError('');
                 }}
                 className="px-5 py-2.5 bg-gray-600 text-white rounded cursor-pointer text-sm hover:bg-gray-700"
@@ -352,7 +503,7 @@ export default function Profile() {
               <button
                 onClick={handleSaveProfile}
                 disabled={isSaving}
-                className={`px-5 py-2.5 bg-green-500 text-white rounded text-sm font-bold hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed`}
+                className="px-5 py-2.5 bg-green-500 text-white rounded text-sm font-bold hover:bg-green-600 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSaving ? '保存中...' : '保存'}
               </button>

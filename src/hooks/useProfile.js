@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS } from '../config';
+import {
+  DEFAULT_PROFILE_THEME_PRESET,
+  normalizeProfileBackgroundUrl,
+  normalizeProfileThemePreset,
+} from '../components/profile/profileThemes';
 
 export function useProfile(id, user) {
   const navigate = useNavigate();
@@ -8,6 +13,8 @@ export function useProfile(id, user) {
   const [userName, setUserName] = useState('');
   const [userDescription, setUserDescription] = useState('');
   const [userCustomId, setUserCustomId] = useState('');
+  const [profileThemePreset, setProfileThemePreset] = useState(DEFAULT_PROFILE_THEME_PRESET);
+  const [profileBackgroundUrl, setProfileBackgroundUrl] = useState(null);
   const [profileUserId, setProfileUserId] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +51,8 @@ export function useProfile(id, user) {
           setUserName(data.name);
           setUserDescription(data.description || '');
           setUserCustomId(data.customId || '');
+          setProfileThemePreset(normalizeProfileThemePreset(data.profileThemePreset));
+          setProfileBackgroundUrl(normalizeProfileBackgroundUrl(data.profileBackgroundUrl));
           setProfileUserId(data.userId);
         } else {
           console.error('Failed to fetch profile');
@@ -76,6 +85,8 @@ export function useProfile(id, user) {
         setUserName(data.name);
         setUserDescription(data.description || '');
         setUserCustomId(data.customId || '');
+        setProfileThemePreset(normalizeProfileThemePreset(data.profileThemePreset));
+        setProfileBackgroundUrl(normalizeProfileBackgroundUrl(data.profileBackgroundUrl));
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -91,6 +102,10 @@ export function useProfile(id, user) {
     setUserDescription,
     userCustomId,
     setUserCustomId,
+    profileThemePreset,
+    setProfileThemePreset,
+    profileBackgroundUrl,
+    setProfileBackgroundUrl,
     profileUserId,
     isOwnProfile,
     loading,
