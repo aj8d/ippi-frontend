@@ -6,7 +6,7 @@ import Sidebar from '../components/Sidebar';
 import MobileBottomNav from '../components/mobile/MobileBottomNav';
 import ProfileWidgetManager from '../components/ProfileWidgetManager';
 import UserAvatar from '../components/UserAvatar';
-import { UserPlus, UserMinus, MoreVertical, Edit, Upload, AtSign } from 'lucide-react';
+import { UserPlus, UserMinus, Edit, Upload, AtSign } from 'lucide-react';
 import { API_ENDPOINTS } from '../config';
 import {
   DEFAULT_PROFILE_THEME_PRESET,
@@ -261,10 +261,9 @@ export default function Profile() {
                 <div className="relative">
                   <button
                     onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                    className="flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
-                    <MoreVertical className="w-5 h-5" />
-                    <span>オプション</span>
+                    <span>プロフィールを編集</span>
                   </button>
 
                   {showOptionsMenu && (
