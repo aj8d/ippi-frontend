@@ -224,7 +224,7 @@ export default function Profile() {
         className={`flex-1 transition-all duration-300 pb-20 md:pb-0 ${sidebarOpen ? 'md:ml-64' : 'md:ml-20'}`}
         style={profileBackgroundStyle}
       >
-        <div className="p-4 md:p-5 max-w-6xl mx-auto">
+        <div className="p-4 md:p-5 max-w-6xl mx-auto bg-white/70 backdrop-blur-sm rounded-xl">
           {/* プロフィールセクション */}
           <div className="mb-8 relative">
             {/* 右上のボタン（フォローボタンまたはオプションメニュー） */}
@@ -261,7 +261,7 @@ export default function Profile() {
                 <div className="relative">
                   <button
                     onClick={() => setShowOptionsMenu(!showOptionsMenu)}
-                    className="flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 font-semibold rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
                     <span>プロフィールを編集</span>
                   </button>
