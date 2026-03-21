@@ -22,13 +22,13 @@ export default function Widget({
     // 他ユーザーの場合は何も表示しない
     if (!isOwnProfile) {
       return (
-        <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-auto min-h-[130px] flex items-center justify-center"></div>
+        <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 min-h-[150px] flex items-center justify-center"></div>
       );
     }
 
     // 自分のプロフィールの場合はドロップダウンを表示
     return (
-      <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 h-auto min-h-[130px] flex items-center justify-center relative group">
+      <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl p-4 min-h-[150px] flex items-center justify-center relative group">
         <select
           value={widget.type}
           onChange={(e) => onTypeChange(widget.id, e.target.value)}
@@ -60,7 +60,7 @@ export default function Widget({
   if (widget.type === WIDGET_TYPES.TEXT) {
     return (
       <div
-        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
+        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[150px]`}
       >
         {isOwnProfile && (
           <div className="flex items-center gap-2 mb-2">
@@ -68,7 +68,7 @@ export default function Widget({
             <select
               value={widget.type}
               onChange={(e) => onTypeChange(widget.id, e.target.value)}
-              className="text-sm bg-white dark:bg-gray-800 rounded px-2 py-1 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
+              className="text-xs bg-white dark:bg-gray-800 rounded px-2 py-0.5 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"
             >
               {Object.entries(WIDGET_INFO).map(([type, info]) => (
                 <option key={type} value={type}>
@@ -143,7 +143,7 @@ export default function Widget({
 
     // 画像コンテンツ
     const imageContent = widget.imageUrl ? (
-      <div className="relative w-full h-full min-h-[130px]">
+      <div className="relative w-full h-full min-h-[150px]">
         <img
           src={widget.imageUrl}
           alt="ウィジェット画像"
@@ -165,18 +165,18 @@ export default function Widget({
         )}
       </div>
     ) : isOwnProfile ? (
-      <label className="flex flex-col items-center justify-center w-full h-full min-h-[130px] cursor-pointer p-4">
+      <label className="flex flex-col items-center justify-center w-full h-full min-h-[150px] cursor-pointer p-4">
         <Upload className={`w-8 h-8 ${info.textColor} mb-2`} />
         <span className="text-sm text-gray-600 dark:text-gray-400">画像をアップロード</span>
         <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
       </label>
     ) : (
-      <div className="flex items-center justify-center w-full h-full min-h-[130px] bg-gray-100 dark:bg-gray-700"></div>
+      <div className="flex items-center justify-center w-full h-full min-h-[150px] bg-gray-100 dark:bg-gray-700"></div>
     );
 
     return (
       <div
-        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
+        className={`bg-gradient-to-br ${info.color} dark:from-gray-900/20 dark:to-gray-800/20 rounded-2xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[150px]`}
       >
         {isOwnProfile && (
           <div className="absolute top-2 left-2 z-10">
@@ -259,7 +259,7 @@ export default function Widget({
     <div
       className={`bg-gradient-to-br ${info.color} dark:from-${info.color.split('-')[1]}-900/20 dark:to-${
         info.color.split('-')[1]
-      }-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[130px]`}
+      }-800/20 rounded-2xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 relative group min-h-[150px] flex flex-col`}
     >
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-2">
@@ -289,11 +289,13 @@ export default function Widget({
           </button>
         )}
       </div>
-      <div className={`text-3xl font-bold ${info.textColor}`}>
-        {value}
-        <span className="text-lg font-normal ml-1">{unit}</span>
+      <div className="flex-1 flex flex-col justify-center">
+        <div className={`text-3xl font-bold ${info.textColor}`}>
+          {value}
+          <span className="text-lg font-normal ml-1">{unit}</span>
+        </div>
+        {subtitle && <div className="text-sm text-gray-500 dark:text-gray-500 mt-1">{subtitle}</div>}
       </div>
-      {subtitle && <div className="text-sm text-gray-500 dark:text-gray-500 mt-1">{subtitle}</div>}
     </div>
   );
 }
