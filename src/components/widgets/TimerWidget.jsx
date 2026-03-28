@@ -1,11 +1,147 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Square, SkipForward, Check } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { createRoot } from 'react-dom/client';
+import { Play, Pause, Square, SkipForward, Check, PictureInPicture2 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { useTimer } from '../../contexts/TimerContext';
 import { useTimerCompletionNotification } from '../../hooks/useTimerCompletionNotification';
 import { API_ENDPOINTS } from '../../config';
 import { DEFAULT_SECTIONS, getTimeFromSection, formatTime, playAlarmSound } from './timerUtils';
 import TimerWarningModal from '../TimerWarningModal';
+
+function copyDocumentStyles(sourceDocument, targetDocument) {
+  const styleNodes = sourceDocument.querySelectorAll('style, link[rel="stylesheet"]');
+
+  styleNodes.forEach((node) => {
+    targetDocument.head.appendChild(node.cloneNode(true));
+  });
+}
+
+function TimerControls({
+  hasStarted,
+  onStart,
+  onStop,
+  onTogglePlayPause,
+  isRunning,
+  isIntervalMode,
+  onSkip,
+  isFlowmodoroMode,
+  isWorkPhase,
+  onFlowmodoroWorkComplete,
+  className = '',
+}) {
+  const buttonClass = 'flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all';
+
+  return (
+    <div className={`flex gap-2 justify-center flex-shrink-0 flex-wrap ${className}`}>
+      {!hasStarted ? (
+        <button onClick={onStart} className={buttonClass}>
+          <Play size={16} />
+        </button>
+      ) : (
+        <>
+          <button onClick={onStop} className={buttonClass}>
+            <Square size={16} />
+          </button>
+          <button onClick={onTogglePlayPause} className={buttonClass}>
+            {isRunning ? <Pause size={16} /> : <Play size={16} />}
+          </button>
+
+          {isIntervalMode && (
+            <button onClick={onSkip} className={buttonClass}>
+              <SkipForward size={16} />
+            </button>
+          )}
+
+          {isFlowmodoroMode && isWorkPhase && (
+            <button onClick={onFlowmodoroWorkComplete} className={buttonClass}>
+              <Check size={16} />
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function TimerPiPContent({
+  badgeStyle,
+  isIntervalMode,
+  hasStarted,
+  isRunning,
+  isFlowmodoroMode,
+  isWorkPhase,
+  currentCycle,
+  totalCycles,
+  currentSectionIndex,
+  sectionsLength,
+  radius,
+  circumference,
+  bgColor,
+  progressColor,
+  strokeDashoffset,
+  displayValue,
+  onStart,
+  onStop,
+  onTogglePlayPause,
+  onSkip,
+  onFlowmodoroWorkComplete,
+}) {
+  return (
+    <div className="h-screen w-screen bg-white text-gray-900 flex items-center justify-center p-4">
+      <div className="w-full h-full rounded-3xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-sm flex flex-col items-center justify-center p-5">
+        <div className="mb-3 text-center">
+          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeStyle.className}`}>
+            {badgeStyle.label}
+          </span>
+          {isIntervalMode && (
+            <div className="text-xs text-gray-500 mt-2">
+              サイクル {currentCycle} / {totalCycles} | セクション {currentSectionIndex + 1} / {sectionsLength}
+            </div>
+          )}
+        </div>
+
+        <div className="relative flex items-center justify-center w-full max-w-[280px] aspect-square">
+          <svg className="transform -rotate-90 w-full h-full" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r={radius} fill="none" stroke={bgColor} strokeWidth="12" />
+            <circle
+              cx="100"
+              cy="100"
+              r={radius}
+              fill="none"
+              stroke={progressColor}
+              strokeWidth="12"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              className="transition-all duration-100"
+            />
+          </svg>
+
+          <div className="absolute inset-0 flex items-center justify-center px-3">
+            <div className="font-mono text-4xl sm:text-5xl font-bold leading-none" style={{ color: progressColor }}>
+              {displayValue}
+            </div>
+          </div>
+        </div>
+
+        <TimerControls
+          hasStarted={hasStarted}
+          onStart={onStart}
+          onStop={onStop}
+          onTogglePlayPause={onTogglePlayPause}
+          isRunning={isRunning}
+          isIntervalMode={isIntervalMode}
+          onSkip={onSkip}
+          isFlowmodoroMode={isFlowmodoroMode}
+          isWorkPhase={isWorkPhase}
+          onFlowmodoroWorkComplete={onFlowmodoroWorkComplete}
+          className="mt-5"
+        />
+      </div>
+    </div>
+  );
+}
 
 function TimerWidget({ settings = {} }) {
   const { token } = useAuth();
@@ -44,6 +180,12 @@ function TimerWidget({ settings = {} }) {
   const totalCyclesRef = useRef(totalCycles);
   const currentSectionIndexRef = useRef(0); // 現在のセクションインデックスを追跡
   const isWorkPhaseRef = useRef(true); // 現在の作業/休憩フェーズを追跡
+  const pipWindowRef = useRef(null);
+  const pipRootRef = useRef(null);
+  const [isPiPOpen, setIsPiPOpen] = useState(false);
+  const [stopModalSource, setStopModalSource] = useState('main');
+  const [tooltip, setTooltip] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
   // バックグラウンドでも正確に動作させるため、開始時刻を記録
   const phaseStartTimeRef = useRef(null); // フェーズ開始時刻（ミリ秒）
@@ -456,6 +598,8 @@ function TimerWidget({ settings = {} }) {
   const radius = 80;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
+  const isPiPSupported =
+    typeof window !== 'undefined' && typeof window.documentPictureInPicture?.requestWindow === 'function';
 
   /**
    * 表示モードに応じた値を返す
@@ -568,7 +712,8 @@ function TimerWidget({ settings = {} }) {
   /**
    * 停止ボタンクリック時の処理（確認モーダルを表示）
    */
-  const handleStopClick = useCallback(() => {
+  const handleStopClick = useCallback((source = 'main') => {
+    setStopModalSource(source);
     setShowStopConfirmModal(true);
   }, []);
 
@@ -752,9 +897,187 @@ function TimerWidget({ settings = {} }) {
   };
 
   const badgeStyle = getBadgeStyle();
+  const displayValue = getDisplayValue();
+
+  const renderPiPWindow = useCallback(() => {
+    if (!pipRootRef.current || !pipWindowRef.current) {
+      return;
+    }
+
+    pipRootRef.current.render(
+      <TimerPiPContent
+        badgeStyle={badgeStyle}
+        isIntervalMode={isIntervalMode}
+        hasStarted={hasStarted}
+        isRunning={isRunning}
+        isFlowmodoroMode={isFlowmodoroMode}
+        isWorkPhase={isWorkPhase}
+        currentCycle={currentCycle}
+        totalCycles={totalCycles}
+        currentSectionIndex={currentSectionIndex}
+        sectionsLength={sections.length}
+        radius={radius}
+        circumference={circumference}
+        bgColor={bgColor}
+        progressColor={progressColor}
+        strokeDashoffset={strokeDashoffset}
+        displayValue={displayValue}
+        onStart={handleStart}
+        onStop={() => handleStopClick('pip')}
+        onTogglePlayPause={togglePlayPause}
+        onSkip={handleSkip}
+        onFlowmodoroWorkComplete={handleFlowmodoroWorkComplete}
+      />,
+    );
+  }, [
+    badgeStyle,
+    isIntervalMode,
+    hasStarted,
+    isRunning,
+    isFlowmodoroMode,
+    isWorkPhase,
+    currentCycle,
+    totalCycles,
+    currentSectionIndex,
+    sections.length,
+    radius,
+    circumference,
+    bgColor,
+    progressColor,
+    strokeDashoffset,
+    displayValue,
+    handleStart,
+    handleStopClick,
+    togglePlayPause,
+    handleSkip,
+    handleFlowmodoroWorkComplete,
+  ]);
+
+  const closePiPWindow = useCallback(() => {
+    if (pipRootRef.current) {
+      pipRootRef.current.unmount();
+      pipRootRef.current = null;
+    }
+
+    if (pipWindowRef.current && !pipWindowRef.current.closed) {
+      pipWindowRef.current.close();
+    }
+
+    pipWindowRef.current = null;
+    setIsPiPOpen(false);
+  }, []);
+
+  const openPiPWindow = useCallback(async () => {
+    if (!isPiPSupported) {
+      return;
+    }
+
+    if (pipWindowRef.current && !pipWindowRef.current.closed) {
+      pipWindowRef.current.focus();
+      return;
+    }
+
+    try {
+      const pipWindow = await window.documentPictureInPicture.requestWindow({
+        width: 360,
+        height: 420,
+      });
+
+      pipWindow.document.title = 'Timer';
+      pipWindow.document.body.innerHTML = '';
+      pipWindow.document.body.style.margin = '0';
+      copyDocumentStyles(document, pipWindow.document);
+
+      const container = pipWindow.document.createElement('div');
+      container.id = 'timer-pip-root';
+      container.style.width = '100vw';
+      container.style.height = '100vh';
+      pipWindow.document.body.appendChild(container);
+
+      pipWindow.addEventListener(
+        'pagehide',
+        () => {
+          if (pipRootRef.current) {
+            pipRootRef.current.unmount();
+            pipRootRef.current = null;
+          }
+          setShowStopConfirmModal(false);
+          setStopModalSource('main');
+          pipWindowRef.current = null;
+          setIsPiPOpen(false);
+        },
+        { once: true },
+      );
+
+      pipWindowRef.current = pipWindow;
+      pipRootRef.current = createRoot(container);
+      setIsPiPOpen(true);
+    } catch (error) {
+      console.error('PiPウィンドウを開けませんでした:', error);
+    }
+  }, [isPiPSupported]);
+
+  const togglePiPWindow = useCallback(() => {
+    if (isPiPOpen) {
+      closePiPWindow();
+      return;
+    }
+
+    openPiPWindow();
+  }, [closePiPWindow, isPiPOpen, openPiPWindow]);
+
+  useEffect(() => {
+    renderPiPWindow();
+  }, [renderPiPWindow]);
+
+  useEffect(() => {
+    return () => {
+      if (pipRootRef.current) {
+        pipRootRef.current.unmount();
+        pipRootRef.current = null;
+      }
+
+      if (pipWindowRef.current && !pipWindowRef.current.closed) {
+        pipWindowRef.current.close();
+      }
+
+      pipWindowRef.current = null;
+    };
+  }, []);
+
+  const handleTooltip = useCallback((text, pos = null) => {
+    setTooltip(text);
+    if (pos) {
+      setTooltipPos(pos);
+    }
+  }, []);
+
+  const stopModalPortalTarget =
+    stopModalSource === 'pip' && pipWindowRef.current?.document?.body ? pipWindowRef.current.document.body : document.body;
 
   return (
-    <div className="flex flex-col items-center justify-center h-full p-4 min-h-[200px] @container">
+    <div className="relative flex flex-col items-center justify-center h-full p-4 min-h-[200px] @container">
+      {isPiPSupported && (
+        <button
+          onClick={togglePiPWindow}
+          onMouseEnter={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            handleTooltip(isPiPOpen ? 'PiPを閉じる' : 'PiPで表示', {
+              x: rect.left + rect.width / 2,
+              y: rect.bottom + 12,
+            });
+          }}
+          onMouseLeave={() => handleTooltip(null)}
+          className={`absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
+            isPiPOpen
+              ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700'
+              : 'border-gray-200 bg-white text-gray-500 hover:border-blue-200 hover:text-blue-600'
+          }`}
+        >
+          <PictureInPicture2 size={16} />
+        </button>
+      )}
+
       {/* フェーズ表示 */}
       <div className="mb-2 text-center">
         <span className={`text-xs font-semibold px-3 py-1 rounded-full ${badgeStyle.className}`}>
@@ -793,59 +1116,23 @@ function TimerWidget({ settings = {} }) {
             className="font-mono font-bold leading-none @[150px]:text-2xl @[200px]:text-3xl @[300px]:text-5xl @[400px]:text-6xl @[500px]:text-7xl text-xl"
             style={{ color: progressColor }}
           >
-            {getDisplayValue()}
+            {displayValue}
           </div>
         </div>
       </div>
 
-      {/* コントロールボタン */}
-      <div className="flex gap-2 justify-center flex-shrink-0">
-        {!hasStarted ? (
-          // 開始前：スタートボタン
-          <button
-            onClick={handleStart}
-            className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-          >
-            <Play size={16} />
-          </button>
-        ) : (
-          // 実行中・一時停止中：コントロールボタン
-          <>
-            <button
-              onClick={handleStopClick}
-              className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-            >
-              <Square size={16} />
-            </button>
-            <button
-              onClick={togglePlayPause}
-              className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-            >
-              {isRunning ? <Pause size={16} /> : <Play size={16} />}
-            </button>
-
-            {/* スキップボタンはポモドーロモードのみ */}
-            {isIntervalMode && (
-              <button
-                onClick={handleSkip}
-                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-              >
-                <SkipForward size={16} />
-              </button>
-            )}
-
-            {/* フローモドーロの作業完了ボタン */}
-            {isFlowmodoroMode && isWorkPhase && (
-              <button
-                onClick={handleFlowmodoroWorkComplete}
-                className="flex items-center gap-1 px-3 py-2 bg-gray-200 text-black rounded-full text-sm font-semibold hover:bg-gray-300 transition-all"
-              >
-                <Check size={16} />
-              </button>
-            )}
-          </>
-        )}
-      </div>
+      <TimerControls
+        hasStarted={hasStarted}
+        onStart={handleStart}
+        onStop={handleStopClick}
+        onTogglePlayPause={togglePlayPause}
+        isRunning={isRunning}
+        isIntervalMode={isIntervalMode}
+        onSkip={handleSkip}
+        isFlowmodoroMode={isFlowmodoroMode}
+        isWorkPhase={isWorkPhase}
+        onFlowmodoroWorkComplete={handleFlowmodoroWorkComplete}
+      />
 
       {/* 停止確認モーダル */}
       <TimerWarningModal
@@ -853,7 +1140,31 @@ function TimerWidget({ settings = {} }) {
         onClose={() => setShowStopConfirmModal(false)}
         onConfirm={handleStopConfirmed}
         actionType="stop"
+        portalTarget={stopModalPortalTarget}
       />
+
+      {tooltip &&
+        createPortal(
+          <div
+            className="fixed bg-gray-800 text-white px-2.5 py-1.5 rounded text-xs font-medium whitespace-nowrap pointer-events-none z-[9999] shadow-md"
+            style={{
+              left: `${tooltipPos.x}px`,
+              top: `${tooltipPos.y}px`,
+              transform: 'translate(-50%, 0)',
+            }}
+          >
+            {tooltip}
+            <div
+              className="absolute w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"
+              style={{
+                left: '50%',
+                top: '-4px',
+                transform: 'translateX(-50%)',
+              }}
+            />
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

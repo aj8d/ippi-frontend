@@ -1,8 +1,12 @@
 import { createPortal } from 'react-dom';
 import { AlertTriangle, X } from 'lucide-react';
 
-function TimerWarningModal({ isOpen, onClose, onConfirm, actionType = 'navigate' }) {
+function TimerWarningModal({ isOpen, onClose, onConfirm, actionType = 'navigate', portalTarget }) {
   if (!isOpen) return null;
+
+  const target = portalTarget || document.body;
+
+  if (!target) return null;
 
   const getMessage = () => {
     switch (actionType) {
@@ -69,7 +73,7 @@ function TimerWarningModal({ isOpen, onClose, onConfirm, actionType = 'navigate'
         </div>
       </div>
     </div>,
-    document.body,
+    target,
   );
 }
 
