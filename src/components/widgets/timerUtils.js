@@ -21,34 +21,42 @@ export function playAlarmSound(volume = 0.5) {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
 
-    // 2回の短いビープ音を生成（ぴぴっ）
+    // 1回の通知音は2回の短いビープ音で構成し、それを2回連続で再生する
     const beepDuration = 0.1; // 各ビープの長さ（秒）
     const beepGap = 0.08; // ビープ間の間隔（秒）
+    const sequenceGap = 0.85; // 通知音同士の間隔（秒）
     const frequency = 1200; // 高めの周波数（ぴっという音）
+    const beepsPerSequence = 2;
+    const sequenceCount = 2;
+    const sequenceDuration = beepDuration * beepsPerSequence + beepGap * (beepsPerSequence - 1);
 
-    for (let i = 0; i < 2; i++) {
-      const startTime = now + i * (beepDuration + beepGap);
+    for (let sequenceIndex = 0; sequenceIndex < sequenceCount; sequenceIndex++) {
+      const sequenceStartTime = now + sequenceIndex * (sequenceDuration + sequenceGap);
 
-      // オシレーター（音を生成）
-      const oscillator = ctx.createOscillator();
-      oscillator.type = 'sine'; // サイン波（柔らかい音）
-      oscillator.frequency.setValueAtTime(frequency, startTime);
+      for (let beepIndex = 0; beepIndex < beepsPerSequence; beepIndex++) {
+        const startTime = sequenceStartTime + beepIndex * (beepDuration + beepGap);
 
-      // ゲイン（音量制御）
-      const gainNode = ctx.createGain();
-      gainNode.gain.setValueAtTime(0, startTime);
-      // フェードイン
-      gainNode.gain.linearRampToValueAtTime(volume * 0.3, startTime + 0.01);
-      // フェードアウト
-      gainNode.gain.linearRampToValueAtTime(0, startTime + beepDuration);
+        // オシレーター（音を生成）
+        const oscillator = ctx.createOscillator();
+        oscillator.type = 'sine'; // サイン波（柔らかい音）
+        oscillator.frequency.setValueAtTime(frequency, startTime);
 
-      // 接続
-      oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
+        // ゲイン（音量制御）
+        const gainNode = ctx.createGain();
+        gainNode.gain.setValueAtTime(0, startTime);
+        // フェードイン
+        gainNode.gain.linearRampToValueAtTime(volume * 0.3, startTime + 0.01);
+        // フェードアウト
+        gainNode.gain.linearRampToValueAtTime(0, startTime + beepDuration);
 
-      // 再生
-      oscillator.start(startTime);
-      oscillator.stop(startTime + beepDuration);
+        // 接続
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        // 再生
+        oscillator.start(startTime);
+        oscillator.stop(startTime + beepDuration);
+      }
     }
   } catch (error) {
     console.error('アラーム音の再生エラー:', error);
